@@ -1,0 +1,23 @@
+export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
+
+export interface Habit {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  frequency: HabitFrequency;
+  goalCount: number;
+  createdAt: string;
+  archived: boolean;
+  sortOrder: number;
+}
+
+export interface HabitEntry {
+  date: string; // e.g. "2026-08-19"
+  completed: boolean;
+  weekOfMonth: number; // 1-5 (for weekly habits)
+  monthKey: string; // e.g. "2026-08" (for monthly query filtering)
+  updatedAt: string;
+}
+
+export type HabitEntryMap = Record<string, HabitEntry>;
