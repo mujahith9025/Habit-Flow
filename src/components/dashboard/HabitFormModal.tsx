@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Habit, HabitFrequency } from '../../types';
+import { Habit, HabitFrequency, TimeOfDay } from '../../types';
 import { Button } from '../ui/Button';
 
 interface HabitFormModalProps {
@@ -11,6 +11,7 @@ interface HabitFormModalProps {
     name: string;
     category?: string;
     frequency: HabitFrequency;
+    timeOfDay?: TimeOfDay;
     goalCount: number;
     color?: string;
     icon?: string;
@@ -26,6 +27,13 @@ const PRESET_CATEGORIES = [
   { label: '🧘 Mindfulness', value: 'Mindfulness' },
   { label: '📚 Study & Work', value: 'Study & Work' },
   { label: '🌟 General', value: 'General' },
+];
+
+const TIME_OF_DAY_OPTIONS: Array<{ value: TimeOfDay; label: string; icon: string }> = [
+  { value: 'morning', label: 'Morning', icon: 'wb_sunny' },
+  { value: 'afternoon', label: 'Afternoon', icon: 'light_mode' },
+  { value: 'evening', label: 'Evening', icon: 'bedtime' },
+  { value: 'anytime', label: 'Anytime', icon: 'schedule' },
 ];
 
 export const HabitFormModal: React.FC<HabitFormModalProps> = ({
@@ -44,6 +52,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [customCategory, setCustomCategory] = useState('');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('anytime');
   const [goalCount, setGoalCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +73,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         setCustomCategory(initialCat);
       }
       setFrequency(habitToEdit.frequency || 'daily');
+      setTimeOfDay(habitToEdit.timeOfDay || 'anytime');
       setGoalCount(habitToEdit.goalCount || 1);
     } else {
       setName('');
@@ -79,6 +89,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         setCustomCategory(initialCat);
       }
       setFrequency('daily');
+      setTimeOfDay('anytime');
       setGoalCount(1);
     }
     setError(null);
@@ -121,6 +132,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         name: name.trim(),
         category: finalCategory,
         frequency,
+        timeOfDay: frequency === 'daily' ? timeOfDay : 'anytime',
         goalCount: Math.max(1, goalCount),
       });
       onClose();
@@ -302,6 +314,32 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               ))}
             </div>
           </div>
+
+          {/* 3.5 Time of Day Selector (For Daily Habits) */}
+          {frequency === 'daily' && (
+            <div className="space-y-1.5 animate-fadeIn">
+              <label className="block font-section-header text-xs font-semibold text-on-surface">
+                Time of Day Routine
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {TIME_OF_DAY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTimeOfDay(opt.value)}
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-95 ${
+                      timeOfDay === opt.value
+                        ? 'bg-primary text-on-primary border-primary shadow-soft'
+                        : 'bg-surface-container-low dark:bg-surface-container-high/40 border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-primary/50'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">{opt.icon}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 4. Goal Stepper */}
           <div className="space-y-1.5">

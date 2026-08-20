@@ -10,7 +10,7 @@ import {
   seedSampleHabits as seedSampleHabitsService,
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
-import { Habit, HabitFrequency } from '../types';
+import { Habit, HabitFrequency, TimeOfDay } from '../types';
 
 export interface UseHabitsResult {
   habits: Habit[];
@@ -23,6 +23,7 @@ export interface UseHabitsResult {
     icon?: string;
     color?: string;
     frequency?: HabitFrequency;
+    timeOfDay?: TimeOfDay;
     goalCount?: number;
     sortOrder?: number;
   }) => Promise<Habit>;
@@ -98,6 +99,7 @@ export function useHabits(
       icon?: string;
       color?: string;
       frequency?: HabitFrequency;
+      timeOfDay?: TimeOfDay;
       goalCount?: number;
       sortOrder?: number;
     }): Promise<Habit> => {

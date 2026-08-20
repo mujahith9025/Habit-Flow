@@ -192,6 +192,7 @@ export const HabitDetailPage: React.FC = () => {
     name: string;
     category?: string;
     frequency: 'daily' | 'weekly' | 'monthly';
+    timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'anytime';
     goalCount: number;
     color?: string;
     icon?: string;
@@ -203,6 +204,7 @@ export const HabitDetailPage: React.FC = () => {
     name: string;
     category?: string;
     frequency: 'daily' | 'weekly' | 'monthly';
+    timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'anytime';
     goalCount: number;
     color?: string;
     icon?: string;

@@ -7,7 +7,7 @@ import {
   getHabitsCollectionRef,
   getEntryDocRef,
 } from './firestore';
-import { Habit, HabitEntry, HabitFrequency } from '../../types';
+import { Habit, HabitEntry, HabitFrequency, TimeOfDay } from '../../types';
 
 /**
  * Calculates the week of the month (1-5) for a given YYYY-MM-DD date string
@@ -63,6 +63,7 @@ export async function createHabit(
     icon?: string;
     color?: string;
     frequency?: HabitFrequency;
+    timeOfDay?: TimeOfDay;
     goalCount?: number;
     sortOrder?: number;
   }
@@ -78,6 +79,7 @@ export async function createHabit(
     icon: data.icon || 'energy_savings_leaf',
     color: data.color || '#006398',
     frequency: data.frequency || 'daily',
+    timeOfDay: data.timeOfDay || 'anytime',
     goalCount: data.goalCount || 1,
     createdAt,
     archived: false,

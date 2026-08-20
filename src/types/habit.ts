@@ -1,4 +1,5 @@
 export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'anytime';
 
 export interface Habit {
   id: string;
@@ -7,6 +8,7 @@ export interface Habit {
   icon: string;
   color: string;
   frequency: HabitFrequency;
+  timeOfDay?: TimeOfDay;
   goalCount: number;
   createdAt: string;
   archived: boolean;
