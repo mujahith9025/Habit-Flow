@@ -19,6 +19,7 @@ export interface UseHabitsResult {
   lastUpdated: Date | null;
   createHabit: (data: {
     name: string;
+    category?: string;
     icon?: string;
     color?: string;
     frequency?: HabitFrequency;
@@ -61,29 +62,28 @@ export function useHabits(
       (snapshot) => {
         const habitList: Habit[] = [];
         snapshot.forEach((docSnap) => {
-          const data = docSnap.data() as Habit;
-          const matchesFrequency =
-            !frequencyFilter || frequencyFilter === 'all' || data.frequency === frequencyFilter;
-
-          if (matchesFrequency && (includeArchived || !data.archived)) {
-            habitList.push({
-              ...data,
-              id: docSnap.id,
-            });
-          }
+          habitList.push(docSnap.data());
         });
 
-        // Client-side sort by sortOrder
-        habitList.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        // Client-side filtering & sorting
+        let filtered = habitList;
+        if (!includeArchived) {
+          filtered = filtered.filter((h) => !h.archived);
+        }
+        if (frequencyFilter && frequencyFilter !== 'all') {
+          filtered = filtered.filter((h) => h.frequency === frequencyFilter);
+        }
 
-        setHabits(habitList);
-        setLastUpdated(new Date());
+        filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+        setHabits(filtered);
         setLoading(false);
+        setLastUpdated(new Date());
         setError(null);
       },
       (err) => {
-        console.warn('Real-time useHabits listener note:', err);
-        setError(err.message);
+        console.error('Error listening to habits:', err);
+        setError(err.message || 'Failed to load habits.');
         setLoading(false);
       }
     );
@@ -91,41 +91,48 @@ export function useHabits(
     return () => unsubscribe();
   }, [user?.uid, frequencyFilter, includeArchived]);
 
-  // Wrapped mutation handlers bound to active user uid
   const createHabit = useCallback(
-    async (data: Parameters<typeof createHabitService>[1]) => {
-      if (!user?.uid) throw new Error('User is not authenticated');
+    async (data: {
+      name: string;
+      category?: string;
+      icon?: string;
+      color?: string;
+      frequency?: HabitFrequency;
+      goalCount?: number;
+      sortOrder?: number;
+    }): Promise<Habit> => {
+      if (!user?.uid) throw new Error('User must be logged in to create a habit');
       return await createHabitService(user.uid, data);
     },
     [user?.uid]
   );
 
   const updateHabit = useCallback(
-    async (habitId: string, updates: Parameters<typeof updateHabitService>[2]) => {
-      if (!user?.uid) throw new Error('User is not authenticated');
-      return await updateHabitService(user.uid, habitId, updates);
+    async (habitId: string, updates: Partial<Omit<Habit, 'id' | 'createdAt'>>): Promise<void> => {
+      if (!user?.uid) throw new Error('User must be logged in to update a habit');
+      await updateHabitService(user.uid, habitId, updates);
     },
     [user?.uid]
   );
 
   const archiveHabit = useCallback(
-    async (habitId: string, archived: boolean) => {
-      if (!user?.uid) throw new Error('User is not authenticated');
-      return await archiveHabitService(user.uid, habitId, archived);
+    async (habitId: string, archived: boolean): Promise<void> => {
+      if (!user?.uid) throw new Error('User must be logged in to archive a habit');
+      await archiveHabitService(user.uid, habitId, archived);
     },
     [user?.uid]
   );
 
   const deleteHabit = useCallback(
-    async (habitId: string) => {
-      if (!user?.uid) throw new Error('User is not authenticated');
-      return await deleteHabitService(user.uid, habitId);
+    async (habitId: string): Promise<void> => {
+      if (!user?.uid) throw new Error('User must be logged in to delete a habit');
+      await deleteHabitService(user.uid, habitId);
     },
     [user?.uid]
   );
 
-  const seedHabits = useCallback(async () => {
-    if (!user?.uid) throw new Error('User is not authenticated');
+  const seedHabits = useCallback(async (): Promise<Habit[]> => {
+    if (!user?.uid) throw new Error('User must be logged in to seed habits');
     return await seedSampleHabitsService(user.uid);
   }, [user?.uid]);
 

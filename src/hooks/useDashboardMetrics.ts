@@ -15,9 +15,9 @@ export function formatDateKey(date: Date): string {
 }
 
 /**
- * Calculates live dashboard completion metrics and overall consecutive streak
+ * Calculates live dashboard completion metrics and overall consecutive streak, optionally filtered by category
  */
-export function useDashboardMetrics(selectedMonthKey?: string): DashboardMetrics {
+export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory: string = 'all'): DashboardMetrics {
   const { user } = useAuth();
   const { habits, loading: habitsLoading } = useHabits('daily');
 
@@ -25,14 +25,22 @@ export function useDashboardMetrics(selectedMonthKey?: string): DashboardMetrics
   const todayDateKey = formatDateKey(today);
   const activeMonthKey = selectedMonthKey || todayDateKey.substring(0, 7);
 
+  // Filter daily habits by category
+  const activeDailyHabits = habits.filter((h) => !h.archived);
+  const dailyHabits = selectedCategory === 'all'
+    ? activeDailyHabits
+    : activeDailyHabits.filter(
+        (h) => (h.category || 'General').toLowerCase() === selectedCategory.toLowerCase()
+      );
+
   const [entriesByHabit, setEntriesByHabit] = useState<Record<string, HabitEntryMap>>({});
   const [entriesLoading, setEntriesLoading] = useState(false);
 
-  const habitIdsKey = habits.map((h) => h.id).join(',');
+  const habitIdsKey = dailyHabits.map((h) => h.id).join(',');
 
   // Subscribe to entries for all daily habits in the active month
   useEffect(() => {
-    if (!user?.uid || habits.length === 0) {
+    if (!user?.uid || dailyHabits.length === 0) {
       setEntriesByHabit({});
       setEntriesLoading(false);
       return;
@@ -41,7 +49,7 @@ export function useDashboardMetrics(selectedMonthKey?: string): DashboardMetrics
     setEntriesLoading(true);
     const unsubscribes: Array<() => void> = [];
 
-    habits.forEach((habit) => {
+    dailyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
       const q = query(colRef, where('monthKey', '==', activeMonthKey));
 
@@ -74,7 +82,6 @@ export function useDashboardMetrics(selectedMonthKey?: string): DashboardMetrics
   }, [user?.uid, habitIdsKey, activeMonthKey]);
 
   // Compute completed count today
-  const dailyHabits = habits.filter((h) => !h.archived);
   const totalDailyHabits = dailyHabits.length;
 
   let completedTodayCount = 0;
@@ -120,6 +127,6 @@ export function useDashboardMetrics(selectedMonthKey?: string): DashboardMetrics
     completionPercentage,
     streakCount,
     todayDateKey,
-    loading: (habitsLoading && habits.length === 0) || entriesLoading,
+    loading: (habitsLoading && dailyHabits.length === 0) || entriesLoading,
   };
 }

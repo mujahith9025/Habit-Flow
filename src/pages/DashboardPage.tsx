@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DateNavigator } from '../components/dashboard/DateNavigator';
 import { SummaryCard } from '../components/dashboard/SummaryCard';
+import { CategoryFilterTabs } from '../components/dashboard/CategoryFilterTabs';
 import { ViewTabs } from '../components/dashboard/ViewTabs';
 import { DailyTabContent } from '../components/dashboard/DailyTabContent';
 import { WeeklyTabContent } from '../components/dashboard/WeeklyTabContent';
@@ -14,9 +15,10 @@ import { DashboardViewTab, Habit, HabitFrequency } from '../types';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
-  // Month/Year navigation state (defaulting to current date e.g. August 2026)
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date(2026, 7, 19));
+  // Month/Year navigation state (defaulting to current date)
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [activeTab, setActiveTab] = useState<DashboardViewTab>('daily');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Add / Edit Habit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,8 +26,8 @@ export const DashboardPage: React.FC = () => {
 
   const selectedMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
 
-  // Live real-time dashboard summary metrics & mutation handlers
-  const metrics = useDashboardMetrics(selectedMonthKey);
+  // Live real-time dashboard summary metrics (filtered by selected tracker board)
+  const metrics = useDashboardMetrics(selectedMonthKey, selectedCategory);
   const { habits, loading: habitsLoading, createHabit, updateHabit, archiveHabit } = useHabits();
 
   const handleMonthChange = (offset: number) => {
@@ -48,6 +50,7 @@ export const DashboardPage: React.FC = () => {
 
   const handleSaveHabit = async (data: {
     name: string;
+    category?: string;
     frequency: HabitFrequency;
     goalCount: number;
     color: string;
@@ -56,6 +59,7 @@ export const DashboardPage: React.FC = () => {
     if (editingHabit) {
       await updateHabit(editingHabit.id, {
         name: data.name,
+        category: data.category,
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
@@ -64,6 +68,7 @@ export const DashboardPage: React.FC = () => {
     } else {
       await createHabit({
         name: data.name,
+        category: data.category || (selectedCategory !== 'all' ? selectedCategory : 'General'),
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
@@ -143,15 +148,24 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. View Toggle Tabs (Daily / Weekly / Monthly) */}
-      <div className="flex justify-center w-full pt-2">
+      {/* 3. Category / Tracker Board Selector Tabs */}
+      <CategoryFilterTabs
+        habits={habits}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        onAddNewCategory={handleOpenAddModal}
+      />
+
+      {/* 4. View Toggle Tabs (Daily / Weekly / Monthly) */}
+      <div className="flex justify-center w-full pt-1">
         <ViewTabs activeTab={activeTab} onChangeTab={setActiveTab} />
       </div>
 
-      {/* 4. Tab Content: Daily Grid, Weekly Grid, or Monthly Grid */}
+      {/* 5. Tab Content: Daily Grid, Weekly Grid, or Monthly Grid */}
       {activeTab === 'daily' && (
         <DailyTabContent
           currentDate={selectedDate}
+          selectedCategory={selectedCategory}
           onEditHabit={handleOpenEditModal}
         />
       )}
@@ -159,6 +173,7 @@ export const DashboardPage: React.FC = () => {
       {activeTab === 'weekly' && (
         <WeeklyTabContent
           currentDate={selectedDate}
+          selectedCategory={selectedCategory}
           onEditHabit={handleOpenEditModal}
         />
       )}
@@ -166,17 +181,19 @@ export const DashboardPage: React.FC = () => {
       {activeTab === 'monthly' && (
         <MonthlyTabContent
           currentDate={selectedDate}
+          selectedCategory={selectedCategory}
           onEditHabit={handleOpenEditModal}
         />
       )}
 
-      {/* 5. Floating Action Button (FAB) -> Opens Add Habit Modal */}
+      {/* 6. Floating Action Button (FAB) -> Opens Add Habit Modal */}
       <FloatingActionButton onClick={handleOpenAddModal} />
 
-      {/* 6. Add / Edit Habit Modal */}
+      {/* 7. Add / Edit Habit Modal */}
       <HabitFormModal
         isOpen={isModalOpen}
         habitToEdit={editingHabit}
+        defaultCategory={selectedCategory !== 'all' ? selectedCategory : undefined}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveHabit}
         onArchive={handleArchiveHabit}

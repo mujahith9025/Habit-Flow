@@ -3,6 +3,7 @@ export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
 export interface Habit {
   id: string;
   name: string;
+  category?: string; // e.g. "Self Challenges", "Diet", "Fitness", "Mindfulness", "General"
   icon: string;
   color: string;
   frequency: HabitFrequency;

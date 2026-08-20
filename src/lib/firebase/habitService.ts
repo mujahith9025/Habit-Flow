@@ -59,6 +59,7 @@ export async function createHabit(
   uid: string,
   data: {
     name: string;
+    category?: string;
     icon?: string;
     color?: string;
     frequency?: HabitFrequency;
@@ -73,6 +74,7 @@ export async function createHabit(
   const newHabit: Habit = {
     id: newHabitRef.id,
     name: data.name.trim(),
+    category: data.category?.trim() || 'General',
     icon: data.icon || 'energy_savings_leaf',
     color: data.color || '#006398',
     frequency: data.frequency || 'daily',
@@ -125,27 +127,39 @@ export async function seedSampleHabits(uid: string): Promise<Habit[]> {
   const samples: Array<Parameters<typeof createHabit>[1]> = [
     {
       name: 'Morning Meditation',
-      icon: 'mindfulness',
+      category: 'Mindfulness',
+      icon: 'self_improvement',
       color: '#006398', // Primary Teal/Blue
       frequency: 'daily',
       goalCount: 1,
       sortOrder: 0,
     },
     {
+      name: 'Cold Shower Challenge',
+      category: 'Self Challenges',
+      icon: 'water_drop',
+      color: '#a03e40', // Muted Coral
+      frequency: 'daily',
+      goalCount: 1,
+      sortOrder: 1,
+    },
+    {
+      name: 'No Sugar Diet',
+      category: 'Diet & Nutrition',
+      icon: 'favorite',
+      color: '#286b33', // Success Green
+      frequency: 'daily',
+      goalCount: 1,
+      sortOrder: 2,
+    },
+    {
       name: 'Physical Workout',
+      category: 'Fitness',
       icon: 'fitness_center',
       color: '#286b33', // Success Green
       frequency: 'weekly',
       goalCount: 4,
-      sortOrder: 1,
-    },
-    {
-      name: 'Read 1 Book',
-      icon: 'menu_book',
-      color: '#a03e40', // Muted Coral
-      frequency: 'monthly',
-      goalCount: 1,
-      sortOrder: 2,
+      sortOrder: 3,
     },
   ];
 

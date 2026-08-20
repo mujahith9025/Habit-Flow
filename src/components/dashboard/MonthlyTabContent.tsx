@@ -6,11 +6,13 @@ import { Habit } from '../../types';
 
 interface MonthlyTabContentProps {
   currentDate: Date;
+  selectedCategory?: string;
   onEditHabit: (habit: Habit) => void;
 }
 
 export const MonthlyTabContent: React.FC<MonthlyTabContentProps> = ({
   currentDate,
+  selectedCategory = 'all',
   onEditHabit,
 }) => {
   const {
@@ -19,7 +21,7 @@ export const MonthlyTabContent: React.FC<MonthlyTabContentProps> = ({
     isCompleted,
     toggleMonthlyEntry,
     seedHabits,
-  } = useMonthlyHabitsData(currentDate);
+  } = useMonthlyHabitsData(currentDate, selectedCategory);
 
   const { formattedTitle } = formatMonthYear(currentDate);
 

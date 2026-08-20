@@ -6,11 +6,13 @@ import { Habit } from '../../types';
 
 interface WeeklyTabContentProps {
   currentDate: Date;
+  selectedCategory?: string;
   onEditHabit: (habit: Habit) => void;
 }
 
 export const WeeklyTabContent: React.FC<WeeklyTabContentProps> = ({
   currentDate,
+  selectedCategory = 'all',
   onEditHabit,
 }) => {
   const {
@@ -19,7 +21,7 @@ export const WeeklyTabContent: React.FC<WeeklyTabContentProps> = ({
     isCompleted,
     toggleWeeklyEntry,
     seedHabits,
-  } = useWeeklyHabitsData(currentDate);
+  } = useWeeklyHabitsData(currentDate, selectedCategory);
 
   const { formattedTitle } = formatMonthYear(currentDate);
 

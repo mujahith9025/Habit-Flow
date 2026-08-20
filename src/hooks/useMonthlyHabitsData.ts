@@ -26,7 +26,7 @@ export interface UseMonthlyHabitsDataResult {
   seedHabits: () => Promise<Habit[]>;
 }
 
-export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataResult {
+export function useMonthlyHabitsData(selectedDate: Date, selectedCategory: string = 'all'): UseMonthlyHabitsDataResult {
   const { user } = useAuth();
   const { habits, loading: habitsLoading, seedHabits } = useHabits('monthly');
 
@@ -34,7 +34,13 @@ export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataRe
   const month = selectedDate.getMonth();
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-  const monthlyHabits = habits.filter((h) => !h.archived);
+  const activeMonthlyHabits = habits.filter((h) => !h.archived);
+  const monthlyHabits = selectedCategory === 'all'
+    ? activeMonthlyHabits
+    : activeMonthlyHabits.filter(
+        (h) => (h.category || 'General').toLowerCase() === selectedCategory.toLowerCase()
+      );
+
   const [entriesByHabit, setEntriesByHabit] = useState<Record<string, HabitEntryMap>>({});
   const [entriesLoading, setEntriesLoading] = useState(true);
 
@@ -70,7 +76,7 @@ export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataRe
           }));
         },
         (err) => {
-          console.warn(`Error listening to monthly habit ${habit.id} entries:`, err);
+          console.warn(`Error listening to monthly habit ${habit.id}:`, err);
         }
       );
 
@@ -83,7 +89,7 @@ export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataRe
     };
   }, [user?.uid, monthlyHabits.map((h) => h.id).join(','), monthKey]);
 
-  // Compute metrics per monthly habit
+  // Compute metrics per habit
   const habitMetricsMap: Record<string, MonthlyHabitMetrics> = {};
 
   monthlyHabits.forEach((habit) => {
@@ -107,12 +113,9 @@ export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataRe
     async (habitId: string): Promise<void> => {
       if (!user?.uid) return;
 
-      const prevHabitEntries = entriesRef.current[habitId] || {};
-      const prevEntry = prevHabitEntries[monthKey];
-      const prevCompleted = prevEntry?.completed ?? false;
-      const nextCompleted = !prevCompleted;
+      const prevEntry = entriesRef.current[habitId]?.[monthKey];
+      const nextCompleted = !prevEntry?.completed;
 
-      // 1. Optimistic Update
       setEntriesByHabit((prev) => ({
         ...prev,
         [habitId]: {
@@ -128,11 +131,9 @@ export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataRe
       }));
 
       try {
-        // 2. Network Write
         await toggleEntryService(user.uid, habitId, monthKey, nextCompleted);
       } catch (err) {
         console.error('Failed to toggle monthly entry. Rolling back:', err);
-        // 3. Rollback
         setEntriesByHabit((prev) => {
           const habitMap = { ...(prev[habitId] || {}) };
           if (prevEntry) {
@@ -140,10 +141,7 @@ export function useMonthlyHabitsData(selectedDate: Date): UseMonthlyHabitsDataRe
           } else {
             delete habitMap[monthKey];
           }
-          return {
-            ...prev,
-            [habitId]: habitMap,
-          };
+          return { ...prev, [habitId]: habitMap };
         });
       }
     },

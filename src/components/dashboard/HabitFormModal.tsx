@@ -5,9 +5,11 @@ import { Button } from '../ui/Button';
 interface HabitFormModalProps {
   isOpen: boolean;
   habitToEdit?: Habit | null;
+  defaultCategory?: string;
   onClose: () => void;
   onSave: (data: {
     name: string;
+    category?: string;
     frequency: HabitFrequency;
     goalCount: number;
     color: string;
@@ -38,9 +40,19 @@ const ICON_CHOICES = [
   { icon: 'auto_stories', label: 'Study' },
 ];
 
+const PRESET_CATEGORIES = [
+  { label: '🎯 Self Challenges', value: 'Self Challenges' },
+  { label: '🥗 Diet & Nutrition', value: 'Diet & Nutrition' },
+  { label: '🏃 Fitness', value: 'Fitness' },
+  { label: '🧘 Mindfulness', value: 'Mindfulness' },
+  { label: '📚 Study & Work', value: 'Study & Work' },
+  { label: '🌟 General', value: 'General' },
+];
+
 export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   isOpen,
   habitToEdit,
+  defaultCategory,
   onClose,
   onSave,
   onArchive,
@@ -48,6 +60,9 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const isEditMode = Boolean(habitToEdit);
 
   const [name, setName] = useState('');
+  const [category, setCategory] = useState('General');
+  const [customCategory, setCustomCategory] = useState('');
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
   const [goalCount, setGoalCount] = useState(1);
   const [color, setColor] = useState('#006398');
@@ -59,19 +74,41 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   useEffect(() => {
     if (habitToEdit) {
       setName(habitToEdit.name);
+      const initialCat = habitToEdit.category || 'General';
+      const isPreset = PRESET_CATEGORIES.some((c) => c.value.toLowerCase() === initialCat.toLowerCase());
+      if (isPreset) {
+        setCategory(initialCat);
+        setIsCustomCategory(false);
+        setCustomCategory('');
+      } else {
+        setCategory('Custom');
+        setIsCustomCategory(true);
+        setCustomCategory(initialCat);
+      }
       setFrequency(habitToEdit.frequency || 'daily');
       setGoalCount(habitToEdit.goalCount || 1);
       setColor(habitToEdit.color || '#006398');
       setIcon(habitToEdit.icon || 'energy_savings_leaf');
     } else {
       setName('');
+      const initialCat = defaultCategory || 'General';
+      const isPreset = PRESET_CATEGORIES.some((c) => c.value.toLowerCase() === initialCat.toLowerCase());
+      if (isPreset) {
+        setCategory(initialCat);
+        setIsCustomCategory(false);
+        setCustomCategory('');
+      } else {
+        setCategory('Custom');
+        setIsCustomCategory(true);
+        setCustomCategory(initialCat);
+      }
       setFrequency('daily');
       setGoalCount(1);
       setColor('#006398');
       setIcon('energy_savings_leaf');
     }
     setError(null);
-  }, [habitToEdit, isOpen]);
+  }, [habitToEdit, defaultCategory, isOpen]);
 
   if (!isOpen) return null;
 
@@ -81,6 +118,17 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
     monthly: 'Times per month',
   };
 
+  const handleCategorySelect = (val: string) => {
+    if (val === 'Custom') {
+      setIsCustomCategory(true);
+      setCategory('Custom');
+    } else {
+      setIsCustomCategory(false);
+      setCategory(val);
+      setCustomCategory('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -88,11 +136,16 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       return;
     }
 
+    const finalCategory = isCustomCategory
+      ? customCategory.trim() || 'General'
+      : category;
+
     try {
       setIsSubmitting(true);
       setError(null);
       await onSave({
         name: name.trim(),
+        category: finalCategory,
         frequency,
         goalCount: Math.max(1, goalCount),
         color,
@@ -182,14 +235,63 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               type="text"
               required
               autoFocus
-              placeholder="e.g. Morning Meditation, Read 20 Pages..."
+              placeholder="e.g. No Sugar Foods, Cold Showers, Workout..."
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-3 text-sm rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/30 text-on-surface focus:ring-2 focus:ring-primary focus:outline-none transition-all"
             />
           </div>
 
-          {/* 2. Frequency Selector Tabs */}
+          {/* 2. Category / Tracker Section */}
+          <div className="space-y-2">
+            <label className="block font-section-header text-xs font-semibold text-on-surface">
+              Tracker Category / Routine
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_CATEGORIES.map((cat) => {
+                const isSelected = !isCustomCategory && category.toLowerCase() === cat.value.toLowerCase();
+                return (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => handleCategorySelect(cat.value)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-primary text-on-primary shadow-soft'
+                        : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => handleCategorySelect('Custom')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                  isCustomCategory
+                    ? 'bg-primary text-on-primary shadow-soft'
+                    : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+                }`}
+              >
+                + Custom Title
+              </button>
+            </div>
+
+            {/* Custom Category Input */}
+            {isCustomCategory && (
+              <input
+                type="text"
+                placeholder="Enter custom tracker title (e.g. Morning Routine, Keto Diet...)"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 border border-primary/50 text-on-surface focus:ring-2 focus:ring-primary focus:outline-none transition-all animate-fadeIn"
+              />
+            )}
+          </div>
+
+          {/* 3. Frequency Selector Tabs */}
           <div className="space-y-1.5">
             <label className="block font-section-header text-xs font-semibold text-on-surface">
               Frequency
@@ -212,7 +314,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </div>
           </div>
 
-          {/* 3. Goal Stepper */}
+          {/* 4. Goal Stepper */}
           <div className="space-y-1.5">
             <label className="block font-section-header text-xs font-semibold text-on-surface">
               {goalLabels[frequency]}
@@ -240,7 +342,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Color Swatches */}
+          {/* 5. Color Swatches */}
           <div className="space-y-1.5">
             <label className="block font-section-header text-xs font-semibold text-on-surface">
               Color Theme
@@ -266,7 +368,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </div>
           </div>
 
-          {/* 5. Icon Grid */}
+          {/* 6. Icon Grid */}
           <div className="space-y-1.5">
             <label className="block font-section-header text-xs font-semibold text-on-surface">
               Icon

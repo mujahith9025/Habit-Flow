@@ -8,8 +8,17 @@ export const DesktopSidebar: React.FC = () => {
   const { habits } = useHabits();
   const navigate = useNavigate();
 
-  const firstHabitId = habits.length > 0 ? habits[0].id : null;
+  const activeHabits = habits.filter((h) => !h.archived);
+  const firstHabitId = activeHabits.length > 0 ? activeHabits[0].id : null;
   const habitViewPath = firstHabitId ? `/habit/${firstHabitId}` : '/dashboard';
+
+  // Distinct tracker categories with habit counts
+  const categoryCounts: Record<string, number> = {};
+  activeHabits.forEach((h) => {
+    const cat = h.category?.trim() || 'General';
+    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+  });
+  const categories = Object.keys(categoryCounts).sort();
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -31,7 +40,7 @@ export const DesktopSidebar: React.FC = () => {
   return (
     <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-surface-container-lowest dark:bg-surface-container border-r border-outline-variant/20 min-h-screen p-md justify-between shrink-0">
       {/* Top Section */}
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Brand */}
         <div className="flex items-center gap-3 px-2">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-soft">
@@ -53,10 +62,7 @@ export const DesktopSidebar: React.FC = () => {
         <div className="px-2">
           <button
             type="button"
-            onClick={() => {
-              // Open add habit modal if on dashboard, or navigate to dashboard
-              navigate('/dashboard');
-            }}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-full bg-primary text-on-primary font-habit-name text-sm font-semibold shadow-soft hover:bg-on-primary-fixed-variant transition-all active:scale-98"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
@@ -71,7 +77,7 @@ export const DesktopSidebar: React.FC = () => {
               key={item.label}
               to={item.to}
               className={({ isActive }) =>
-                `flex items-center gap-3.5 px-4 py-3 rounded-xl font-habit-name text-sm transition-all duration-200 ${
+                `flex items-center gap-3.5 px-4 py-2.5 rounded-xl font-habit-name text-sm transition-all duration-200 ${
                   isActive
                     ? 'bg-secondary-container text-on-secondary-container font-semibold shadow-sm'
                     : 'text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high hover:text-on-surface'
@@ -97,6 +103,32 @@ export const DesktopSidebar: React.FC = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* Tracker Boards Category List in Sidebar */}
+        {categories.length > 0 && (
+          <div className="pt-3 border-t border-outline-variant/15 px-2 space-y-1.5">
+            <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold block px-2 mb-1">
+              Tracker Boards
+            </span>
+            <div className="space-y-1 max-h-44 overflow-y-auto scrollbar-thin pr-1">
+              {categories.map((cat) => {
+                const count = categoryCounts[cat];
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => navigate('/dashboard')}
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors text-left"
+                  >
+                    <span className="truncate font-medium">{cat}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-surface-container-highest dark:bg-surface-container-high text-on-surface-variant">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Section: Gentle Persistence Card & User Footer */}

@@ -27,7 +27,7 @@ export interface UseWeeklyHabitsDataResult {
   seedHabits: () => Promise<Habit[]>;
 }
 
-export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResult {
+export function useWeeklyHabitsData(selectedDate: Date, selectedCategory: string = 'all'): UseWeeklyHabitsDataResult {
   const { user } = useAuth();
   const { habits, loading: habitsLoading, seedHabits } = useHabits('weekly');
 
@@ -35,7 +35,13 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
   const month = selectedDate.getMonth();
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-  const weeklyHabits = habits.filter((h) => !h.archived);
+  const activeWeeklyHabits = habits.filter((h) => !h.archived);
+  const weeklyHabits = selectedCategory === 'all'
+    ? activeWeeklyHabits
+    : activeWeeklyHabits.filter(
+        (h) => (h.category || 'General').toLowerCase() === selectedCategory.toLowerCase()
+      );
+
   const [entriesByHabit, setEntriesByHabit] = useState<Record<string, HabitEntryMap>>({});
   const [entriesLoading, setEntriesLoading] = useState(true);
 
@@ -71,7 +77,7 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
           }));
         },
         (err) => {
-          console.warn(`Error listening to weekly habit ${habit.id} entries:`, err);
+          console.warn(`Error listening to weekly habit ${habit.id}:`, err);
         }
       );
 
@@ -84,7 +90,7 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
     };
   }, [user?.uid, weeklyHabits.map((h) => h.id).join(','), monthKey]);
 
-  // Compute metrics per weekly habit
+  // Compute metrics per habit
   const habitMetricsMap: Record<string, WeeklyHabitMetrics> = {};
 
   weeklyHabits.forEach((habit) => {
@@ -98,17 +104,14 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
       }
     }
 
-    const goalCount = habit.goalCount > 0 ? habit.goalCount : 4;
+    const goalCount = habit.goalCount || 4;
     const progressPercent = Math.min(100, Math.round((completedWeeksCount / goalCount) * 100));
-
-    // Approximate weekly streak based on completed weeks count
-    const streakCount = completedWeeksCount > 0 ? completedWeeksCount * 7 : 0;
 
     habitMetricsMap[habit.id] = {
       habit,
       completedWeeksCount,
       progressPercent,
-      streakCount,
+      streakCount: completedWeeksCount,
       goalCount,
     };
   });
@@ -126,12 +129,10 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
       if (!user?.uid) return;
 
       const weekKey = `${monthKey}-W${weekNumber}`;
-      const prevHabitEntries = entriesRef.current[habitId] || {};
-      const prevEntry = prevHabitEntries[weekKey];
-      const prevCompleted = prevEntry?.completed ?? false;
-      const nextCompleted = !prevCompleted;
+      const prevEntry = entriesRef.current[habitId]?.[weekKey];
+      const nextCompleted = !prevEntry?.completed;
 
-      // 1. Optimistic Update
+      // Optimistic update
       setEntriesByHabit((prev) => ({
         ...prev,
         [habitId]: {
@@ -147,11 +148,9 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
       }));
 
       try {
-        // 2. Network Write
         await toggleEntryService(user.uid, habitId, weekKey, nextCompleted);
       } catch (err) {
         console.error('Failed to toggle weekly entry. Rolling back:', err);
-        // 3. Rollback
         setEntriesByHabit((prev) => {
           const habitMap = { ...(prev[habitId] || {}) };
           if (prevEntry) {
@@ -159,10 +158,7 @@ export function useWeeklyHabitsData(selectedDate: Date): UseWeeklyHabitsDataResu
           } else {
             delete habitMap[weekKey];
           }
-          return {
-            ...prev,
-            [habitId]: habitMap,
-          };
+          return { ...prev, [habitId]: habitMap };
         });
       }
     },

@@ -43,9 +43,9 @@ export interface UseDailyHabitsDataResult {
 const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /**
- * Hook to manage real-time entries and metrics for all daily habits in a selected month
+ * Hook to manage real-time entries and metrics for daily habits in a selected month, optionally filtered by category
  */
-export function useDailyHabitsData(selectedDate: Date): UseDailyHabitsDataResult {
+export function useDailyHabitsData(selectedDate: Date, selectedCategory: string = 'all'): UseDailyHabitsDataResult {
   const { user } = useAuth();
   const { habits, loading: habitsLoading, seedHabits } = useHabits('daily');
 
@@ -86,8 +86,13 @@ export function useDailyHabitsData(selectedDate: Date): UseDailyHabitsDataResult
   const entriesRef = useRef(entriesByHabit);
   entriesRef.current = entriesByHabit;
 
-  // Filter daily habits that are not archived
-  const dailyHabits = habits.filter((h) => !h.archived);
+  // Filter daily habits that are not archived, optionally filtered by category
+  const activeDailyHabits = habits.filter((h) => !h.archived);
+  const dailyHabits = selectedCategory === 'all'
+    ? activeDailyHabits
+    : activeDailyHabits.filter(
+        (h) => (h.category || 'General').toLowerCase() === selectedCategory.toLowerCase()
+      );
 
   useEffect(() => {
     if (!user?.uid || dailyHabits.length === 0) {

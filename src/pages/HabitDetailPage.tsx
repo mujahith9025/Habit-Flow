@@ -67,6 +67,7 @@ export const HabitDetailPage: React.FC = () => {
 
   const handleSaveEdit = async (data: {
     name: string;
+    category?: string;
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
     color: string;
@@ -77,6 +78,7 @@ export const HabitDetailPage: React.FC = () => {
 
   const handleCreateHabit = async (data: {
     name: string;
+    category?: string;
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
     color: string;
@@ -217,10 +219,15 @@ export const HabitDetailPage: React.FC = () => {
           </div>
 
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
                 {habit.name}
               </h1>
+              {habit.category && (
+                <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary dark:text-primary-fixed-dim font-stat-label">
+                  {habit.category}
+                </span>
+              )}
               <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
                 {habit.frequency || 'daily'}
               </span>
