@@ -8,17 +8,45 @@ import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
+const CATEGORY_ICONS: Record<string, string> = {
+  'self challenges': '🎯',
+  'diet & nutrition': '🥗',
+  diet: '🥗',
+  fitness: '🏃',
+  workout: '🏋️',
+  mindfulness: '🧘',
+  meditation: '🧘',
+  'study & work': '📚',
+  study: '📚',
+  work: '💼',
+  general: '🌱',
+  health: '❤️',
+};
+
 export const HabitDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { habits, loading: habitsLoading, createHabit, deleteHabit } = useHabits();
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Active habits list
   const activeHabits = habits.filter((h) => !h.archived);
+
+  // Group habits by category
+  const categoryHabitsMap: Record<string, typeof activeHabits> = {};
+  activeHabits.forEach((h) => {
+    const cat = h.category?.trim() || 'General';
+    if (!categoryHabitsMap[cat]) {
+      categoryHabitsMap[cat] = [];
+    }
+    categoryHabitsMap[cat].push(h);
+  });
+
+  const categories = Object.keys(categoryHabitsMap).sort();
 
   // Determine effective habit ID
   const matchedHabit = activeHabits.find((h) => h.id === id);
@@ -35,6 +63,16 @@ export const HabitDetailPage: React.FC = () => {
     }
   }, [habitsLoading, activeHabits, matchedHabit, id, navigate]);
 
+  // Sync selected category with current habit
+  useEffect(() => {
+    if (matchedHabit) {
+      const habitCat = matchedHabit.category?.trim() || 'General';
+      setSelectedCategory(habitCat);
+    } else if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
+    }
+  }, [matchedHabit, categories]);
+
   const {
     habit,
     metrics,
@@ -44,6 +82,26 @@ export const HabitDetailPage: React.FC = () => {
     updateHabit,
     archiveHabit,
   } = useSingleHabitHistory(effectiveHabitId, selectedDate);
+
+  // Filter habits under the currently selected tracker title
+  const currentCategory = selectedCategory || (habit?.category?.trim() || 'General');
+  const habitsInCurrentCategory = categoryHabitsMap[currentCategory] || (habit ? [habit] : []);
+
+  const getCategoryIcon = (cat: string) => {
+    const key = cat.toLowerCase();
+    return CATEGORY_ICONS[key] || '📋';
+  };
+
+  const handleSelectCategory = (cat: string) => {
+    setSelectedCategory(cat);
+    const habitsInCat = categoryHabitsMap[cat] || [];
+    if (habitsInCat.length > 0) {
+      // If current habit is not in this category, navigate to the first habit in this category
+      if (!habitsInCat.some((h) => h.id === habit?.id)) {
+        navigate(`/habit/${habitsInCat[0].id}`);
+      }
+    }
+  };
 
   const handleMonthChange = (offset: number) => {
     setSelectedDate((prev) => {
@@ -175,41 +233,95 @@ export const HabitDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fadeIn pb-12">
-      {/* 1. Habit Switcher Bar */}
-      {activeHabits.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          <span className="text-xs font-stat-label text-on-surface-variant shrink-0 uppercase tracking-wider">
-            Habits:
-          </span>
-          {activeHabits.map((h) => {
-            const isSelected = h.id === habit.id;
-            return (
-              <button
-                key={h.id}
-                onClick={() => navigate(`/habit/${h.id}`)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 active:scale-95 ${
-                  isSelected
-                    ? 'bg-primary text-on-primary shadow-soft'
-                    : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-                }`}
-              >
-                <span className="truncate max-w-[140px]">{h.name}</span>
-              </button>
-            );
-          })}
+      {/* 1. Categorized 2-Tier Habit Navigator */}
+      <div className="bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-5 rounded-2xl border border-outline-variant/15 shadow-soft space-y-4">
+        {/* Tier 1: Tracker Board / Category Selector */}
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-2 px-1">
+            <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                dashboard_customize
+              </span>
+              1. Select Tracker Board:
+            </span>
+          </div>
 
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            title="Create another habit"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container-lowest dark:bg-surface-container text-primary hover:bg-primary-fixed/20 border border-outline-variant/20 transition-all shrink-0 active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            <span>New</span>
-          </button>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {categories.map((cat) => {
+              const isSelected = currentCategory.toLowerCase() === cat.toLowerCase();
+              const count = categoryHabitsMap[cat]?.length || 0;
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleSelectCategory(cat)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
+                    isSelected
+                      ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+                  }`}
+                >
+                  <span>{getCategoryIcon(cat)}</span>
+                  <span>{cat}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      isSelected
+                        ? 'bg-white/20 text-white'
+                        : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
 
-      {/* 2. Habit Header Banner */}
+        {/* Tier 2: Habits under Selected Tracker Board */}
+        <div className="pt-3 border-t border-outline-variant/15">
+          <div className="flex items-center justify-between gap-2 mb-2 px-1">
+            <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-secondary text-[18px]">
+                checklist
+              </span>
+              2. Select Habit for Analytics ({currentCategory}):
+            </span>
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              <span>New Habit</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {habitsInCurrentCategory.map((h) => {
+              const isSelected = h.id === habit.id;
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => navigate(`/habit/${h.id}`)}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
+                    isSelected
+                      ? 'bg-secondary text-on-secondary shadow-soft scale-[1.02]'
+                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">
+                    {isSelected ? 'radio_button_checked' : 'radio_button_unchecked'}
+                  </span>
+                  <span className="truncate max-w-[160px]">{h.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Habit Header Banner (for the selected habit) */}
       <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Left: Habit Identity */}
         <div>
@@ -231,7 +343,7 @@ export const HabitDetailPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Right: Actions (Edit, Archive, Delete) */}
+        {/* Right: Actions (Edit, Delete, Archive) */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
@@ -265,10 +377,10 @@ export const HabitDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Metrics Summary Grid */}
+      {/* 3. Metrics Summary Grid for the selected habit */}
       <HabitStatsGrid metrics={metrics} habitColor={habit.color || '#006398'} />
 
-      {/* 4. Monthly Calendar Activity Heatmap */}
+      {/* 4. Monthly Calendar Activity Heatmap for the selected habit */}
       <HabitCalendarHeatmap
         currentDate={selectedDate}
         onChangeMonth={handleMonthChange}
@@ -291,6 +403,7 @@ export const HabitDetailPage: React.FC = () => {
       {/* Create Habit Modal */}
       <HabitFormModal
         isOpen={isCreateModalOpen}
+        defaultCategory={currentCategory}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateHabit}
       />
