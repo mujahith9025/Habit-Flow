@@ -29,6 +29,8 @@ export const AppRoutes: React.FC = () => {
         <Route element={<AppShell />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/habit" element={<HabitDetailPage />} />
+          <Route path="/habits" element={<HabitDetailPage />} />
           <Route path="/habit/:id" element={<HabitDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/debug" element={<DataLayerDebugPage />} />

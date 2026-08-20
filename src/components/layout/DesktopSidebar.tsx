@@ -1,24 +1,22 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-
-interface SidebarItem {
-  to: string;
-  label: string;
-  icon: string;
-  badge?: string;
-}
-
-const navItems: SidebarItem[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/habit/1', label: 'Habit View', icon: 'task_alt' },
-  { to: '/debug', label: 'Real-time Sync', icon: 'sync', badge: 'Live' },
-  { to: '/settings', label: 'Settings', icon: 'tune' },
-];
+import { useHabits } from '../../hooks/useHabits';
 
 export const DesktopSidebar: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { habits } = useHabits();
   const navigate = useNavigate();
+
+  const firstHabitId = habits.length > 0 ? habits[0].id : null;
+  const habitViewPath = firstHabitId ? `/habit/${firstHabitId}` : '/dashboard';
+
+  const navItems = [
+    { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { to: habitViewPath, label: 'Habit View', icon: 'task_alt' },
+    { to: '/debug', label: 'Real-time Sync', icon: 'sync', badge: 'Live' },
+    { to: '/settings', label: 'Settings', icon: 'tune' },
+  ];
 
   const handleSignOut = async () => {
     try {
@@ -53,20 +51,24 @@ export const DesktopSidebar: React.FC = () => {
 
         {/* Primary Action Button */}
         <div className="px-2">
-          <NavLink
-            to="/habit/new"
+          <button
+            type="button"
+            onClick={() => {
+              // Open add habit modal if on dashboard, or navigate to dashboard
+              navigate('/dashboard');
+            }}
             className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-full bg-primary text-on-primary font-habit-name text-sm font-semibold shadow-soft hover:bg-on-primary-fixed-variant transition-all active:scale-98"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
             <span>New Habit</span>
-          </NavLink>
+          </button>
         </div>
 
         {/* Nav Links */}
         <nav className="space-y-1 px-1">
           {navItems.map((item) => (
             <NavLink
-              key={item.to}
+              key={item.label}
               to={item.to}
               className={({ isActive }) =>
                 `flex items-center gap-3.5 px-4 py-3 rounded-xl font-habit-name text-sm transition-all duration-200 ${
@@ -119,20 +121,20 @@ export const DesktopSidebar: React.FC = () => {
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover shrink-0 border border-primary/20"
+                  alt={user.name || 'User'}
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs font-stat-label shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-stat-label text-xs font-bold flex items-center justify-center shrink-0">
                   {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-habit-name text-xs font-semibold text-on-surface truncate">
-                  {user.name}
+                  {user.name || 'User'}
                 </p>
-                <p className="font-body-text text-[11px] text-on-surface-variant truncate">
-                  {user.email}
+                <p className="font-body-text text-[10px] text-on-surface-variant truncate">
+                  {user.email || ''}
                 </p>
               </div>
             </div>
@@ -140,8 +142,7 @@ export const DesktopSidebar: React.FC = () => {
             <button
               onClick={handleSignOut}
               title="Sign Out"
-              className="p-1.5 rounded-lg text-outline hover:text-error hover:bg-error-container/20 transition-colors shrink-0"
-              aria-label="Sign Out"
+              className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-surface-container-lowest dark:hover:bg-surface-container transition-colors shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">logout</span>
             </button>

@@ -1,29 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useHabits } from '../hooks/useHabits';
 import { useSingleHabitHistory } from '../hooks/useSingleHabitHistory';
 import { HabitStatsGrid } from '../components/habit/HabitStatsGrid';
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 
 export const HabitDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { habits, loading: habitsLoading, createHabit } = useHabits();
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date(2026, 7, 19));
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Active habits list
+  const activeHabits = habits.filter((h) => !h.archived);
+
+  // Determine effective habit ID
+  const matchedHabit = activeHabits.find((h) => h.id === id);
+  const effectiveHabitId = matchedHabit
+    ? matchedHabit.id
+    : activeHabits.length > 0
+    ? activeHabits[0].id
+    : id;
+
+  // Auto-sync route if ID in URL was invalid (e.g. /habit/1) but user has active habits
+  useEffect(() => {
+    if (!habitsLoading && activeHabits.length > 0 && (!matchedHabit || id === '1')) {
+      navigate(`/habit/${activeHabits[0].id}`, { replace: true });
+    }
+  }, [habitsLoading, activeHabits, matchedHabit, id, navigate]);
 
   const {
     habit,
     metrics,
-    loading,
+    loading: historyLoading,
     isCompleted,
     toggleEntry,
     updateHabit,
     archiveHabit,
-  } = useSingleHabitHistory(id, selectedDate);
+  } = useSingleHabitHistory(effectiveHabitId, selectedDate);
 
   const handleMonthChange = (offset: number) => {
     setSelectedDate((prev) => {
@@ -45,7 +65,7 @@ export const HabitDetailPage: React.FC = () => {
     }
   };
 
-  const handleSaveModal = async (data: {
+  const handleSaveEdit = async (data: {
     name: string;
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
@@ -55,14 +75,62 @@ export const HabitDetailPage: React.FC = () => {
     await updateHabit(data);
   };
 
-  if (loading) {
+  const handleCreateHabit = async (data: {
+    name: string;
+    frequency: 'daily' | 'weekly' | 'monthly';
+    goalCount: number;
+    color: string;
+    icon: string;
+  }) => {
+    const newHabit = await createHabit(data);
+    setIsCreateModalOpen(false);
+    navigate(`/habit/${newHabit.id}`);
+  };
+
+  if (habitsLoading || historyLoading) {
     return (
-      <div className="max-w-4xl mx-auto py-12 text-center space-y-4">
+      <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
         <p className="font-body-text text-sm text-on-surface-variant">
           Loading habit progress and history...
         </p>
       </div>
+    );
+  }
+
+  // 0 Habits empty state
+  if (activeHabits.length === 0) {
+    return (
+      <Card variant="elevated" className="max-w-md mx-auto my-12 p-8 text-center space-y-5">
+        <div className="w-14 h-14 rounded-2xl bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center shadow-soft">
+          <span className="material-symbols-outlined text-[32px]">energy_savings_leaf</span>
+        </div>
+        <div className="space-y-1">
+          <h2 className="font-section-header text-xl font-bold text-on-surface">
+            No Active Habits Yet
+          </h2>
+          <p className="font-body-text text-xs text-on-surface-variant max-w-xs mx-auto">
+            Create your first habit to start tracking daily consistency and calendar heatmaps.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+          <Button variant="primary" size="sm" onClick={() => setIsCreateModalOpen(true)}>
+            <span className="material-symbols-outlined text-[18px] mr-1.5">add</span>
+            Create First Habit
+          </Button>
+          <Link to="/dashboard">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+              Go to Dashboard
+            </Button>
+          </Link>
+        </div>
+
+        <HabitFormModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleCreateHabit}
+        />
+      </Card>
     );
   }
 
@@ -76,7 +144,7 @@ export const HabitDetailPage: React.FC = () => {
           Habit Not Found
         </h2>
         <p className="font-body-text text-xs text-on-surface-variant">
-          This habit may have been archived or does not exist.
+          This habit may have been archived or removed.
         </p>
         <Link to="/dashboard">
           <Button variant="primary" size="sm">
@@ -88,25 +156,60 @@ export const HabitDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-fadeIn">
-      {/* 1. Header with Back Button & Habit Overview */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <Link
-            to="/dashboard"
-            aria-label="Back to Dashboard"
-            className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors"
-          >
-            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
-          </Link>
+    <div className="max-w-5xl mx-auto space-y-6 animate-fadeIn pb-12">
+      {/* 1. Habit Switcher Bar */}
+      {activeHabits.length > 1 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <span className="text-xs font-stat-label text-on-surface-variant shrink-0 uppercase tracking-wider">
+            Habits:
+          </span>
+          {activeHabits.map((h) => {
+            const isSelected = h.id === habit.id;
+            return (
+              <button
+                key={h.id}
+                onClick={() => navigate(`/habit/${h.id}`)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 active:scale-95 ${
+                  isSelected
+                    ? 'bg-primary text-on-primary shadow-soft'
+                    : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+                }`}
+              >
+                <span
+                  className="material-symbols-outlined text-[16px]"
+                  style={{
+                    color: isSelected ? 'inherit' : h.color || '#006398',
+                    fontVariationSettings: "'FILL' 1",
+                  }}
+                >
+                  {h.icon || 'energy_savings_leaf'}
+                </span>
+                <span className="truncate max-w-[140px]">{h.name}</span>
+              </button>
+            );
+          })}
 
-          {/* Habit Icon Container */}
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            title="Create another habit"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container-lowest dark:bg-surface-container text-primary hover:bg-primary-fixed/20 border border-outline-variant/20 transition-all shrink-0 active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>New</span>
+          </button>
+        </div>
+      )}
+
+      {/* 2. Habit Header Banner */}
+      <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Left: Habit Identity */}
+        <div className="flex items-center gap-4">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-soft shrink-0"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-white shadow-soft shrink-0"
             style={{ backgroundColor: habit.color || '#006398' }}
           >
             <span
-              className="material-symbols-outlined text-[24px]"
+              className="material-symbols-outlined text-[28px] sm:text-[32px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               {habit.icon || 'energy_savings_leaf'}
@@ -118,62 +221,67 @@ export const HabitDetailPage: React.FC = () => {
               <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
                 {habit.name}
               </h1>
-              <Badge variant="primary" size="sm" className="capitalize">
-                {habit.frequency}
-              </Badge>
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
+                {habit.frequency || 'daily'}
+              </span>
             </div>
-            <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
-              Goal: {habit.goalCount} {habit.frequency === 'daily' ? 'time per day' : 'times per period'}
+            <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
+              Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
             </p>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsEditModalOpen(true)}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">edit</span>}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
           >
-            Edit Habit
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+            <span>Edit Habit</span>
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={handleArchive}
-            className="text-error hover:bg-error-container/20"
-            leftIcon={<span className="material-symbols-outlined text-[16px]">archive</span>}
+            className="text-error hover:bg-error-container/20 px-3"
+            title="Archive Habit"
           >
-            Archive
+            <span className="material-symbols-outlined text-[18px]">archive</span>
           </Button>
         </div>
       </div>
 
-      {/* 2. Key Metrics Grid (Current Streak, Longest Streak, Monthly %, Lifetime) */}
-      <HabitStatsGrid metrics={metrics} habitColor={habit.color} />
+      {/* 3. Metrics Summary Grid */}
+      <HabitStatsGrid metrics={metrics} habitColor={habit.color || '#006398'} />
 
-      {/* 3. Monthly Calendar Heatmap */}
+      {/* 4. Monthly Calendar Activity Heatmap */}
       <HabitCalendarHeatmap
         currentDate={selectedDate}
         onChangeMonth={handleMonthChange}
         isCompleted={isCompleted}
         onToggleDate={toggleEntry}
-        habitColor={habit.color}
+        habitColor={habit.color || '#006398'}
         habitName={habit.name}
       />
 
-      {/* 4. Edit Habit Modal */}
+      {/* Edit Habit Modal */}
       <HabitFormModal
         isOpen={isEditModalOpen}
         habitToEdit={habit}
         onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveModal}
-        onArchive={async () => {
-          await archiveHabit(true);
-          navigate('/dashboard');
-        }}
+        onSave={handleSaveEdit}
+        onArchive={handleArchive}
+      />
+
+      {/* Create Habit Modal */}
+      <HabitFormModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={handleCreateHabit}
       />
     </div>
   );
