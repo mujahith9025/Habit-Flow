@@ -1,16 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useHabits } from '../../hooks/useHabits';
 
 export const MobileBottomNav: React.FC = () => {
-  const { habits } = useHabits();
-
-  const firstHabitId = habits.length > 0 ? habits[0].id : null;
-  const habitViewPath = firstHabitId ? `/habit/${firstHabitId}` : '/dashboard';
-
   const navTabs = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: habitViewPath, label: 'Habit', icon: 'task_alt' },
+    { to: '/habit', label: 'Habit', icon: 'task_alt' },
     { to: '/debug', label: 'Sync Test', icon: 'sync' },
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];

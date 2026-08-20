@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Habit } from '../../types';
 import { HabitGridMetrics, MonthDayInfo } from '../../hooks/useDailyHabitsData';
+import { Button } from '../ui/Button';
 
 interface CategoryAggregateGraphsViewProps {
   categoryName: string;
@@ -10,6 +11,7 @@ interface CategoryAggregateGraphsViewProps {
   isCompleted: (habitId: string, dateKey: string) => boolean;
   onToggleEntry: (habitId: string, dateKey: string) => Promise<void>;
   selectedMonthTitle: string;
+  onCreateHabit?: () => void;
 }
 
 const WEEK_THEMES = [
@@ -28,11 +30,34 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
   isCompleted,
   onToggleEntry,
   selectedMonthTitle,
+  onCreateHabit,
 }) => {
   const [graphMode, setGraphMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
 
   const totalHabits = habits.length;
   const totalDaysInMonth = daysInMonth.length;
+
+  if (totalHabits === 0) {
+    return (
+      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-8 shadow-soft border border-outline-variant/15 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center">
+          <span className="material-symbols-outlined text-[24px]">dataset</span>
+        </div>
+        <h3 className="font-section-header text-lg font-bold text-on-surface">
+          No Habits in {categoryName}
+        </h3>
+        <p className="font-body-text text-xs text-on-surface-variant max-w-sm mx-auto">
+          Add your first habit to {categoryName} to start viewing daily, weekly, and monthly performance graphs.
+        </p>
+        {onCreateHabit && (
+          <Button variant="primary" size="sm" onClick={onCreateHabit}>
+            <span className="material-symbols-outlined text-[18px] mr-1.5">add</span>
+            Add Habit to {categoryName}
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   // Compute daily aggregate completions
   const dailyStats = daysInMonth.map((day) => {
@@ -289,7 +314,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
         </div>
       )}
 
-      {/* MODE B: DAILY GRAPH (31-Day Continuous Histogram & Daily Habit Matrix) */}
+      {/* MODE B: DAILY GRAPH (31-Day Continuous Histogram) */}
       {graphMode === 'daily' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">

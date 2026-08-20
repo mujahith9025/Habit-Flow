@@ -9,8 +9,6 @@ export const DesktopSidebar: React.FC = () => {
   const navigate = useNavigate();
 
   const activeHabits = habits.filter((h) => !h.archived);
-  const firstHabitId = activeHabits.length > 0 ? activeHabits[0].id : null;
-  const habitViewPath = firstHabitId ? `/habit/${firstHabitId}` : '/dashboard';
 
   // Distinct tracker categories with habit counts
   const categoryCounts: Record<string, number> = {};
@@ -22,7 +20,7 @@ export const DesktopSidebar: React.FC = () => {
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: habitViewPath, label: 'Habit View', icon: 'task_alt' },
+    { to: '/habit', label: 'Habit View', icon: 'task_alt' },
     { to: '/debug', label: 'Real-time Sync', icon: 'sync', badge: 'Live' },
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];
@@ -131,55 +129,30 @@ export const DesktopSidebar: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom Section: Gentle Persistence Card & User Footer */}
-      <div className="space-y-4">
-        {/* Soft Encouragement Card */}
-        <div className="p-3.5 rounded-xl bg-surface-container-low dark:bg-surface-container-highest/40 border border-outline-variant/15">
-          <div className="flex items-center gap-2 text-secondary dark:text-secondary-fixed mb-1">
-            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-              local_fire_department
-            </span>
-            <span className="font-stat-label text-xs font-bold">Gentle Streak</span>
+      {/* User Profile Card Footer */}
+      <div className="pt-4 border-t border-outline-variant/20 px-2 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary-fixed/40 text-primary flex items-center justify-center font-bold text-sm">
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : user?.email?.slice(0, 2).toUpperCase() || 'HF'}
           </div>
-          <p className="font-body-text text-xs text-on-surface-variant">
-            One small step daily creates calm momentum over time.
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="font-app-title text-sm font-semibold text-on-surface truncate">
+              {user?.name || user?.email?.split('@')[0] || 'Member'}
+            </p>
+            <p className="font-body-text text-xs text-on-surface-variant truncate">
+              {user?.email || 'Active Plan'}
+            </p>
+          </div>
         </div>
 
-        {/* User Card with Sign-Out */}
-        {user && (
-          <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-surface-container dark:bg-surface-container-high border border-outline-variant/15">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.name || 'User'}
-                  className="w-8 h-8 rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-stat-label text-xs font-bold flex items-center justify-center shrink-0">
-                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="font-habit-name text-xs font-semibold text-on-surface truncate">
-                  {user.name || 'User'}
-                </p>
-                <p className="font-body-text text-[10px] text-on-surface-variant truncate">
-                  {user.email || ''}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSignOut}
-              title="Sign Out"
-              className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-surface-container-lowest dark:hover:bg-surface-container transition-colors shrink-0"
-            >
-              <span className="material-symbols-outlined text-[18px]">logout</span>
-            </button>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[18px]">logout</span>
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );

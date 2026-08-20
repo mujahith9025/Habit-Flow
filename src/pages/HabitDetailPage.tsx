@@ -71,18 +71,21 @@ export const HabitDetailPage: React.FC = () => {
   const categories = Object.keys(categoryHabitsMap).sort();
 
   // Match habit if URL ID passed
-  const matchedHabit = activeHabits.find((h) => h.id === id);
+  const matchedHabit = id ? activeHabits.find((h) => h.id === id) : undefined;
 
-  // Sync category and habit selection from URL
+  // Sync category and habit selection from URL or defaults
   useEffect(() => {
     if (matchedHabit) {
       const habitCat = matchedHabit.category?.trim() || 'General';
       setSelectedCategory(habitCat);
       setSelectedHabitId(matchedHabit.id);
-    } else if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0]);
+    } else {
+      if (categories.length > 0 && !selectedCategory) {
+        setSelectedCategory(categories[0]);
+      }
+      setSelectedHabitId('all');
     }
-  }, [matchedHabit, categories]);
+  }, [id, matchedHabit, categories]);
 
   const currentCategory = selectedCategory || (categories.length > 0 ? categories[0] : 'General');
   const habitsInCurrentCategory = categoryHabitsMap[currentCategory] || [];
@@ -105,7 +108,6 @@ export const HabitDetailPage: React.FC = () => {
 
   // Data for aggregate category (all habits under current tracker board)
   const {
-    dailyHabits: aggregateHabits,
     daysInMonth,
     habitMetricsMap: aggregateMetricsMap,
     isCompleted: isAggregateCompleted,
@@ -120,12 +122,15 @@ export const HabitDetailPage: React.FC = () => {
   const handleSelectCategory = (cat: string) => {
     setSelectedCategory(cat);
     setSelectedHabitId('all');
+    navigate('/habit');
   };
 
   const handleSelectHabit = (habitId: string) => {
     setSelectedHabitId(habitId);
     if (habitId !== 'all') {
       navigate(`/habit/${habitId}`);
+    } else {
+      navigate('/habit');
     }
   };
 
@@ -446,12 +451,13 @@ export const HabitDetailPage: React.FC = () => {
         /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
         <CategoryAggregateGraphsView
           categoryName={currentCategory}
-          habits={aggregateHabits}
+          habits={habitsInCurrentCategory}
           daysInMonth={daysInMonth}
           habitMetricsMap={aggregateMetricsMap}
           isCompleted={isAggregateCompleted}
           onToggleEntry={toggleAggregateEntry}
           selectedMonthTitle={formattedTitle}
+          onCreateHabit={() => setIsCreateModalOpen(true)}
         />
       ) : (
         /* B. INDIVIDUAL HABIT DEEP DIVE VIEW */

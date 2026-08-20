@@ -43,11 +43,12 @@ export interface UseDailyHabitsDataResult {
 const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /**
- * Hook to manage real-time entries and metrics for daily habits in a selected month, optionally filtered by category
+ * Hook to manage real-time entries and metrics for all habits in a selected month, optionally filtered by category
  */
 export function useDailyHabitsData(selectedDate: Date, selectedCategory: string = 'all'): UseDailyHabitsDataResult {
   const { user } = useAuth();
-  const { habits, loading: habitsLoading, seedHabits } = useHabits('daily');
+  // Fetch all active habits (not just 'daily') so all habits in the category board are included
+  const { habits, loading: habitsLoading, seedHabits } = useHabits('all');
 
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth(); // 0-indexed
@@ -86,13 +87,18 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
   const entriesRef = useRef(entriesByHabit);
   entriesRef.current = entriesByHabit;
 
-  // Filter daily habits that are not archived, optionally filtered by category
-  const activeDailyHabits = habits.filter((h) => !h.archived);
-  const dailyHabits = selectedCategory === 'all'
-    ? activeDailyHabits
-    : activeDailyHabits.filter(
-        (h) => (h.category || 'General').toLowerCase() === selectedCategory.toLowerCase()
-      );
+  // Filter habits that are not archived, optionally filtered by category
+  const activeHabits = habits.filter((h) => !h.archived);
+  const normalizedCategory = selectedCategory.trim().toLowerCase();
+
+  const dailyHabits =
+    normalizedCategory === 'all'
+      ? activeHabits
+      : activeHabits.filter(
+          (h) => (h.category || 'General').trim().toLowerCase() === normalizedCategory
+        );
+
+  const habitIdsKey = dailyHabits.map((h) => h.id).sort().join(',');
 
   useEffect(() => {
     if (!user?.uid || dailyHabits.length === 0) {
@@ -134,7 +140,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };
-  }, [user?.uid, dailyHabits.map((h) => h.id).join(','), monthKey]);
+  }, [user?.uid, habitIdsKey, monthKey]);
 
   // Compute metrics per habit
   const habitMetricsMap: Record<string, HabitGridMetrics> = {};
@@ -170,7 +176,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       }
     }
 
-    const targetCount = habit.goalCount > 1 ? habit.goalCount : totalDays;
+    const targetCount = habit.goalCount && habit.goalCount > 1 ? habit.goalCount : totalDays;
     const monthProgressPercent =
       totalDays > 0 ? Math.min(100, Math.round((completedCount / targetCount) * 100)) : 0;
 
