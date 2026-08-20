@@ -53,6 +53,37 @@ export async function toggleEntry(
 }
 
 /**
+ * Saves a quick 1-tap note and reflection for a habit entry
+ */
+export async function saveHabitNote(
+  uid: string,
+  habitId: string,
+  dateKey: string,
+  note: string,
+  mood?: string,
+  tags?: string[]
+): Promise<void> {
+  const entryRef = getEntryDocRef(uid, habitId, dateKey);
+  const monthKey = getMonthKey(dateKey);
+  const weekOfMonth = getWeekOfMonth(dateKey);
+  const updatedAt = new Date().toISOString();
+
+  const dataToSet: Record<string, unknown> = {
+    date: dateKey,
+    monthKey,
+    weekOfMonth,
+    note: note.trim(),
+    tags: tags || [],
+    updatedAt,
+  };
+  if (mood) {
+    dataToSet.mood = mood;
+  }
+
+  await setDoc(entryRef, dataToSet, { merge: true });
+}
+
+/**
  * Creates a new habit document in users/{uid}/habits/{habitId}
  */
 export async function createHabit(

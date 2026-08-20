@@ -5,10 +5,11 @@ import {
   where,
   getEntriesCollectionRef,
   toggleEntry as toggleEntryService,
+  saveHabitNote as saveHabitNoteService,
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
-import { Habit, HabitEntryMap } from '../types';
+import { Habit, HabitEntry, HabitEntryMap } from '../types';
 import { calculateGentleHabitStreak, formatDateKey } from '../lib/calculations';
 
 export interface MonthDayInfo {
@@ -37,7 +38,9 @@ export interface UseDailyHabitsDataResult {
   topHabits: HabitGridMetrics[];
   loading: boolean;
   isCompleted: (habitId: string, dateKey: string) => boolean;
+  getHabitEntry: (habitId: string, dateKey: string) => HabitEntry | undefined;
   toggleHabitEntry: (habitId: string, dateKey: string) => Promise<void>;
+  saveHabitNote: (habitId: string, dateKey: string, note: string, mood?: string, tags?: string[]) => Promise<void>;
   seedHabits: () => Promise<Habit[]>;
 }
 
@@ -195,6 +198,57 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     [entriesByHabit]
   );
 
+  const getHabitEntry = useCallback(
+    (habitId: string, dateKey: string): HabitEntry | undefined => {
+      return entriesByHabit[habitId]?.[dateKey];
+    },
+    [entriesByHabit]
+  );
+
+  // Save 1-Tap Daily Habit Note & Reflection
+  const saveHabitNote = useCallback(
+    async (
+      habitId: string,
+      dateKey: string,
+      note: string,
+      mood?: string,
+      tags?: string[]
+    ): Promise<void> => {
+      if (!user?.uid) return;
+
+      const prevHabitEntries = entriesRef.current[habitId] || {};
+      const existing = prevHabitEntries[dateKey] || {
+        date: dateKey,
+        completed: false,
+        weekOfMonth: Math.ceil(Number(dateKey.split('-')[2]) / 7),
+        monthKey: dateKey.substring(0, 7),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Optimistic UI update
+      setEntriesByHabit((prev) => ({
+        ...prev,
+        [habitId]: {
+          ...(prev[habitId] || {}),
+          [dateKey]: {
+            ...existing,
+            note: note.trim(),
+            mood: (mood as any) || undefined,
+            tags: tags || [],
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      }));
+
+      try {
+        await saveHabitNoteService(user.uid, habitId, dateKey, note, mood, tags);
+      } catch (err) {
+        console.error('Failed to save habit note:', err);
+      }
+    },
+    [user?.uid]
+  );
+
   // Optimistic Toggle with Rollback
   const toggleHabitEntry = useCallback(
     async (habitId: string, dateKey: string): Promise<void> => {
@@ -250,7 +304,9 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     topHabits,
     loading: habitsLoading || entriesLoading,
     isCompleted,
+    getHabitEntry,
     toggleHabitEntry,
+    saveHabitNote,
     seedHabits,
   };
 }

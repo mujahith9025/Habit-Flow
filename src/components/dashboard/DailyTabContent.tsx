@@ -22,6 +22,7 @@ export const DailyTabContent: React.FC<DailyTabContentProps> = ({
     habitMetricsMap,
     topHabits,
     isCompleted,
+    getHabitEntry,
     toggleHabitEntry,
     seedHabits,
   } = useDailyHabitsData(currentDate, selectedCategory);
@@ -36,6 +37,7 @@ export const DailyTabContent: React.FC<DailyTabContentProps> = ({
         daysInMonth={daysInMonth}
         habitMetricsMap={habitMetricsMap}
         isCompleted={isCompleted}
+        getHabitEntry={getHabitEntry}
         onToggleEntry={toggleHabitEntry}
         onEditHabit={onEditHabit}
         onSeedHabits={() => seedHabits().catch(console.error)}

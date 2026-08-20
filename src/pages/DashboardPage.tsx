@@ -52,7 +52,9 @@ export const DashboardPage: React.FC = () => {
     dailyHabits,
     habitMetricsMap,
     isCompleted,
+    getHabitEntry,
     toggleHabitEntry,
+    saveHabitNote,
   } = useDailyHabitsData(selectedDate, effectiveCategory);
 
   const handleMonthChange = (offset: number) => {
@@ -137,7 +139,9 @@ export const DashboardPage: React.FC = () => {
             habits={dailyHabits}
             habitMetricsMap={habitMetricsMap}
             isCompleted={isCompleted}
+            getHabitEntry={getHabitEntry}
             onToggleEntry={toggleHabitEntry}
+            onSaveNote={saveHabitNote}
             onAddNewHabit={handleOpenAddModal}
             className="h-full min-h-[220px]"
           />
