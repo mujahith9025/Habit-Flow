@@ -11,16 +11,16 @@ export const AppShell: React.FC = () => {
       {/* Offline Status Warning Bar */}
       <OfflineBanner />
 
-      {/* Desktop Sidebar (visible on md+) */}
+      {/* Desktop Collapsible Sidebar (visible on md+) */}
       <DesktopSidebar />
 
       {/* Main Content Viewport */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300">
         {/* Sticky Top Header */}
         <TopHeader />
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 px-container-padding py-md sm:py-lg pb-28 md:pb-12 max-w-7xl mx-auto w-full">
+        <main className="flex-1 px-container-padding py-md sm:py-lg pb-28 md:pb-12 max-w-[1500px] mx-auto w-full transition-all duration-300">
           <Outlet />
         </main>
       </div>
