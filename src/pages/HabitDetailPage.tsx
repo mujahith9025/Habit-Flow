@@ -342,7 +342,7 @@ export const HabitDetailPage: React.FC = () => {
               <span className="material-symbols-outlined text-[16px]">
                 {selectedHabitId === 'all' ? 'radio_button_checked' : 'radio_button_unchecked'}
               </span>
-              <span>📊 All Habits in {currentCategory} (Day/Week/Month Graphs)</span>
+              <span>All Habits</span>
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                   selectedHabitId === 'all'
