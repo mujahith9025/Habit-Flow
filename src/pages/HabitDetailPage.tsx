@@ -6,6 +6,7 @@ import { HabitStatsGrid } from '../components/habit/HabitStatsGrid';
 import { HabitWeeklyGraphsView } from '../components/habit/HabitWeeklyGraphsView';
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
+import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
@@ -24,11 +25,27 @@ const CATEGORY_ICONS: Record<string, string> = {
   health: '❤️',
 };
 
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 export const HabitDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { habits, loading: habitsLoading, createHabit, deleteHabit } = useHabits();
 
+  // Selected date defaults to current date / current month on initial entry
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [activeAnalyticsView, setActiveAnalyticsView] = useState<'graphs' | 'calendar'>('graphs');
@@ -112,6 +129,22 @@ export const HabitDetailPage: React.FC = () => {
     });
   };
 
+  const handleSelectMonthIndex = (monthIdx: number) => {
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setMonth(monthIdx);
+      return next;
+    });
+  };
+
+  const handleSelectYear = (offset: number) => {
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setFullYear(next.getFullYear() + offset);
+      return next;
+    });
+  };
+
   const handleDelete = async () => {
     if (!habit) return;
     if (
@@ -163,6 +196,10 @@ export const HabitDetailPage: React.FC = () => {
     setIsCreateModalOpen(false);
     navigate(`/habit/${newHabit.id}`);
   };
+
+  const selectedYear = selectedDate.getFullYear();
+  const selectedMonthIdx = selectedDate.getMonth();
+  const { formattedTitle } = formatMonthYear(selectedDate);
 
   if (habitsLoading || historyLoading) {
     return (
@@ -378,10 +415,82 @@ export const HabitDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Metrics Summary Grid for the selected habit */}
-      <HabitStatsGrid metrics={metrics} habitColor={habit.color || '#006398'} />
+      {/* 3. Interactive Month Navigation Bar (Jan - Dec + Year) */}
+      <div className="bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 rounded-2xl border border-outline-variant/15 shadow-soft space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[20px]">
+              calendar_month
+            </span>
+            <h3 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
+              Analytics Month: <span className="text-primary dark:text-primary-fixed-dim">{formattedTitle}</span>
+            </h3>
+          </div>
 
-      {/* 4. Graph / Calendar View Switcher Tabs */}
+          {/* Year Switcher Stepper */}
+          <div className="flex items-center gap-1.5 self-end sm:self-auto">
+            <button
+              onClick={() => handleSelectYear(-1)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors"
+              title="Previous Year"
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+            </button>
+            <span className="font-stat-label text-xs font-bold px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface">
+              {selectedYear}
+            </span>
+            <button
+              onClick={() => handleSelectYear(1)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors"
+              title="Next Year"
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedDate(new Date())}
+              className="ml-1 text-[11px] font-stat-label font-semibold text-primary hover:underline px-2 py-1 rounded-lg hover:bg-primary-fixed/15 transition-colors"
+            >
+              Current Month
+            </button>
+          </div>
+        </div>
+
+        {/* 12 Months Pill Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {MONTH_NAMES.map((name, idx) => {
+            const isSelected = selectedMonthIdx === idx;
+            const isCurrentMonthNow =
+              new Date().getMonth() === idx && new Date().getFullYear() === selectedYear;
+
+            return (
+              <button
+                key={name}
+                onClick={() => handleSelectMonthIndex(idx)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 flex items-center gap-1 ${
+                  isSelected
+                    ? 'bg-primary text-on-primary shadow-soft font-bold scale-[1.02]'
+                    : 'bg-surface-container-low dark:bg-surface-container-high/30 text-on-surface hover:bg-surface-container-high border border-outline-variant/15'
+                }`}
+              >
+                <span>{name.slice(0, 3)}</span>
+                {isCurrentMonthNow && !isSelected && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Metrics Summary Grid for the selected month */}
+      <HabitStatsGrid
+        metrics={metrics}
+        selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
+        habitColor={habit.color || '#006398'}
+      />
+
+      {/* 5. Graph / Calendar View Switcher Tabs */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
           <button
@@ -410,7 +519,7 @@ export const HabitDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Main Analytics Visualization: Weekly Performance Graphs or Calendar Heatmap */}
+      {/* 6. Main Analytics Visualization: Weekly Performance Graphs or Calendar Heatmap */}
       {activeAnalyticsView === 'graphs' ? (
         <HabitWeeklyGraphsView
           currentDate={selectedDate}

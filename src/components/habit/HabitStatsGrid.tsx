@@ -3,15 +3,22 @@ import { HabitHistoryMetrics } from '../../hooks/useSingleHabitHistory';
 
 interface HabitStatsGridProps {
   metrics: HabitHistoryMetrics;
+  selectedMonthTitle?: string;
   habitColor?: string;
 }
 
 export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
   metrics,
-  habitColor = '#006398',
+  selectedMonthTitle,
 }) => {
-  const { currentStreak, longestStreak, totalLifetimeCompletions, monthCompletionPercent } =
-    metrics;
+  const {
+    currentStreak,
+    longestStreak,
+    totalLifetimeCompletions,
+    monthCompletionPercent,
+    monthCompletedDays,
+    daysInMonth,
+  } = metrics;
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -67,11 +74,11 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
       </div>
 
-      {/* 3. Monthly Completion % */}
+      {/* 3. Selected Month Completion % */}
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-            Monthly Rate
+          <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
+            {selectedMonthTitle ? `${selectedMonthTitle} Rate` : 'Monthly Rate'}
           </span>
           <div className="w-8 h-8 rounded-full bg-secondary-fixed/30 text-secondary flex items-center justify-center">
             <span
@@ -83,24 +90,31 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
           </div>
         </div>
         <div className="mt-3">
-          <div className="font-app-title text-2xl sm:text-3xl font-bold text-on-surface">
-            {monthCompletionPercent}
-            <span className="text-xs font-normal text-on-surface-variant ml-0.5">%</span>
+          <div className="flex items-baseline justify-between">
+            <div className="font-app-title text-2xl sm:text-3xl font-bold text-on-surface">
+              {monthCompletionPercent}
+              <span className="text-xs font-normal text-on-surface-variant ml-0.5">%</span>
+            </div>
+            {daysInMonth > 0 && (
+              <span className="text-[10px] font-stat-label text-on-surface-variant">
+                {monthCompletedDays}/{daysInMonth}d
+              </span>
+            )}
           </div>
           <div className="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden mt-1.5">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${monthCompletionPercent}%`, backgroundColor: habitColor }}
+              className="h-full rounded-full transition-all duration-500 bg-secondary"
+              style={{ width: `${monthCompletionPercent}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* 4. Total Lifetime Completions */}
+      {/* 4. Total Lifetime Check-ins */}
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-            Total Done
+            All-Time Total
           </span>
           <div className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center">
             <span
@@ -117,7 +131,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             <span className="text-xs font-normal text-on-surface-variant ml-1">times</span>
           </div>
           <p className="font-body-text text-[10px] text-on-surface-variant mt-0.5">
-            Lifetime check-ins
+            Across all months
           </p>
         </div>
       </div>

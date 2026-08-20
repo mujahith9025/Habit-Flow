@@ -16,6 +16,9 @@ export interface HabitHistoryMetrics {
   longestStreak: number;
   totalLifetimeCompletions: number;
   monthCompletionPercent: number;
+  monthCompletedDays: number;
+  daysInMonth: number;
+  selectedMonthKey: string;
 }
 
 export interface UseSingleHabitHistoryResult {
@@ -112,24 +115,24 @@ export function useSingleHabitHistory(
     return () => unsub();
   }, [user?.uid, habitId]);
 
-  // 3. Compute Lifetime & Streak Metrics
+  // 3. Compute Lifetime & Selected Month Metrics
   let totalLifetimeCompletions = 0;
-  let monthCompletedCount = 0;
+  let monthCompletedDays = 0;
 
-  const daysInActiveMonth = new Date(activeYear, activeMonth + 1, 0).getDate();
+  const daysInMonth = new Date(activeYear, activeMonth + 1, 0).getDate();
 
   Object.values(entries).forEach((entry) => {
     if (entry.completed) {
       totalLifetimeCompletions++;
       if (entry.date.startsWith(activeMonthKey)) {
-        monthCompletedCount++;
+        monthCompletedDays++;
       }
     }
   });
 
   const monthCompletionPercent =
-    daysInActiveMonth > 0
-      ? Math.min(100, Math.round((monthCompletedCount / daysInActiveMonth) * 100))
+    daysInMonth > 0
+      ? Math.min(100, Math.round((monthCompletedDays / daysInMonth) * 100))
       : 0;
 
   // Compute Current Streak
@@ -154,7 +157,7 @@ export function useSingleHabitHistory(
   // Compute Longest Streak Ever
   let longestStreak = currentStreak;
   const sortedDates = Object.keys(entries)
-    .filter((k) => entries[k].completed && k.length === 10) // YYYY-MM-DD format
+    .filter((k) => entries[k].completed && k.length === 10)
     .sort();
 
   let tempStreak = 0;
@@ -253,6 +256,9 @@ export function useSingleHabitHistory(
       longestStreak,
       totalLifetimeCompletions,
       monthCompletionPercent,
+      monthCompletedDays,
+      daysInMonth,
+      selectedMonthKey: activeMonthKey,
     },
     loading,
     error,
