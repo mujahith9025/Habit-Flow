@@ -53,6 +53,17 @@ export const TopHeader: React.FC = () => {
             </span>
           </button>
 
+          {/* Trophy & Achievements Link */}
+          <Link
+            to="/settings"
+            title="View Trophies & Milestones"
+            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-amber-500 hover:bg-amber-500/10 rounded-full transition-colors active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              emoji_events
+            </span>
+          </Link>
+
           {/* Quick sync link / action button */}
           {isDashboard && (
             <Link

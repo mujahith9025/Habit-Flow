@@ -7,6 +7,7 @@ import { useHabits } from '../hooks/useHabits';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { updateDoc, getUserDocRef } from '../lib/firebase';
 import { Badge } from '../components/ui/Badge';
+import { AchievementsShelf } from '../components/achievements/AchievementsShelf';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
@@ -168,6 +169,9 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* 2. Milestones & Achievements Trophy Shelf */}
+      <AchievementsShelf />
 
       {/* 2. Dedicated "How to Install the App" Page Link */}
       <section className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden">
