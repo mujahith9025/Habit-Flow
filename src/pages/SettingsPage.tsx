@@ -16,6 +16,8 @@ export const SettingsPage: React.FC = () => {
   const { isInstallable, isInstalled, installPWA } = usePWAInstall();
   const navigate = useNavigate();
 
+  // Collapsible state for "How to Install the App"
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [activeInstallTab, setActiveInstallTab] = useState<'android' | 'ios' | 'desktop'>('android');
   const [dailyReminders, setDailyReminders] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
@@ -170,232 +172,277 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Mobile App Installation Guide (How to install from Website) */}
-      <section className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+      {/* 2. Collapsible "How to Install the App" Card (Click Header to expand/collapse) */}
+      <section className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden transition-all duration-300">
+        {/* Clickable Header */}
+        <div
+          onClick={() => setIsInstallGuideOpen((prev) => !prev)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setIsInstallGuideOpen((prev) => !prev)}
+          className="p-4 sm:p-5 flex items-center justify-between gap-3 cursor-pointer hover:bg-surface-container-low/60 dark:hover:bg-surface-container-high/20 transition-colors select-none group"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <span className="material-symbols-outlined text-[24px]">install_mobile</span>
             </div>
-            <div>
-              <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
-                How to Install Mobile App
-              </h3>
-              <p className="font-body-text text-xs text-on-surface-variant">
-                Install HabitFlow directly onto your phone without downloading from an app store.
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                  How to Install the App
+                </h3>
+                {isInstalled && (
+                  <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold font-stat-label hidden sm:inline">
+                    Installed
+                  </span>
+                )}
+              </div>
+              <p className="font-body-text text-xs text-on-surface-variant truncate mt-0.5">
+                {isInstallGuideOpen
+                  ? 'Click to collapse instructions'
+                  : 'Click here to view step-by-step installation instructions for Mobile & PC'}
               </p>
             </div>
           </div>
 
-          {/* Quick Install Action if browser supports */}
-          {isInstallable && (
-            <button
-              type="button"
-              onClick={installPWA}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-soft hover:bg-on-primary-fixed-variant transition-all shrink-0 active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              <span>1-Tap Install</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Quick 1-Tap Install action button if available */}
+            {isInstallable && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  installPWA();
+                }}
+                className="hidden sm:flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-soft hover:bg-on-primary-fixed-variant transition-all active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[16px]">download</span>
+                <span>1-Tap Install</span>
+              </button>
+            )}
 
-          {isInstalled && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold font-stat-label shrink-0">
-              <span className="material-symbols-outlined text-[16px]">check_circle</span>
-              App Installed
-            </span>
-          )}
+            {/* Expand / Collapse Chevron */}
+            <div className="w-8 h-8 rounded-full bg-surface-container-low dark:bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+              <span
+                className={`material-symbols-outlined text-[20px] transition-transform duration-300 ${
+                  isInstallGuideOpen ? 'rotate-180 text-primary' : ''
+                }`}
+              >
+                expand_more
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Platform Selector Tabs */}
-        <div className="flex items-center gap-2 border-b border-outline-variant/15 pb-2">
-          <button
-            type="button"
-            onClick={() => setActiveInstallTab('android')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              activeInstallTab === 'android'
-                ? 'bg-primary text-on-primary shadow-soft'
-                : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">android</span>
-            <span>Android (Chrome)</span>
-          </button>
+        {/* Collapsible Details Body */}
+        {isInstallGuideOpen && (
+          <div className="p-4 sm:p-6 pt-0 border-t border-outline-variant/15 space-y-4 animate-fadeIn">
+            {/* Platform Selector Tabs */}
+            <div className="flex items-center gap-2 border-b border-outline-variant/15 pb-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setActiveInstallTab('android')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeInstallTab === 'android'
+                    ? 'bg-primary text-on-primary shadow-soft'
+                    : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">android</span>
+                <span>Android (Chrome)</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveInstallTab('ios')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              activeInstallTab === 'ios'
-                ? 'bg-primary text-on-primary shadow-soft'
-                : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
-            <span>iPhone / iPad (Safari)</span>
-          </button>
+              <button
+                type="button"
+                onClick={() => setActiveInstallTab('ios')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeInstallTab === 'ios'
+                    ? 'bg-primary text-on-primary shadow-soft'
+                    : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
+                <span>iPhone / iPad (Safari)</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveInstallTab('desktop')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              activeInstallTab === 'desktop'
-                ? 'bg-primary text-on-primary shadow-soft'
-                : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">computer</span>
-            <span>PC / Mac</span>
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={() => setActiveInstallTab('desktop')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeInstallTab === 'desktop'
+                    ? 'bg-primary text-on-primary shadow-soft'
+                    : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">computer</span>
+                <span>PC / Mac</span>
+              </button>
+            </div>
 
-        {/* Instructions Content */}
-        {activeInstallTab === 'android' && (
-          <div className="space-y-3 pt-1 animate-fadeIn">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
-              Android Installation Steps:
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-primary">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">1</span>
-                  <span>Open in Google Chrome</span>
+            {/* Android Instructions */}
+            {activeInstallTab === 'android' && (
+              <div className="space-y-3 animate-fadeIn">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
+                  Android Installation Steps (Google Chrome):
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-primary">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">1</span>
+                      <span>Open in Google Chrome</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Visit <strong className="text-on-surface">https://habitflow-2a53e.web.app</strong> in Chrome on your phone.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-primary">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">2</span>
+                      <span>Tap Menu (⋮)</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Tap the three vertical dots <strong className="text-on-surface">(⋮)</strong> at the top right of Chrome.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-primary">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">3</span>
+                      <span>Tap "Install App"</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Tap <strong className="text-on-surface">"Install App"</strong> or <strong className="text-on-surface">"Add to Home screen"</strong>.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-primary">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">4</span>
+                      <span>Tap "Install" to Confirm</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Confirm by tapping <strong className="text-on-surface">Install</strong>. HabitFlow will appear on your home screen!
+                    </p>
+                  </div>
                 </div>
-                <p className="text-on-surface-variant pl-7">
-                  Visit <strong className="text-on-surface">https://habitflow-2a53e.web.app</strong> on your mobile Chrome browser.
-                </p>
-              </div>
 
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-primary">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">2</span>
-                  <span>Tap Chrome Menu (⋮)</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Tap the three vertical dots <strong className="text-on-surface">(⋮)</strong> in the top-right corner of Chrome.
-                </p>
+                {isInstallable && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={installPWA}
+                      className="w-full py-2.5 px-4 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-soft hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2 active:scale-98"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">download</span>
+                      <span>Install HabitFlow Now (1-Tap Direct Install)</span>
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
 
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-primary">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">3</span>
-                  <span>Tap "Install App" / "Add to Home"</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Select <strong className="text-on-surface">"Install App"</strong> or <strong className="text-on-surface">"Add to Home screen"</strong> from the menu list.
-                </p>
-              </div>
+            {/* iOS Instructions */}
+            {activeInstallTab === 'ios' && (
+              <div className="space-y-3 animate-fadeIn">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
+                  iPhone & iPad Steps (Apple Safari):
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-secondary">
+                      <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">1</span>
+                      <span>Open in Apple Safari</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Navigate to <strong className="text-on-surface">https://habitflow-2a53e.web.app</strong> in Safari.
+                    </p>
+                  </div>
 
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-primary">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">4</span>
-                  <span>Tap "Install" to Finish</span>
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-secondary">
+                      <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">2</span>
+                      <span>Tap Share Button (⎋)</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Tap the <strong className="text-on-surface">Share button</strong> (box with arrow pointing up) at the bottom.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-secondary">
+                      <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">3</span>
+                      <span>Tap "Add to Home Screen"</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Scroll down and tap <strong className="text-on-surface">"Add to Home Screen" ➕</strong>.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-secondary">
+                      <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">4</span>
+                      <span>Tap "Add" in Top Right</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Tap <strong className="text-on-surface">Add</strong>. HabitFlow opens in fullscreen without browser bars!
+                    </p>
+                  </div>
                 </div>
-                <p className="text-on-surface-variant pl-7">
-                  Confirm by tapping <strong className="text-on-surface">Install</strong>. The HabitFlow icon appears on your home screen!
-                </p>
               </div>
+            )}
+
+            {/* Desktop Instructions */}
+            {activeInstallTab === 'desktop' && (
+              <div className="space-y-3 animate-fadeIn">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
+                  Desktop App Steps (Chrome / Edge / Brave):
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-primary">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">1</span>
+                      <span>Look for Install Icon in URL Bar</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      In the browser address bar, click the <strong className="text-on-surface">Install icon (computer with down arrow)</strong> on the right.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-primary">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">2</span>
+                      <span>Click "Install"</span>
+                    </div>
+                    <p className="text-on-surface-variant pl-7">
+                      Click <strong className="text-on-surface">Install</strong>. A dedicated app window opens and pins to your taskbar/dock.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Benefits Summary Box */}
+            <div className="pt-3 border-t border-outline-variant/15 flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px] text-primary">offline_bolt</span>
+                Works 100% Offline
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px] text-primary">sync</span>
+                Auto Cloud Sync
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px] text-primary">fullscreen</span>
+                Fullscreen App Experience
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px] text-primary">speed</span>
+                Lightning Fast (~1MB)
+              </span>
             </div>
           </div>
         )}
-
-        {activeInstallTab === 'ios' && (
-          <div className="space-y-3 pt-1 animate-fadeIn">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
-              iPhone & iPad (Safari) Steps:
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-secondary">
-                  <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">1</span>
-                  <span>Open in Apple Safari</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Navigate to <strong className="text-on-surface">https://habitflow-2a53e.web.app</strong> using the Safari browser.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-secondary">
-                  <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">2</span>
-                  <span>Tap Share Button (⎋)</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Tap the <strong className="text-on-surface">Share button (square with arrow up)</strong> at the bottom bar.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-secondary">
-                  <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">3</span>
-                  <span>Choose "Add to Home Screen"</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Scroll down the share sheet and tap <strong className="text-on-surface">"Add to Home Screen" ➕</strong>.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-secondary">
-                  <span className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center text-[11px]">4</span>
-                  <span>Tap "Add" in Top Right</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Tap <strong className="text-on-surface">Add</strong> in the top right. HabitFlow opens in fullscreen without browser bars!
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeInstallTab === 'desktop' && (
-          <div className="space-y-3 pt-1 animate-fadeIn">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
-              Desktop Installation (Chrome / Edge / Brave):
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-primary">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">1</span>
-                  <span>Look for Install Icon in URL Bar</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  In Chrome/Edge address bar on desktop, look for the <strong className="text-on-surface">Install icon (computer with down arrow)</strong> on the right.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-primary">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[11px]">2</span>
-                  <span>Click Install</span>
-                </div>
-                <p className="text-on-surface-variant pl-7">
-                  Click <strong className="text-on-surface">Install</strong>. A dedicated desktop app window will open and pin to your taskbar/dock.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Benefits Summary Box */}
-        <div className="pt-3 border-t border-outline-variant/15 flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant">
-          <span className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-primary">offline_bolt</span>
-            Works 100% Offline
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-primary">sync</span>
-            Auto Cloud Sync
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-primary">fullscreen</span>
-            Fullscreen App Experience
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-primary">speed</span>
-            Lightning Fast (~1MB)
-          </span>
-        </div>
       </section>
 
       {/* 3. Preferences Section */}
