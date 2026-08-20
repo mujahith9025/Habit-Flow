@@ -1,4 +1,5 @@
 import React from 'react';
+import { triggerHaptic } from '../../utils/haptics';
 
 interface DailyGridCellProps {
   habitId: string;
@@ -15,6 +16,11 @@ export const DailyGridCell: React.FC<DailyGridCellProps> = ({
   isToday,
   onToggle,
 }) => {
+  const handleToggle = () => {
+    triggerHaptic(isCompleted ? 'medium' : 'light');
+    onToggle();
+  };
+
   return (
     <td
       className={`p-1.5 sm:p-2 text-center transition-colors border-r border-outline-variant/15 ${
@@ -25,7 +31,7 @@ export const DailyGridCell: React.FC<DailyGridCellProps> = ({
     >
       <button
         type="button"
-        onClick={onToggle}
+        onClick={handleToggle}
         title={
           isCompleted
             ? `Mark as incomplete (${isToday ? 'Today' : dateKey})`

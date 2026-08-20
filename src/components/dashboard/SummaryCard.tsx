@@ -1,5 +1,6 @@
 import React from 'react';
 import { DashboardMetrics } from '../../types';
+import { getGentleAffirmation } from '../../utils/affirmations';
 
 interface SummaryCardProps {
   metrics: DashboardMetrics;
@@ -8,6 +9,12 @@ interface SummaryCardProps {
 
 export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, className = '' }) => {
   const { totalDailyHabits, completedTodayCount, completionPercentage, streakCount } = metrics;
+
+  const affirmation = getGentleAffirmation({
+    completedCount: completedTodayCount,
+    totalCount: totalDailyHabits,
+    maxStreak: streakCount,
+  });
 
   // SVG Progress Ring calculations (radius = 42, circumference ~ 263.89)
   const radius = 42;
@@ -23,14 +30,19 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, className = '
 
       {/* Card Top: Header & Streak Badge */}
       <div className="flex justify-between items-start mb-4 relative z-10">
-        <div>
-          <h2 className="font-section-header text-base sm:text-lg font-semibold text-on-surface mb-0.5">
-            Today's Progress
-          </h2>
-          <p className="text-on-surface-variant font-body-text text-xs">
-            {completionPercentage === 100 && totalDailyHabits > 0
-              ? 'All daily habits completed today!'
-              : 'Keep up the gentle momentum.'}
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <h2 className="font-section-header text-base sm:text-lg font-semibold text-on-surface">
+              {affirmation.headline}
+            </h2>
+            {affirmation.badge && (
+              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
+                {affirmation.badge}
+              </span>
+            )}
+          </div>
+          <p className="text-on-surface-variant font-body-text text-xs line-clamp-2 max-w-sm">
+            {affirmation.quote}
           </p>
         </div>
 

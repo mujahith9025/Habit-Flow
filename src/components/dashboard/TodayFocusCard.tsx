@@ -2,6 +2,8 @@ import React from 'react';
 import { Habit } from '../../types';
 import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { formatDateKey } from '../../hooks/useDashboardMetrics';
+import { triggerHaptic } from '../../utils/haptics';
+import { triggerMilestoneCelebration } from '../../utils/confetti';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -36,6 +38,23 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const totalCount = activeHabits.length;
   const percentDone = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
+
+  const handleToggle = async (habitId: string) => {
+    const isCurrentlyDone = isCompleted(habitId, todayDateKey);
+    
+    // Tactile haptic feedback
+    triggerHaptic(isCurrentlyDone ? 'medium' : 'light');
+
+    // Check if completing this habit hits 100%
+    if (!isCurrentlyDone && completedCount + 1 === totalCount) {
+      setTimeout(() => {
+        triggerMilestoneCelebration();
+        triggerHaptic('success');
+      }, 150);
+    }
+
+    await onToggleEntry(habitId, todayDateKey);
+  };
 
   return (
     <div
@@ -98,7 +117,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               return (
                 <div
                   key={habit.id}
-                  onClick={() => onToggleEntry(habit.id, todayDateKey)}
+                  onClick={() => handleToggle(habit.id)}
                   className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer active:scale-[0.99] select-none ${
                     done
                       ? 'bg-secondary-container/20 dark:bg-secondary-container/10 border-secondary/30'

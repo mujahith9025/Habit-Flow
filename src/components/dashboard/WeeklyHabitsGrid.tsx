@@ -2,6 +2,7 @@ import React from 'react';
 import { Habit } from '../../types';
 import { WeeklyHabitMetrics } from '../../hooks/useWeeklyHabitsData';
 import { Button } from '../ui/Button';
+import { triggerHaptic } from '../../utils/haptics';
 
 interface WeeklyHabitsGridProps {
   weeklyHabits: Habit[];
@@ -137,7 +138,10 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
                         >
                           <button
                             type="button"
-                            onClick={() => onToggleWeeklyEntry(habit.id, w)}
+                            onClick={() => {
+                              triggerHaptic(completed ? 'medium' : 'light');
+                              onToggleWeeklyEntry(habit.id, w);
+                            }}
                             title={completed ? 'Mark as incomplete' : 'Mark as complete for Week ' + w}
                             aria-label={`Week ${w} status`}
                             className={`w-7 h-7 sm:w-8 sm:h-8 mx-auto rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 ${

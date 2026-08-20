@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Habit } from '../../types';
 import { HabitGridMetrics, MonthDayInfo } from '../../hooks/useDailyHabitsData';
 import { Button } from '../ui/Button';
+import { triggerHaptic } from '../../utils/haptics';
 
 interface CategoryAggregateGraphsViewProps {
   categoryName: string;
@@ -504,7 +505,10 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                         >
                           <button
                             type="button"
-                            onClick={() => onToggleEntry(h.id, day.dateKey)}
+                            onClick={() => {
+                              triggerHaptic(done ? 'medium' : 'light');
+                              onToggleEntry(h.id, day.dateKey);
+                            }}
                             title={`${h.name} - ${day.dateKey}: ${done ? 'Completed' : 'Pending'}`}
                             className={`w-5 h-5 rounded-md mx-auto flex items-center justify-center transition-all ${
                               done
