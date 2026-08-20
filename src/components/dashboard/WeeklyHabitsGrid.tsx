@@ -92,7 +92,7 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
                   </th>
                 ))}
 
-                <th className="p-3 sm:p-4 text-right min-w-[64px] sm:min-w-[72px]">
+                <th className="sticky right-0 z-20 bg-surface-container-low dark:bg-surface-container-high/90 p-3 sm:p-4 text-right min-w-[64px] sm:min-w-[72px] border-l border-outline-variant/30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
                   <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
                     %
                   </span>
@@ -180,8 +180,8 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
                       );
                     })}
 
-                    {/* % Column */}
-                    <td className="p-3 sm:p-4 text-right font-stat-label text-xs sm:text-sm font-bold text-secondary dark:text-secondary-fixed">
+                    {/* % Column (Stable / Sticky Right) */}
+                    <td className="sticky right-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 text-right font-stat-label text-xs sm:text-sm font-bold text-secondary dark:text-secondary-fixed border-l border-outline-variant/20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
                       {metrics.progressPercent}%
                     </td>
                   </tr>

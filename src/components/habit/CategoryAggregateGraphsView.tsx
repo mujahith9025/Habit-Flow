@@ -480,7 +480,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                     <div>{day.dayNum}</div>
                   </th>
                 ))}
-                <th className="p-3 text-right text-xs font-stat-label uppercase font-bold text-on-surface-variant min-w-[60px]">
+                <th className="sticky right-0 z-20 bg-surface-container-low dark:bg-surface-container-high p-3 text-right text-xs font-stat-label uppercase font-bold text-on-surface-variant min-w-[60px] border-l border-outline-variant/20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
                   %
                 </th>
               </tr>
@@ -517,7 +517,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                         </td>
                       );
                     })}
-                    <td className="p-3 text-right font-bold text-primary border-l border-outline-variant/15">
+                    <td className="sticky right-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 text-right font-bold text-primary border-l border-outline-variant/15 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
                       {metrics?.monthProgressPercent ?? 0}%
                     </td>
                   </tr>
