@@ -3,6 +3,7 @@ import { onSnapshot, query, where, getEntriesCollectionRef } from '../lib/fireba
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import { DashboardMetrics, HabitEntryMap } from '../types';
+import { calculateGentleOverallStreak } from '../lib/calculations';
 
 /**
  * Formats a Date object as YYYY-MM-DD
@@ -94,38 +95,19 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
   const completionPercentage =
     totalDailyHabits > 0 ? Math.round((completedTodayCount / totalDailyHabits) * 100) : 0;
 
-  // Compute consecutive days streak
-  let streakCount = 0;
-  if (totalDailyHabits > 0) {
-    const isTodayAllDone = completedTodayCount === totalDailyHabits;
-    
-    if (isTodayAllDone) {
-      streakCount = 1;
-    }
-
-    const checkDate = new Date(today);
-    checkDate.setDate(checkDate.getDate() - 1);
-
-    for (let i = 0; i < 30; i++) {
-      const pastDateKey = formatDateKey(checkDate);
-      const allCompletedOnDay = dailyHabits.every(
-        (h) => entriesByHabit[h.id]?.[pastDateKey]?.completed === true
-      );
-
-      if (allCompletedOnDay) {
-        streakCount++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-  }
+  // Compute consecutive days streak with Gentle Persistence Streak Shield
+  const gentleOverall = calculateGentleOverallStreak(entriesByHabit, dailyHabits, today, 1);
+  const streakCount = gentleOverall.streak;
+  const isShieldActive = gentleOverall.isShieldActive;
+  const shieldsRemaining = gentleOverall.shieldsRemaining;
 
   return {
     totalDailyHabits,
     completedTodayCount,
     completionPercentage,
     streakCount,
+    isShieldActive,
+    shieldsRemaining,
     todayDateKey,
     loading: (habitsLoading && dailyHabits.length === 0) || entriesLoading,
   };

@@ -112,15 +112,29 @@ describe('HabitFlow Calculations Unit Test Suite', () => {
       expect(calculateSingleHabitStreak(entries, asOfDate)).toBe(5);
     });
 
-    it('stops counting when a missed day occurs (missed day breaks streak)', () => {
+    it('protects a single missed day with Gentle Persistence Streak Shield', () => {
+      const entries: HabitEntryMap = {
+        '2026-08-19': { date: '2026-08-19', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
+        '2026-08-18': { date: '2026-08-18', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
+        // 2026-08-17 missed! (Protected by Shield)
+        '2026-08-16': { date: '2026-08-16', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
+        '2026-08-15': { date: '2026-08-15', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
+      };
+      // With Gentle Shield enabled, streak is 4
+      expect(calculateSingleHabitStreak(entries, asOfDate, true)).toBe(4);
+      // In strict mode without shield, streak is 2
+      expect(calculateSingleHabitStreak(entries, asOfDate, false)).toBe(2);
+    });
+
+    it('breaks streak when 2 consecutive days are missed even with shield', () => {
       const entries: HabitEntryMap = {
         '2026-08-19': { date: '2026-08-19', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
         '2026-08-18': { date: '2026-08-18', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
         // 2026-08-17 missed!
-        '2026-08-16': { date: '2026-08-16', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
+        // 2026-08-16 missed!
         '2026-08-15': { date: '2026-08-15', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
       };
-      expect(calculateSingleHabitStreak(entries, asOfDate)).toBe(2);
+      expect(calculateSingleHabitStreak(entries, asOfDate, true)).toBe(2);
     });
 
     it('seamlessly traverses month boundaries (e.g. July 31 -> August 1)', () => {

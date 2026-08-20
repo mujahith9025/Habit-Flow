@@ -9,7 +9,7 @@ import {
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import { Habit, HabitEntryMap } from '../types';
-import { formatDateKey } from './useDashboardMetrics';
+import { calculateGentleHabitStreak, formatDateKey } from '../lib/calculations';
 
 export interface MonthDayInfo {
   dayNum: number;
@@ -25,6 +25,7 @@ export interface HabitGridMetrics {
   completedCount: number;
   monthProgressPercent: number;
   streakCount: number;
+  isShieldActive?: boolean;
   targetCount: number;
   rank?: number;
 }
@@ -155,26 +156,10 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       }
     });
 
-    // Compute streak for this individual habit
-    let streakCount = 0;
-    const isCompletedToday = habitEntries[todayDateKey]?.completed === true;
-
-    if (isCompletedToday) {
-      streakCount = 1;
-    }
-
-    const checkDate = new Date(today);
-    checkDate.setDate(checkDate.getDate() - 1);
-
-    for (let i = 0; i < 30; i++) {
-      const pastKey = formatDateKey(checkDate);
-      if (habitEntries[pastKey]?.completed === true) {
-        streakCount++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
+    // Compute streak for this individual habit with Gentle Streak Shield
+    const gentleResult = calculateGentleHabitStreak(habitEntries, today, 1);
+    const streakCount = gentleResult.streak;
+    const isShieldActive = gentleResult.isShieldActive;
 
     const targetCount = habit.goalCount && habit.goalCount > 1 ? habit.goalCount : totalDays;
     const monthProgressPercent =
@@ -185,6 +170,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       completedCount,
       monthProgressPercent,
       streakCount,
+      isShieldActive,
       targetCount,
     };
   });

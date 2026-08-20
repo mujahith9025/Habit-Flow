@@ -10,44 +10,62 @@ export function formatDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export interface GentleStreakResult {
+  streak: number;
+  isShieldActive: boolean;
+  shieldsRemaining: number;
+  protectedDaysCount: number;
+}
+
 /**
- * Calculates current consecutive streak across ALL daily habits
- * A day is counted if ALL non-archived daily habits due were completed on that day.
+ * Calculates current streak for a SINGLE habit with "Gentle Persistence" Streak Shields:
+ * Allows 1 Grace/Rest day per 7 days of unbroken progress.
+ * If 1 day is missed, a shield protects the streak from resetting to 0.
+ * If 2 consecutive days are missed, the streak breaks.
  */
-export function calculateOverallDailyStreak(
-  entriesByHabit: Record<string, HabitEntryMap>,
-  dailyHabits: Habit[],
-  asOfDate: Date = new Date()
-): number {
-  const activeHabits = dailyHabits.filter((h) => !h.archived);
-  if (activeHabits.length === 0) return 0;
-
+export function calculateGentleHabitStreak(
+  entries: HabitEntryMap,
+  asOfDate: Date = new Date(),
+  maxShields: number = 1
+): GentleStreakResult {
   const todayKey = formatDateKey(asOfDate);
-  const isTodayAllDone = activeHabits.every(
-    (h) => entriesByHabit[h.id]?.[todayKey]?.completed === true
-  );
+  const isTodayDone = Boolean(entries[todayKey]?.completed);
 
-  let streak = isTodayAllDone ? 1 : 0;
+  let streak = isTodayDone ? 1 : 0;
+  let shieldsUsed = 0;
+  let protectedDays = 0;
+  let consecutiveMissed = 0;
 
-  // Check backward from yesterday up to 365 days
   const checkDate = new Date(asOfDate);
   checkDate.setDate(checkDate.getDate() - 1);
 
   for (let i = 0; i < 365; i++) {
     const pastKey = formatDateKey(checkDate);
-    const allDone = activeHabits.every(
-      (h) => entriesByHabit[h.id]?.[pastKey]?.completed === true
-    );
+    const isDone = Boolean(entries[pastKey]?.completed);
 
-    if (allDone) {
+    if (isDone) {
       streak++;
+      consecutiveMissed = 0;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
-      break; // Streak broken by a missed day
+      consecutiveMissed++;
+      // If only 1 day missed and we have a shield available, absorb the rest day!
+      if (consecutiveMissed === 1 && shieldsUsed < maxShields && streak > 0) {
+        shieldsUsed++;
+        protectedDays++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break; // 2 consecutive days missed or out of shields -> streak breaks
+      }
     }
   }
 
-  return streak;
+  return {
+    streak,
+    isShieldActive: protectedDays > 0,
+    shieldsRemaining: Math.max(0, maxShields - shieldsUsed),
+    protectedDaysCount: protectedDays,
+  };
 }
 
 /**
@@ -55,8 +73,13 @@ export function calculateOverallDailyStreak(
  */
 export function calculateSingleHabitStreak(
   entries: HabitEntryMap,
-  asOfDate: Date = new Date()
+  asOfDate: Date = new Date(),
+  useShield: boolean = true
 ): number {
+  if (useShield) {
+    return calculateGentleHabitStreak(entries, asOfDate, 1).streak;
+  }
+
   const todayKey = formatDateKey(asOfDate);
   const isTodayDone = Boolean(entries[todayKey]?.completed);
 
@@ -68,6 +91,111 @@ export function calculateSingleHabitStreak(
   for (let i = 0; i < 365; i++) {
     const pastKey = formatDateKey(checkDate);
     if (entries[pastKey]?.completed) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+/**
+ * Calculates current consecutive streak across ALL daily habits with Streak Shield support
+ */
+export function calculateGentleOverallStreak(
+  entriesByHabit: Record<string, HabitEntryMap>,
+  dailyHabits: Habit[],
+  asOfDate: Date = new Date(),
+  maxShields: number = 1
+): GentleStreakResult {
+  const activeHabits = dailyHabits.filter((h) => !h.archived);
+  if (activeHabits.length === 0) {
+    return {
+      streak: 0,
+      isShieldActive: false,
+      shieldsRemaining: maxShields,
+      protectedDaysCount: 0,
+    };
+  }
+
+  const todayKey = formatDateKey(asOfDate);
+  const isTodayAllDone = activeHabits.every(
+    (h) => entriesByHabit[h.id]?.[todayKey]?.completed === true
+  );
+
+  let streak = isTodayAllDone ? 1 : 0;
+  let shieldsUsed = 0;
+  let protectedDays = 0;
+  let consecutiveMissed = 0;
+
+  const checkDate = new Date(asOfDate);
+  checkDate.setDate(checkDate.getDate() - 1);
+
+  for (let i = 0; i < 365; i++) {
+    const pastKey = formatDateKey(checkDate);
+    const allDone = activeHabits.every(
+      (h) => entriesByHabit[h.id]?.[pastKey]?.completed === true
+    );
+
+    if (allDone) {
+      streak++;
+      consecutiveMissed = 0;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      consecutiveMissed++;
+      if (consecutiveMissed === 1 && shieldsUsed < maxShields && streak > 0) {
+        shieldsUsed++;
+        protectedDays++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  return {
+    streak,
+    isShieldActive: protectedDays > 0,
+    shieldsRemaining: Math.max(0, maxShields - shieldsUsed),
+    protectedDaysCount: protectedDays,
+  };
+}
+
+/**
+ * Calculates current consecutive streak across ALL daily habits
+ */
+export function calculateOverallDailyStreak(
+  entriesByHabit: Record<string, HabitEntryMap>,
+  dailyHabits: Habit[],
+  asOfDate: Date = new Date(),
+  useShield: boolean = true
+): number {
+  if (useShield) {
+    return calculateGentleOverallStreak(entriesByHabit, dailyHabits, asOfDate, 1).streak;
+  }
+
+  const activeHabits = dailyHabits.filter((h) => !h.archived);
+  if (activeHabits.length === 0) return 0;
+
+  const todayKey = formatDateKey(asOfDate);
+  const isTodayAllDone = activeHabits.every(
+    (h) => entriesByHabit[h.id]?.[todayKey]?.completed === true
+  );
+
+  let streak = isTodayAllDone ? 1 : 0;
+
+  const checkDate = new Date(asOfDate);
+  checkDate.setDate(checkDate.getDate() - 1);
+
+  for (let i = 0; i < 365; i++) {
+    const pastKey = formatDateKey(checkDate);
+    const allDone = activeHabits.every(
+      (h) => entriesByHabit[h.id]?.[pastKey]?.completed === true
+    );
+
+    if (allDone) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
@@ -120,9 +248,6 @@ export function calculateLongestStreak(entries: HabitEntryMap): number {
 
 /**
  * Calculates monthly completion rate percentage for a habit
- * @param completedCount Number of completed entries in the month
- * @param daysInMonth Total number of days in the month (28..31)
- * @param goalCount Optional goal count target
  */
 export function calculateMonthProgressPercent(
   completedCount: number,
@@ -136,8 +261,6 @@ export function calculateMonthProgressPercent(
 
 /**
  * Calculates weekly completion percentage
- * @param completedWeeksCount Number of completed weeks (0..5)
- * @param goalCount Weekly target (e.g. 4)
  */
 export function calculateWeeklyProgressPercent(
   completedWeeksCount: number,

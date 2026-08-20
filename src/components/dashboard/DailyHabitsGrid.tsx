@@ -232,6 +232,15 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                           <span className="font-stat-label text-[10px] sm:text-[11px] font-bold leading-none">
                             {metrics.streakCount}d
                           </span>
+                          {metrics.isShieldActive && (
+                            <span
+                              title="Gentle Persistence: Protected by Streak Shield"
+                              className="material-symbols-outlined text-[12px] sm:text-[13px] text-secondary ml-0.5"
+                              style={{ fontVariationSettings: "'FILL' 1" }}
+                            >
+                              shield
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>

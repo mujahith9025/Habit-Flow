@@ -12,6 +12,8 @@ export interface DashboardMetrics {
   completedTodayCount: number;
   completionPercentage: number;
   streakCount: number;
+  isShieldActive?: boolean;
+  shieldsRemaining?: number;
   todayDateKey: string;
   loading: boolean;
 }

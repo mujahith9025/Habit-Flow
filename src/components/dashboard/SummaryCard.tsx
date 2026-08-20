@@ -46,17 +46,31 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, className = '
           </p>
         </div>
 
-        {/* Streak Badge */}
-        <div className="flex items-center gap-1.5 bg-primary-fixed/40 dark:bg-primary-fixed-dim/20 text-on-primary-fixed-variant dark:text-primary-fixed-dim px-3 py-1.5 rounded-full border border-primary/20 shrink-0">
-          <span
-            className="material-symbols-outlined text-[16px] text-tertiary"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            local_fire_department
-          </span>
-          <span className="font-stat-label text-xs uppercase tracking-wider font-bold">
-            {streakCount} {streakCount === 1 ? 'DAY' : 'DAYS'}
-          </span>
+        {/* Streak & Shield Badge */}
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex items-center gap-1.5 bg-primary-fixed/40 dark:bg-primary-fixed-dim/20 text-on-primary-fixed-variant dark:text-primary-fixed-dim px-3 py-1.5 rounded-full border border-primary/20 shrink-0">
+            <span
+              className="material-symbols-outlined text-[16px] text-tertiary"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              local_fire_department
+            </span>
+            <span className="font-stat-label text-xs uppercase tracking-wider font-bold">
+              {streakCount} {streakCount === 1 ? 'DAY' : 'DAYS'}
+            </span>
+          </div>
+
+          {metrics.isShieldActive && (
+            <div
+              title="Gentle Persistence: 1 missed day was protected by your Streak Shield"
+              className="flex items-center gap-1 text-[10px] font-bold text-secondary dark:text-secondary-fixed bg-secondary-container/40 px-2 py-0.5 rounded-full border border-secondary/30 shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[13px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                shield
+              </span>
+              <span>Shield Active</span>
+            </div>
+          )}
         </div>
       </div>
 
