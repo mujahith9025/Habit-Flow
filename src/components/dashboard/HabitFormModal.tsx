@@ -12,20 +12,11 @@ interface HabitFormModalProps {
     category?: string;
     frequency: HabitFrequency;
     goalCount: number;
-    color: string;
+    color?: string;
     icon?: string;
   }) => Promise<void>;
   onArchive?: (habitId: string) => Promise<void>;
 }
-
-const COLOR_PALETTE = [
-  { name: 'Primary Teal', hex: '#006398', bgClass: 'bg-primary' },
-  { name: 'Success Green', hex: '#286b33', bgClass: 'bg-secondary' },
-  { name: 'Terracotta', hex: '#a03e40', bgClass: 'bg-tertiary' },
-  { name: 'Coral', hex: '#ff8e8d', bgClass: 'bg-tertiary-container' },
-  { name: 'Sky Blue', hex: '#64b5f6', bgClass: 'bg-primary-container' },
-  { name: 'Mint Green', hex: '#abf4ac', bgClass: 'bg-secondary-container' },
-];
 
 const PRESET_CATEGORIES = [
   { label: '🎯 Self Challenges', value: 'Self Challenges' },
@@ -52,7 +43,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
   const [goalCount, setGoalCount] = useState(1);
-  const [color, setColor] = useState('#006398');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +63,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       }
       setFrequency(habitToEdit.frequency || 'daily');
       setGoalCount(habitToEdit.goalCount || 1);
-      setColor(habitToEdit.color || '#006398');
     } else {
       setName('');
       const initialCat = defaultCategory || 'General';
@@ -89,7 +78,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       }
       setFrequency('daily');
       setGoalCount(1);
-      setColor('#006398');
     }
     setError(null);
   }, [habitToEdit, defaultCategory, isOpen]);
@@ -132,7 +120,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         category: finalCategory,
         frequency,
         goalCount: Math.max(1, goalCount),
-        color,
       });
       onClose();
     } catch (err: unknown) {
@@ -179,15 +166,9 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-outline-variant/15">
-          <div className="flex items-center gap-2.5">
-            <span
-              className="w-4 h-4 rounded-full shadow-sm"
-              style={{ backgroundColor: color }}
-            />
-            <h2 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-              {isEditMode ? 'Edit Habit' : 'Create New Habit'}
-            </h2>
-          </div>
+          <h2 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
+            {isEditMode ? 'Edit Habit' : 'Create New Habit'}
+          </h2>
 
           <button
             type="button"
@@ -320,32 +301,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               >
                 <span className="material-symbols-outlined text-[18px]">add</span>
               </button>
-            </div>
-          </div>
-
-          {/* 5. Color Swatches */}
-          <div className="space-y-1.5">
-            <label className="block font-section-header text-xs font-semibold text-on-surface">
-              Color Theme
-            </label>
-            <div className="flex gap-2.5 overflow-x-auto pb-1">
-              {COLOR_PALETTE.map((c) => {
-                const isSelected = color === c.hex;
-                return (
-                  <button
-                    key={c.hex}
-                    type="button"
-                    title={c.name}
-                    onClick={() => setColor(c.hex)}
-                    className={`w-9 h-9 rounded-full shrink-0 transition-transform active:scale-95 ${
-                      isSelected
-                        ? 'ring-2 ring-offset-2 ring-primary ring-offset-background scale-105 shadow-soft'
-                        : 'hover:scale-105 opacity-80 hover:opacity-100'
-                    }`}
-                    style={{ backgroundColor: c.hex }}
-                  />
-                );
-              })}
             </div>
           </div>
 

@@ -76,7 +76,6 @@ export const MonthlyHabitsGrid: React.FC<MonthlyHabitsGridProps> = ({
             streakCount: 0,
           };
           const completed = isCompleted(habit.id);
-          const habitColor = habit.color || '#a03e40';
 
           return (
             <div
@@ -86,32 +85,25 @@ export const MonthlyHabitsGrid: React.FC<MonthlyHabitsGridProps> = ({
             >
               {/* Card Header */}
               <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className="w-3 h-3 rounded-full shrink-0 shadow-sm"
-                    style={{ backgroundColor: habitColor }}
-                  />
-
-                  <div className="min-w-0">
-                    <h3 className="font-habit-name text-sm sm:text-base font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
-                      {habit.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] font-stat-label text-on-surface-variant">
-                        Goal: 1 / month
+                <div className="min-w-0">
+                  <h3 className="font-habit-name text-sm sm:text-base font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
+                    {habit.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] font-stat-label text-on-surface-variant">
+                      Goal: 1 / month
+                    </span>
+                    <span className="text-outline-variant text-[10px]">•</span>
+                    <div className="flex items-center gap-0.5 text-tertiary">
+                      <span
+                        className="material-symbols-outlined text-[12px]"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        local_fire_department
                       </span>
-                      <span className="text-outline-variant text-[10px]">•</span>
-                      <div className="flex items-center gap-0.5 text-tertiary">
-                        <span
-                          className="material-symbols-outlined text-[12px]"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          local_fire_department
-                        </span>
-                        <span className="font-stat-label text-[10px] font-bold">
-                          {metrics.streakCount}m
-                        </span>
-                      </div>
+                      <span className="font-stat-label text-[10px] font-bold">
+                        {metrics.streakCount}m
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -125,12 +117,9 @@ export const MonthlyHabitsGrid: React.FC<MonthlyHabitsGridProps> = ({
                     aria-label="Toggle monthly completion"
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 ${
                       completed
-                        ? 'text-white shadow-soft ring-1 ring-black/10'
-                        : 'border-2 border-outline-variant/60 dark:border-outline-variant/40 hover:border-tertiary hover:scale-105'
+                        ? 'bg-secondary text-on-secondary shadow-soft'
+                        : 'border-2 border-outline-variant/60 dark:border-outline-variant/40 hover:border-secondary hover:scale-105'
                     }`}
-                    style={{
-                      backgroundColor: completed ? habitColor : 'transparent',
-                    }}
                   >
                     {completed ? (
                       <span
@@ -151,18 +140,16 @@ export const MonthlyHabitsGrid: React.FC<MonthlyHabitsGridProps> = ({
                 <div className="flex justify-between items-center text-xs font-stat-label">
                   <span className="text-on-surface-variant text-[11px]">Progress</span>
                   <span
-                    className="font-bold text-xs"
-                    style={{ color: completed ? habitColor : 'inherit' }}
+                    className={`font-bold text-xs ${completed ? 'text-secondary' : 'text-on-surface'}`}
                   >
                     {metrics.progressPercent}%
                   </span>
                 </div>
                 <div className="h-2.5 w-full bg-surface-container-high dark:bg-surface-container-highest/60 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-500"
+                    className="h-full rounded-full transition-all duration-500 bg-secondary"
                     style={{
                       width: `${metrics.progressPercent}%`,
-                      backgroundColor: habitColor,
                     }}
                   />
                 </div>

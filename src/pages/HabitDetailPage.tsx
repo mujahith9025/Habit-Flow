@@ -70,7 +70,7 @@ export const HabitDetailPage: React.FC = () => {
     category?: string;
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
-    color: string;
+    color?: string;
     icon?: string;
   }) => {
     await updateHabit(data);
@@ -81,7 +81,7 @@ export const HabitDetailPage: React.FC = () => {
     category?: string;
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
-    color: string;
+    color?: string;
     icon?: string;
   }) => {
     const newHabit = await createHabit(data);
@@ -177,12 +177,6 @@ export const HabitDetailPage: React.FC = () => {
                     : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
                 }`}
               >
-                <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
-                  style={{
-                    backgroundColor: isSelected ? '#ffffff' : h.color || '#006398',
-                  }}
-                />
                 <span className="truncate max-w-[140px]">{h.name}</span>
               </button>
             );
@@ -202,30 +196,23 @@ export const HabitDetailPage: React.FC = () => {
       {/* 2. Habit Header Banner */}
       <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Left: Habit Identity */}
-        <div className="flex items-center gap-3.5">
-          <span
-            className="w-4 h-4 rounded-full shrink-0 shadow-sm ring-4 ring-outline-variant/20"
-            style={{ backgroundColor: habit.color || '#006398' }}
-          />
-
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
-                {habit.name}
-              </h1>
-              {habit.category && (
-                <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary dark:text-primary-fixed-dim font-stat-label">
-                  {habit.category}
-                </span>
-              )}
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
-                {habit.frequency || 'daily'}
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+              {habit.name}
+            </h1>
+            {habit.category && (
+              <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary dark:text-primary-fixed-dim font-stat-label">
+                {habit.category}
               </span>
-            </div>
-            <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
-              Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
-            </p>
+            )}
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
+              {habit.frequency || 'daily'}
+            </span>
           </div>
+          <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
+            Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
+          </p>
         </div>
 
         {/* Right: Actions */}

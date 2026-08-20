@@ -124,14 +124,10 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                       )}
                     </button>
 
-                    {/* Color dot + Habit Name */}
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    {/* Habit Name */}
+                    <div className="min-w-0 flex-1">
                       <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
-                        style={{ backgroundColor: habit.color || '#006398' }}
-                      />
-                      <span
-                        className={`font-habit-name text-xs sm:text-sm font-semibold truncate transition-colors ${
+                        className={`font-habit-name text-xs sm:text-sm font-semibold truncate block transition-colors ${
                           done
                             ? 'text-on-surface-variant line-through opacity-80'
                             : 'text-on-surface'

@@ -161,12 +161,8 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                       className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15 cursor-pointer group"
                     >
                       <div className="flex flex-col min-w-0">
-                        {/* Habit Title + Color Dot */}
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
-                            style={{ backgroundColor: habit.color || '#006398' }}
-                          />
+                        {/* Habit Title */}
+                        <div className="flex items-center">
                           <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
                             {habit.name}
                           </span>

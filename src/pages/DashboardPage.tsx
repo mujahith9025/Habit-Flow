@@ -78,7 +78,7 @@ export const DashboardPage: React.FC = () => {
     category?: string;
     frequency: HabitFrequency;
     goalCount: number;
-    color: string;
+    color?: string;
     icon?: string;
   }) => {
     if (editingHabit) {
