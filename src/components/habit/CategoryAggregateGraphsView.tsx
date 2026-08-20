@@ -466,7 +466,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
           <table className="w-full border-collapse min-w-[680px]">
             <thead>
               <tr className="bg-surface-container-low dark:bg-surface-container-high/60 border-b border-outline-variant/20 text-left">
-                <th className="p-3 text-xs font-stat-label uppercase font-bold text-on-surface-variant sticky left-0 z-10 bg-surface-container-low dark:bg-surface-container-high min-w-[150px]">
+                <th className="p-2 sm:p-3 text-xs font-stat-label uppercase font-bold text-on-surface-variant sticky left-0 z-10 bg-surface-container-low dark:bg-surface-container-high min-w-[95px] max-w-[105px] sm:min-w-[150px] sm:max-w-none">
                   Habit
                 </th>
                 {daysInMonth.map((day) => (
@@ -490,7 +490,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                 const metrics = habitMetricsMap[h.id];
                 return (
                   <tr key={h.id} className="hover:bg-surface-container-low/40">
-                    <td className="p-3 font-semibold text-on-surface sticky left-0 z-10 bg-surface-container-lowest dark:bg-surface-container border-r border-outline-variant/15">
+                    <td className="p-2 sm:p-3 font-semibold text-on-surface sticky left-0 z-10 bg-surface-container-lowest dark:bg-surface-container border-r border-outline-variant/15 min-w-[95px] max-w-[105px] sm:min-w-[150px] sm:max-w-none break-words whitespace-normal leading-snug">
                       {h.name}
                     </td>
                     {daysInMonth.map((day) => {

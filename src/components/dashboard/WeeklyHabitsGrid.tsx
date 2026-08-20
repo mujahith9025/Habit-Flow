@@ -75,8 +75,9 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
           <table className="w-full border-collapse min-w-[600px] sm:min-w-[750px]">
             <thead>
               <tr className="bg-surface-container-low/70 dark:bg-surface-container-high/40 border-b border-outline-variant/20">
-                <th className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 text-left min-w-[180px] sm:min-w-[240px] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15">
-                  <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
+                {/* Sticky Habit Header Column (Compact on mobile) */}
+                <th className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2 sm:p-4 text-left min-w-[100px] max-w-[110px] sm:min-w-[190px] sm:max-w-none shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15">
+                  <span className="font-stat-label text-[10px] sm:text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
                     Habit
                   </span>
                 </th>
@@ -84,7 +85,7 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
                 {weeks.map((w) => (
                   <th
                     key={w}
-                    className="p-3 sm:p-4 text-center min-w-[60px] sm:min-w-[70px] border-r border-outline-variant/10"
+                    className="p-2 sm:p-4 text-center min-w-[50px] sm:min-w-[70px] border-r border-outline-variant/10"
                   >
                     <span className="font-stat-label text-xs sm:text-sm font-bold text-on-surface">
                       W{w}
@@ -115,25 +116,24 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
                     onClick={() => onEditHabit(habit)}
                     className="hover:bg-surface-container-low/40 dark:hover:bg-surface-container-high/20 transition-colors cursor-pointer group"
                   >
-                    {/* Habit Info Column */}
-                    <td className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15">
+                    {/* Habit Info Column (Multi-line wrap on mobile) */}
+                    <td className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15 min-w-[100px] max-w-[110px] sm:min-w-[190px] sm:max-w-none">
                       <div className="min-w-0 flex-1">
-                        <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors truncate block">
+                        <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors break-words whitespace-normal leading-snug block">
                           {habit.name}
                         </span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-stat-label text-on-surface-variant">
-                            Goal: {metrics.goalCount}/mo
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mt-1">
+                          <span className="text-[9px] sm:text-[10px] font-stat-label text-on-surface-variant leading-none">
+                            {metrics.goalCount}/mo
                           </span>
-                          <span className="text-outline-variant text-[10px]">•</span>
                           <div className="flex items-center gap-0.5 text-tertiary">
                             <span
-                              className="material-symbols-outlined text-[12px]"
+                              className="material-symbols-outlined text-[12px] sm:text-[13px]"
                               style={{ fontVariationSettings: "'FILL' 1" }}
                             >
                               local_fire_department
                             </span>
-                            <span className="font-stat-label text-[10px] font-bold">
+                            <span className="font-stat-label text-[9px] sm:text-[10px] font-bold">
                               {metrics.completedWeeksCount}w
                             </span>
                           </div>

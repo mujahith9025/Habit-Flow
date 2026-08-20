@@ -105,10 +105,10 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
             {/* Table Header */}
             <thead>
               <tr className="bg-surface-container-low dark:bg-surface-container-high/60 border-b border-outline-variant/30">
-                {/* Sticky Habit Header Column */}
-                <th className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 text-left min-w-[170px] sm:min-w-[210px] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/25">
-                  <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-                    Habit Name
+                {/* Sticky Habit Header Column (Compact on mobile to maximize dates space) */}
+                <th className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2 sm:p-4 text-left min-w-[100px] max-w-[110px] sm:min-w-[190px] sm:max-w-none shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/25">
+                  <span className="font-stat-label text-[10px] sm:text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
+                    Habit
                   </span>
                 </th>
 
@@ -186,34 +186,33 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                     key={habit.id}
                     className="hover:bg-surface-container-low/40 dark:hover:bg-surface-container-high/20 transition-colors"
                   >
-                    {/* Sticky Left Column: Habit Info (Clickable for editing) */}
+                    {/* Sticky Left Column: Habit Info (Compact on mobile with multi-line wrap) */}
                     <td
                       onClick={() => onEditHabit?.(habit)}
                       title="Click to edit habit"
-                      className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/20 cursor-pointer group"
+                      className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/20 cursor-pointer group min-w-[100px] max-w-[110px] sm:min-w-[190px] sm:max-w-none"
                     >
                       <div className="flex flex-col min-w-0">
-                        {/* Habit Title */}
+                        {/* Habit Title (Multi-line wrap on mobile) */}
                         <div className="flex items-center">
-                          <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
+                          <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors break-words whitespace-normal leading-snug">
                             {habit.name}
                           </span>
                         </div>
 
                         {/* Goal & Streak Subtitle */}
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] font-stat-label text-on-surface-variant">
-                            Target: {metrics.targetCount}/d
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mt-1">
+                          <span className="text-[9px] sm:text-[10px] font-stat-label text-on-surface-variant leading-none">
+                            {metrics.targetCount}/d
                           </span>
-                          <span className="text-outline-variant text-[10px]">•</span>
                           <div className="flex items-center gap-0.5 text-tertiary">
                             <span
-                              className="material-symbols-outlined text-[13px]"
+                              className="material-symbols-outlined text-[12px] sm:text-[13px]"
                               style={{ fontVariationSettings: "'FILL' 1" }}
                             >
                               local_fire_department
                             </span>
-                            <span className="font-stat-label text-[10px] font-bold">
+                            <span className="font-stat-label text-[9px] sm:text-[10px] font-bold">
                               {metrics.streakCount}d
                             </span>
                           </div>
