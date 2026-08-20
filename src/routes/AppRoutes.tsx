@@ -9,6 +9,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { SignUpPage } from '../pages/SignUpPage';
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { InstallAppPage } from '../pages/InstallAppPage';
 import { DataLayerDebugPage } from '../pages/DataLayerDebugPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
@@ -33,6 +34,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/habits" element={<HabitDetailPage />} />
           <Route path="/habit/:id" element={<HabitDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/install" element={<InstallAppPage />} />
           <Route path="/debug" element={<DataLayerDebugPage />} />
         </Route>
       </Route>
