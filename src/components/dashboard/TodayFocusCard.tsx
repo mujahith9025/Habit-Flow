@@ -124,17 +124,12 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                       )}
                     </button>
 
-                    {/* Icon + Habit Name */}
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {/* Color dot + Habit Name */}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <span
-                        className="material-symbols-outlined text-[18px] shrink-0"
-                        style={{
-                          color: habit.color || '#006398',
-                          fontVariationSettings: "'FILL' 1",
-                        }}
-                      >
-                        {habit.icon || 'energy_savings_leaf'}
-                      </span>
+                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
+                        style={{ backgroundColor: habit.color || '#006398' }}
+                      />
                       <span
                         className={`font-habit-name text-xs sm:text-sm font-semibold truncate transition-colors ${
                           done

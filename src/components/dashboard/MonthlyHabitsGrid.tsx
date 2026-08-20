@@ -86,18 +86,11 @@ export const MonthlyHabitsGrid: React.FC<MonthlyHabitsGridProps> = ({
             >
               {/* Card Header */}
               <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0 shadow-sm"
                     style={{ backgroundColor: habitColor }}
-                  >
-                    <span
-                      className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      {habit.icon || 'menu_book'}
-                    </span>
-                  </div>
+                  />
 
                   <div className="min-w-0">
                     <h3 className="font-habit-name text-sm sm:text-base font-semibold text-on-surface group-hover:text-primary transition-colors truncate">

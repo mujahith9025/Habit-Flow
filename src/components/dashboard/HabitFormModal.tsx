@@ -13,7 +13,7 @@ interface HabitFormModalProps {
     frequency: HabitFrequency;
     goalCount: number;
     color: string;
-    icon: string;
+    icon?: string;
   }) => Promise<void>;
   onArchive?: (habitId: string) => Promise<void>;
 }
@@ -25,19 +25,6 @@ const COLOR_PALETTE = [
   { name: 'Coral', hex: '#ff8e8d', bgClass: 'bg-tertiary-container' },
   { name: 'Sky Blue', hex: '#64b5f6', bgClass: 'bg-primary-container' },
   { name: 'Mint Green', hex: '#abf4ac', bgClass: 'bg-secondary-container' },
-];
-
-const ICON_CHOICES = [
-  { icon: 'energy_savings_leaf', label: 'Leaf' },
-  { icon: 'self_improvement', label: 'Meditation' },
-  { icon: 'fitness_center', label: 'Workout' },
-  { icon: 'menu_book', label: 'Reading' },
-  { icon: 'water_drop', label: 'Hydration' },
-  { icon: 'favorite', label: 'Health' },
-  { icon: 'directions_run', label: 'Running' },
-  { icon: 'spa', label: 'Wellness' },
-  { icon: 'bedtime', label: 'Sleep' },
-  { icon: 'auto_stories', label: 'Study' },
 ];
 
 const PRESET_CATEGORIES = [
@@ -66,7 +53,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
   const [goalCount, setGoalCount] = useState(1);
   const [color, setColor] = useState('#006398');
-  const [icon, setIcon] = useState('energy_savings_leaf');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,7 +74,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       setFrequency(habitToEdit.frequency || 'daily');
       setGoalCount(habitToEdit.goalCount || 1);
       setColor(habitToEdit.color || '#006398');
-      setIcon(habitToEdit.icon || 'energy_savings_leaf');
     } else {
       setName('');
       const initialCat = defaultCategory || 'General';
@@ -105,7 +90,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       setFrequency('daily');
       setGoalCount(1);
       setColor('#006398');
-      setIcon('energy_savings_leaf');
     }
     setError(null);
   }, [habitToEdit, defaultCategory, isOpen]);
@@ -149,7 +133,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         frequency,
         goalCount: Math.max(1, goalCount),
         color,
-        icon,
       });
       onClose();
     } catch (err: unknown) {
@@ -196,13 +179,11 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-outline-variant/15">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <span
-              className="material-symbols-outlined text-[24px]"
-              style={{ color, fontVariationSettings: "'FILL' 1" }}
-            >
-              {icon}
-            </span>
+              className="w-4 h-4 rounded-full shadow-sm"
+              style={{ backgroundColor: color }}
+            />
             <h2 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
               {isEditMode ? 'Edit Habit' : 'Create New Habit'}
             </h2>
@@ -363,38 +344,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                     }`}
                     style={{ backgroundColor: c.hex }}
                   />
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 6. Icon Grid */}
-          <div className="space-y-1.5">
-            <label className="block font-section-header text-xs font-semibold text-on-surface">
-              Icon
-            </label>
-            <div className="grid grid-cols-5 gap-2">
-              {ICON_CHOICES.map((ic) => {
-                const isSelected = icon === ic.icon;
-                return (
-                  <button
-                    key={ic.icon}
-                    type="button"
-                    title={ic.label}
-                    onClick={() => setIcon(ic.icon)}
-                    className={`p-2.5 rounded-xl flex items-center justify-center transition-all duration-150 active:scale-95 ${
-                      isSelected
-                        ? 'bg-primary text-on-primary shadow-soft'
-                        : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <span
-                      className="material-symbols-outlined text-[22px]"
-                      style={{ fontVariationSettings: isSelected ? "'FILL' 1" : "'FILL' 0" }}
-                    >
-                      {ic.icon}
-                    </span>
-                  </button>
                 );
               })}
             </div>

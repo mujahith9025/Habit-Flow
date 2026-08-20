@@ -117,18 +117,11 @@ export const WeeklyHabitsGrid: React.FC<WeeklyHabitsGridProps> = ({
                   >
                     {/* Habit Info Column */}
                     <td className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
                           style={{ backgroundColor: habit.color || '#286b33' }}
-                        >
-                          <span
-                            className="material-symbols-outlined text-[18px]"
-                            style={{ fontVariationSettings: "'FILL' 1" }}
-                          >
-                            {habit.icon || 'fitness_center'}
-                          </span>
-                        </div>
+                        />
 
                         <div className="min-w-0 flex-1">
                           <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors truncate block">

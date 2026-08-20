@@ -71,7 +71,7 @@ export const HabitDetailPage: React.FC = () => {
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
     color: string;
-    icon: string;
+    icon?: string;
   }) => {
     await updateHabit(data);
   };
@@ -82,7 +82,7 @@ export const HabitDetailPage: React.FC = () => {
     frequency: 'daily' | 'weekly' | 'monthly';
     goalCount: number;
     color: string;
-    icon: string;
+    icon?: string;
   }) => {
     const newHabit = await createHabit(data);
     setIsCreateModalOpen(false);
@@ -178,14 +178,11 @@ export const HabitDetailPage: React.FC = () => {
                 }`}
               >
                 <span
-                  className="material-symbols-outlined text-[16px]"
+                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
                   style={{
-                    color: isSelected ? 'inherit' : h.color || '#006398',
-                    fontVariationSettings: "'FILL' 1",
+                    backgroundColor: isSelected ? '#ffffff' : h.color || '#006398',
                   }}
-                >
-                  {h.icon || 'energy_savings_leaf'}
-                </span>
+                />
                 <span className="truncate max-w-[140px]">{h.name}</span>
               </button>
             );
@@ -205,18 +202,11 @@ export const HabitDetailPage: React.FC = () => {
       {/* 2. Habit Header Banner */}
       <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Left: Habit Identity */}
-        <div className="flex items-center gap-4">
-          <div
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-white shadow-soft shrink-0"
+        <div className="flex items-center gap-3.5">
+          <span
+            className="w-4 h-4 rounded-full shrink-0 shadow-sm ring-4 ring-outline-variant/20"
             style={{ backgroundColor: habit.color || '#006398' }}
-          >
-            <span
-              className="material-symbols-outlined text-[28px] sm:text-[32px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              {habit.icon || 'energy_savings_leaf'}
-            </span>
-          </div>
+          />
 
           <div>
             <div className="flex flex-wrap items-center gap-2">

@@ -79,7 +79,7 @@ export const DashboardPage: React.FC = () => {
     frequency: HabitFrequency;
     goalCount: number;
     color: string;
-    icon: string;
+    icon?: string;
   }) => {
     if (editingHabit) {
       await updateHabit(editingHabit.id, {
@@ -88,7 +88,6 @@ export const DashboardPage: React.FC = () => {
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
-        icon: data.icon,
       });
     } else {
       await createHabit({
@@ -97,7 +96,6 @@ export const DashboardPage: React.FC = () => {
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
-        icon: data.icon,
         sortOrder: habits.length,
       });
     }
