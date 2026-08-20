@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useHabits } from '../hooks/useHabits';
 import { useSingleHabitHistory } from '../hooks/useSingleHabitHistory';
+import { useDailyHabitsData } from '../hooks/useDailyHabitsData';
 import { HabitStatsGrid } from '../components/habit/HabitStatsGrid';
 import { HabitWeeklyGraphsView } from '../components/habit/HabitWeeklyGraphsView';
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
+import { CategoryAggregateGraphsView } from '../components/habit/CategoryAggregateGraphsView';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
@@ -48,6 +50,7 @@ export const HabitDetailPage: React.FC = () => {
   // Selected date defaults to current date / current month on initial entry
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
   const [activeAnalyticsView, setActiveAnalyticsView] = useState<'graphs' | 'calendar'>('graphs');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -67,44 +70,47 @@ export const HabitDetailPage: React.FC = () => {
 
   const categories = Object.keys(categoryHabitsMap).sort();
 
-  // Determine effective habit ID
+  // Match habit if URL ID passed
   const matchedHabit = activeHabits.find((h) => h.id === id);
-  const effectiveHabitId = matchedHabit
-    ? matchedHabit.id
-    : activeHabits.length > 0
-    ? activeHabits[0].id
-    : id;
 
-  // Auto-sync route if ID in URL was invalid (e.g. /habit/1) but user has active habits
-  useEffect(() => {
-    if (!habitsLoading && activeHabits.length > 0 && (!matchedHabit || id === '1')) {
-      navigate(`/habit/${activeHabits[0].id}`, { replace: true });
-    }
-  }, [habitsLoading, activeHabits, matchedHabit, id, navigate]);
-
-  // Sync selected category with current habit
+  // Sync category and habit selection from URL
   useEffect(() => {
     if (matchedHabit) {
       const habitCat = matchedHabit.category?.trim() || 'General';
       setSelectedCategory(habitCat);
+      setSelectedHabitId(matchedHabit.id);
     } else if (categories.length > 0 && !selectedCategory) {
       setSelectedCategory(categories[0]);
     }
   }, [matchedHabit, categories]);
 
+  const currentCategory = selectedCategory || (categories.length > 0 ? categories[0] : 'General');
+  const habitsInCurrentCategory = categoryHabitsMap[currentCategory] || [];
+
+  // Effective habit for single-habit deep dive
+  const effectiveHabit =
+    selectedHabitId !== 'all'
+      ? habitsInCurrentCategory.find((h) => h.id === selectedHabitId) || habitsInCurrentCategory[0]
+      : habitsInCurrentCategory[0];
+
+  // Data for single habit
   const {
     habit,
-    metrics,
-    loading: historyLoading,
-    isCompleted,
-    toggleEntry,
+    metrics: singleMetrics,
+    isCompleted: isSingleCompleted,
+    toggleEntry: toggleSingleEntry,
     updateHabit,
     archiveHabit,
-  } = useSingleHabitHistory(effectiveHabitId, selectedDate);
+  } = useSingleHabitHistory(effectiveHabit?.id, selectedDate);
 
-  // Filter habits under the currently selected tracker title
-  const currentCategory = selectedCategory || (habit?.category?.trim() || 'General');
-  const habitsInCurrentCategory = categoryHabitsMap[currentCategory] || (habit ? [habit] : []);
+  // Data for aggregate category (all habits under current tracker board)
+  const {
+    dailyHabits: aggregateHabits,
+    daysInMonth,
+    habitMetricsMap: aggregateMetricsMap,
+    isCompleted: isAggregateCompleted,
+    toggleHabitEntry: toggleAggregateEntry,
+  } = useDailyHabitsData(selectedDate, currentCategory);
 
   const getCategoryIcon = (cat: string) => {
     const key = cat.toLowerCase();
@@ -113,11 +119,13 @@ export const HabitDetailPage: React.FC = () => {
 
   const handleSelectCategory = (cat: string) => {
     setSelectedCategory(cat);
-    const habitsInCat = categoryHabitsMap[cat] || [];
-    if (habitsInCat.length > 0) {
-      if (!habitsInCat.some((h) => h.id === habit?.id)) {
-        navigate(`/habit/${habitsInCat[0].id}`);
-      }
+    setSelectedHabitId('all');
+  };
+
+  const handleSelectHabit = (habitId: string) => {
+    setSelectedHabitId(habitId);
+    if (habitId !== 'all') {
+      navigate(`/habit/${habitId}`);
     }
   };
 
@@ -154,7 +162,8 @@ export const HabitDetailPage: React.FC = () => {
     ) {
       try {
         await deleteHabit(habit.id);
-        navigate('/dashboard');
+        setSelectedHabitId('all');
+        navigate('/habit');
       } catch (err) {
         console.error('Failed to delete habit:', err);
       }
@@ -166,7 +175,8 @@ export const HabitDetailPage: React.FC = () => {
     if (window.confirm(`Archive "${habit.name}"? Historical logs will be preserved.`)) {
       try {
         await archiveHabit(true);
-        navigate('/dashboard');
+        setSelectedHabitId('all');
+        navigate('/habit');
       } catch (err) {
         console.error('Failed to archive habit:', err);
       }
@@ -201,7 +211,7 @@ export const HabitDetailPage: React.FC = () => {
   const selectedMonthIdx = selectedDate.getMonth();
   const { formattedTitle } = formatMonthYear(selectedDate);
 
-  if (habitsLoading || historyLoading) {
+  if (habitsLoading) {
     return (
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
@@ -224,7 +234,7 @@ export const HabitDetailPage: React.FC = () => {
             No Active Habits Yet
           </h2>
           <p className="font-body-text text-xs text-on-surface-variant max-w-xs mx-auto">
-            Create your first habit to start tracking weekly performance graphs and consistency gauges.
+            Create your first habit to start tracking daily, weekly, and monthly performance graphs.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
@@ -244,27 +254,6 @@ export const HabitDetailPage: React.FC = () => {
           onClose={() => setIsCreateModalOpen(false)}
           onSave={handleCreateHabit}
         />
-      </Card>
-    );
-  }
-
-  if (!habit || habit.archived) {
-    return (
-      <Card variant="elevated" className="max-w-md mx-auto my-12 p-8 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center">
-          <span className="material-symbols-outlined text-[24px]">search_off</span>
-        </div>
-        <h2 className="font-section-header text-lg font-bold text-on-surface">
-          Habit Not Found
-        </h2>
-        <p className="font-body-text text-xs text-on-surface-variant">
-          This habit may have been archived or removed.
-        </p>
-        <Link to="/dashboard">
-          <Button variant="primary" size="sm">
-            Return to Dashboard
-          </Button>
-        </Link>
       </Card>
     );
   }
@@ -316,14 +305,14 @@ export const HabitDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tier 2: Habits under Selected Tracker Board */}
+        {/* Tier 2: Habits under Selected Tracker Board (Aggregate or Individual Habit) */}
         <div className="pt-3 border-t border-outline-variant/15">
           <div className="flex items-center justify-between gap-2 mb-2 px-1">
             <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold flex items-center gap-1.5">
               <span className="material-symbols-outlined text-secondary text-[18px]">
                 checklist
               </span>
-              2. Select Habit for Analytics ({currentCategory}):
+              2. Select Analytics View for {currentCategory}:
             </span>
 
             <button
@@ -336,12 +325,37 @@ export const HabitDetailPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {/* Aggregate All Habits Option */}
+            <button
+              onClick={() => handleSelectHabit('all')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
+                selectedHabitId === 'all'
+                  ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+                  : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {selectedHabitId === 'all' ? 'radio_button_checked' : 'radio_button_unchecked'}
+              </span>
+              <span>📊 All Habits in {currentCategory} (Day/Week/Month Graphs)</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  selectedHabitId === 'all'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-surface-container-highest text-on-surface-variant'
+                }`}
+              >
+                {habitsInCurrentCategory.length}
+              </span>
+            </button>
+
+            {/* Individual Habit Buttons */}
             {habitsInCurrentCategory.map((h) => {
-              const isSelected = h.id === habit.id;
+              const isSelected = selectedHabitId === h.id;
               return (
                 <button
                   key={h.id}
-                  onClick={() => navigate(`/habit/${h.id}`)}
+                  onClick={() => handleSelectHabit(h.id)}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
                     isSelected
                       ? 'bg-secondary text-on-secondary shadow-soft scale-[1.02]'
@@ -351,7 +365,7 @@ export const HabitDetailPage: React.FC = () => {
                   <span className="material-symbols-outlined text-[16px]">
                     {isSelected ? 'radio_button_checked' : 'radio_button_unchecked'}
                   </span>
-                  <span className="truncate max-w-[160px]">{h.name}</span>
+                  <span className="truncate max-w-[150px]">{h.name}</span>
                 </button>
               );
             })}
@@ -359,63 +373,7 @@ export const HabitDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Habit Header Banner (for the selected habit) */}
-      <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Left: Habit Identity */}
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
-              {habit.name}
-            </h1>
-            {habit.category && (
-              <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary dark:text-primary-fixed-dim font-stat-label">
-                {habit.category}
-              </span>
-            )}
-            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
-              {habit.frequency || 'daily'}
-            </span>
-          </div>
-          <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
-            Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
-          </p>
-        </div>
-
-        {/* Right: Actions (Edit, Delete, Archive) */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditModalOpen(true)}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
-          >
-            <span className="material-symbols-outlined text-[18px]">edit</span>
-            <span>Edit</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="text-error hover:bg-error-container/20 px-3"
-            title="Delete Habit Permanently"
-          >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleArchive}
-            className="text-on-surface-variant hover:bg-surface-container-high px-2.5"
-            title="Archive Habit"
-          >
-            <span className="material-symbols-outlined text-[18px]">archive</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* 3. Interactive Month Navigation Bar (Jan - Dec + Year) */}
+      {/* 2. Interactive 12-Month Navigation Bar */}
       <div className="bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 rounded-2xl border border-outline-variant/15 shadow-soft space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
           <div className="flex items-center gap-2">
@@ -483,62 +441,136 @@ export const HabitDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Metrics Summary Grid for the selected month */}
-      <HabitStatsGrid
-        metrics={metrics}
-        selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
-        habitColor={habit.color || '#006398'}
-      />
-
-      {/* 5. Graph / Calendar View Switcher Tabs */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
-          <button
-            onClick={() => setActiveAnalyticsView('graphs')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              activeAnalyticsView === 'graphs'
-                ? 'bg-primary text-on-primary shadow-soft'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">bar_chart</span>
-            <span>Weekly Performance Graphs</span>
-          </button>
-
-          <button
-            onClick={() => setActiveAnalyticsView('calendar')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              activeAnalyticsView === 'calendar'
-                ? 'bg-primary text-on-primary shadow-soft'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-            <span>Calendar Heatmap</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 6. Main Analytics Visualization: Weekly Performance Graphs or Calendar Heatmap */}
-      {activeAnalyticsView === 'graphs' ? (
-        <HabitWeeklyGraphsView
-          currentDate={selectedDate}
-          onChangeMonth={handleMonthChange}
-          isCompleted={isCompleted}
-          onToggleDate={toggleEntry}
-          habitName={habit.name}
-          habitFrequency={habit.frequency}
-          goalCount={habit.goalCount}
+      {/* 3. Main Analytics Content Area */}
+      {selectedHabitId === 'all' ? (
+        /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
+        <CategoryAggregateGraphsView
+          categoryName={currentCategory}
+          habits={aggregateHabits}
+          daysInMonth={daysInMonth}
+          habitMetricsMap={aggregateMetricsMap}
+          isCompleted={isAggregateCompleted}
+          onToggleEntry={toggleAggregateEntry}
+          selectedMonthTitle={formattedTitle}
         />
       ) : (
-        <HabitCalendarHeatmap
-          currentDate={selectedDate}
-          onChangeMonth={handleMonthChange}
-          isCompleted={isCompleted}
-          onToggleDate={toggleEntry}
-          habitColor={habit.color || '#006398'}
-          habitName={habit.name}
-        />
+        /* B. INDIVIDUAL HABIT DEEP DIVE VIEW */
+        habit && (
+          <div className="space-y-6">
+            {/* Habit Header Banner */}
+            <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+                    {habit.name}
+                  </h1>
+                  {habit.category && (
+                    <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary dark:text-primary-fixed-dim font-stat-label">
+                      {habit.category}
+                    </span>
+                  )}
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
+                    {habit.frequency || 'daily'}
+                  </span>
+                </div>
+                <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                  Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
+                </p>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  <span>Edit</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="text-error hover:bg-error-container/20 px-3"
+                  title="Delete Habit Permanently"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleArchive}
+                  className="text-on-surface-variant hover:bg-surface-container-high px-2.5"
+                  title="Archive Habit"
+                >
+                  <span className="material-symbols-outlined text-[18px]">archive</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Metrics Summary Grid for the selected habit */}
+            <HabitStatsGrid
+              metrics={singleMetrics}
+              selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
+              habitColor={habit.color || '#006398'}
+            />
+
+            {/* Graph / Calendar View Switcher Tabs */}
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
+                <button
+                  onClick={() => setActiveAnalyticsView('graphs')}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeAnalyticsView === 'graphs'
+                      ? 'bg-primary text-on-primary shadow-soft'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">bar_chart</span>
+                  <span>Weekly Performance Graphs</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveAnalyticsView('calendar')}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeAnalyticsView === 'calendar'
+                      ? 'bg-primary text-on-primary shadow-soft'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                  <span>Calendar Heatmap</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Individual Habit Visualization */}
+            {activeAnalyticsView === 'graphs' ? (
+              <HabitWeeklyGraphsView
+                currentDate={selectedDate}
+                onChangeMonth={handleMonthChange}
+                isCompleted={isSingleCompleted}
+                onToggleDate={toggleSingleEntry}
+                habitName={habit.name}
+                habitFrequency={habit.frequency}
+                goalCount={habit.goalCount}
+              />
+            ) : (
+              <HabitCalendarHeatmap
+                currentDate={selectedDate}
+                onChangeMonth={handleMonthChange}
+                isCompleted={isSingleCompleted}
+                onToggleDate={toggleSingleEntry}
+                habitColor={habit.color || '#006398'}
+                habitName={habit.name}
+              />
+            )}
+          </div>
+        )
       )}
 
       {/* Edit Habit Modal */}
