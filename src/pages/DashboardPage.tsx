@@ -27,7 +27,7 @@ export const DashboardPage: React.FC = () => {
 
   const selectedMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
 
-  const { habits, loading: habitsLoading, createHabit, updateHabit, archiveHabit } = useHabits();
+  const { habits, loading: habitsLoading, createHabit, updateHabit, archiveHabit, deleteHabit } = useHabits();
 
   const activeHabits = habits.filter((h) => !h.archived);
 
@@ -99,6 +99,10 @@ export const DashboardPage: React.FC = () => {
         sortOrder: habits.length,
       });
     }
+  };
+
+  const handleDeleteHabit = async (habitId: string) => {
+    await deleteHabit(habitId);
   };
 
   const handleArchiveHabit = async (habitId: string) => {
@@ -188,6 +192,7 @@ export const DashboardPage: React.FC = () => {
         defaultCategory={effectiveCategory !== 'all' ? effectiveCategory : undefined}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveHabit}
+        onDelete={handleDeleteHabit}
         onArchive={handleArchiveHabit}
       />
     </div>

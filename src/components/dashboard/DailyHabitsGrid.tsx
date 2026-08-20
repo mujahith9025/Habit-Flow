@@ -1,13 +1,22 @@
 import React, { useRef, useEffect } from 'react';
 import { Habit } from '../../types';
-import { MonthDayInfo, HabitGridMetrics } from '../../hooks/useDailyHabitsData';
+import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { DailyGridCell } from './DailyGridCell';
 import { Button } from '../ui/Button';
 
+interface DayColumnHeader {
+  dayNum: number;
+  dayOfWeek: string;
+  isToday: boolean;
+  dateKey: string;
+  isWeekend?: boolean;
+}
+
 interface DailyHabitsGridProps {
+  currentDate?: Date;
   dailyHabits: Habit[];
-  daysInMonth: MonthDayInfo[];
   habitMetricsMap: Record<string, HabitGridMetrics>;
+  daysInMonth: DayColumnHeader[];
   isCompleted: (habitId: string, dateKey: string) => boolean;
   onToggleEntry: (habitId: string, dateKey: string) => void;
   onEditHabit?: (habit: Habit) => void;
@@ -17,8 +26,8 @@ interface DailyHabitsGridProps {
 
 export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
   dailyHabits,
-  daysInMonth,
   habitMetricsMap,
+  daysInMonth,
   isCompleted,
   onToggleEntry,
   onEditHabit,
@@ -27,12 +36,12 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll mobile view to today's column on initial mount
+  // Auto-scroll horizontally to today's column on initial load
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const todayElement = scrollContainerRef.current.querySelector('[data-is-today="true"]');
-      if (todayElement) {
-        todayElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      const todayEl = scrollContainerRef.current.querySelector('[data-is-today="true"]');
+      if (todayEl) {
+        todayEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
       }
     }
   }, [daysInMonth]);
@@ -40,14 +49,14 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
   if (dailyHabits.length === 0) {
     return (
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-xl shadow-soft border border-outline-variant/15 p-8 text-center space-y-3">
-        <div className="w-12 h-12 rounded-full bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center">
-          <span className="material-symbols-outlined text-[24px]">task_alt</span>
+        <div className="w-12 h-12 rounded-full bg-primary-container/30 text-primary mx-auto flex items-center justify-center">
+          <span className="material-symbols-outlined text-[24px]">calendar_today</span>
         </div>
         <h3 className="font-section-header text-base font-semibold text-on-surface">
-          No Daily Habits Found
+          No Daily Habits in This Board
         </h3>
         <p className="font-body-text text-xs sm:text-sm text-on-surface-variant max-w-sm mx-auto">
-          Start building consistency by adding your first daily habit or seeding our starter habits.
+          Start building consistency by adding your first daily habit to this tracker board.
         </p>
         {onSeedHabits && (
           <div className="pt-2">
@@ -78,21 +87,21 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
           </span>
         </div>
         <span className="text-[11px] font-stat-label text-on-surface-variant uppercase hidden sm:inline">
-          Scroll horizontally for full month
+          Scroll horizontally for all 31 days
         </span>
       </div>
 
       {/* Grid Table Container */}
-      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-xl shadow-soft border border-outline-variant/15 overflow-hidden">
+      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-xl shadow-soft border border-outline-variant/20 overflow-hidden">
         <div ref={scrollContainerRef} className="overflow-x-auto scrollbar-thin">
-          <table className="w-full border-collapse min-w-[760px] lg:min-w-[1000px]">
+          <table className="w-full border-collapse min-w-[780px] lg:min-w-[1020px]">
             {/* Table Header */}
             <thead>
-              <tr className="bg-surface-container-low/70 dark:bg-surface-container-high/40 border-b border-outline-variant/20">
+              <tr className="bg-surface-container-low dark:bg-surface-container-high/60 border-b border-outline-variant/30">
                 {/* Sticky Habit Header Column */}
-                <th className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 text-left min-w-[170px] sm:min-w-[210px] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15">
+                <th className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 text-left min-w-[170px] sm:min-w-[210px] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/25">
                   <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-                    Habit
+                    Habit Name
                   </span>
                 </th>
 
@@ -101,31 +110,47 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                   <th
                     key={day.dateKey}
                     data-is-today={day.isToday}
-                    className={`p-1 sm:p-1.5 text-center min-w-[34px] sm:min-w-[38px] transition-colors border-r border-outline-variant/10 ${
+                    className={`p-1 sm:p-1.5 text-center min-w-[36px] sm:min-w-[40px] transition-colors border-r ${
                       day.isToday
-                        ? 'bg-primary-container/25 dark:bg-primary-container/15 rounded-t-lg'
-                        : ''
+                        ? 'bg-primary text-on-primary border-x-2 border-primary shadow-md z-10'
+                        : 'border-outline-variant/20 hover:bg-surface-container-high/40'
                     }`}
                   >
-                    <div className="flex flex-col items-center py-0.5">
+                    <div
+                      className={`flex flex-col items-center py-1 rounded-lg transition-all ${
+                        day.isToday
+                          ? 'bg-primary text-on-primary font-bold'
+                          : 'bg-surface-container-lowest/60 dark:bg-surface-container/60 border border-outline-variant/20'
+                      }`}
+                    >
+                      {/* Day of Week (M, T, W, etc.) */}
                       <span
-                        className={`text-[10px] uppercase font-semibold ${
+                        className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-tight ${
                           day.isToday
-                            ? 'text-primary dark:text-primary-fixed-dim font-bold'
-                            : 'text-outline dark:text-outline-variant'
+                            ? 'text-on-primary'
+                            : 'text-on-surface-variant'
                         }`}
                       >
                         {day.dayOfWeek}
                       </span>
+
+                      {/* Day Number (01, 02, ..., 31) */}
                       <span
-                        className={`font-stat-label text-xs ${
+                        className={`font-stat-label text-xs sm:text-sm font-extrabold ${
                           day.isToday
-                            ? 'text-primary dark:text-primary-fixed-dim font-bold'
+                            ? 'text-on-primary'
                             : 'text-on-surface'
                         }`}
                       >
-                        {day.dayNum}
+                        {String(day.dayNum).padStart(2, '0')}
                       </span>
+
+                      {/* Today Micro Indicator */}
+                      {day.isToday && (
+                        <span className="text-[8px] uppercase tracking-widest font-black text-on-primary/90 mt-0.5 leading-none">
+                          TODAY
+                        </span>
+                      )}
                     </div>
                   </th>
                 ))}
@@ -140,13 +165,13 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
             </thead>
 
             {/* Table Body */}
-            <tbody className="text-on-surface divide-y divide-outline-variant/10">
+            <tbody className="divide-y divide-outline-variant/15 text-on-surface">
               {dailyHabits.map((habit) => {
                 const metrics = habitMetricsMap[habit.id] || {
-                  completedCount: 0,
+                  completedDaysCount: 0,
                   monthProgressPercent: 0,
                   streakCount: 0,
-                  targetCount: daysInMonth.length,
+                  targetCount: habit.goalCount || 1,
                 };
 
                 return (
@@ -158,7 +183,7 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                     <td
                       onClick={() => onEditHabit?.(habit)}
                       title="Click to edit habit"
-                      className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/15 cursor-pointer group"
+                      className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/20 cursor-pointer group"
                     >
                       <div className="flex flex-col min-w-0">
                         {/* Habit Title */}
@@ -171,7 +196,7 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                         {/* Goal & Streak Subtitle */}
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] font-stat-label text-on-surface-variant">
-                            Target: {metrics.targetCount}
+                            Target: {metrics.targetCount}/d
                           </span>
                           <span className="text-outline-variant text-[10px]">•</span>
                           <div className="flex items-center gap-0.5 text-tertiary">
@@ -200,14 +225,13 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                           dateKey={day.dateKey}
                           isCompleted={completed}
                           isToday={day.isToday}
-                          habitColor={habit.color || '#006398'}
                           onToggle={() => onToggleEntry(habit.id, day.dateKey)}
                         />
                       );
                     })}
 
                     {/* Month % Complete Column */}
-                    <td className="p-3 sm:p-4 text-right">
+                    <td className="p-3 sm:p-4 text-right border-l border-outline-variant/15">
                       <span className="font-stat-label text-xs sm:text-sm font-bold text-primary dark:text-primary-fixed-dim">
                         {metrics.monthProgressPercent}%
                       </span>

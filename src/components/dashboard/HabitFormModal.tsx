@@ -15,6 +15,7 @@ interface HabitFormModalProps {
     color?: string;
     icon?: string;
   }) => Promise<void>;
+  onDelete?: (habitId: string) => Promise<void>;
   onArchive?: (habitId: string) => Promise<void>;
 }
 
@@ -33,6 +34,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   defaultCategory,
   onClose,
   onSave,
+  onDelete,
   onArchive,
 }) => {
   const isEditMode = Boolean(habitToEdit);
@@ -135,15 +137,40 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!habitToEdit || !onDelete) return;
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete "${habitToEdit.name}"?\n\nThis will remove the habit and its logs permanently.`
+      )
+    ) {
+      try {
+        setIsSubmitting(true);
+        await onDelete(habitToEdit.id);
+        onClose();
+      } catch (err) {
+        console.error('Failed to delete habit:', err);
+        setError('Failed to delete habit. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
   const handleArchive = async () => {
     if (!habitToEdit || !onArchive) return;
-    if (window.confirm(`Are you sure you want to archive "${habitToEdit.name}"? Historical logs will be preserved.`)) {
+    if (
+      window.confirm(
+        `Archive "${habitToEdit.name}"? Historical logs will be preserved in records.`
+      )
+    ) {
       try {
         setIsSubmitting(true);
         await onArchive(habitToEdit.id);
         onClose();
       } catch (err) {
         console.error('Failed to archive habit:', err);
+        setError('Failed to archive habit. Please try again.');
       } finally {
         setIsSubmitting(false);
       }
@@ -306,15 +333,34 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
           {/* Actions Area */}
           <div className="pt-4 border-t border-outline-variant/15 flex flex-col sm:flex-row items-center justify-between gap-3">
-            {isEditMode && onArchive && (
-              <button
-                type="button"
-                onClick={handleArchive}
-                disabled={isSubmitting}
-                className="text-xs font-semibold text-error hover:bg-error-container/20 px-3 py-2 rounded-xl transition-colors w-full sm:w-auto"
-              >
-                Archive Habit
-              </button>
+            {isEditMode && (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isSubmitting}
+                    className="text-xs font-semibold text-error hover:bg-error-container/20 px-3 py-2 rounded-xl transition-colors flex items-center gap-1"
+                    title="Permanently delete habit"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    <span>Delete</span>
+                  </button>
+                )}
+
+                {onArchive && (
+                  <button
+                    type="button"
+                    onClick={handleArchive}
+                    disabled={isSubmitting}
+                    className="text-xs font-semibold text-on-surface-variant hover:bg-surface-container-low px-3 py-2 rounded-xl transition-colors flex items-center gap-1"
+                    title="Archive habit"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">archive</span>
+                    <span>Archive</span>
+                  </button>
+                )}
+              </div>
             )}
 
             <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">

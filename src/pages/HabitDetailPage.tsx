@@ -11,7 +11,7 @@ import { Card } from '../components/ui/Card';
 export const HabitDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { habits, loading: habitsLoading, createHabit } = useHabits();
+  const { habits, loading: habitsLoading, createHabit, deleteHabit } = useHabits();
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -51,6 +51,22 @@ export const HabitDetailPage: React.FC = () => {
       next.setMonth(next.getMonth() + offset);
       return next;
     });
+  };
+
+  const handleDelete = async () => {
+    if (!habit) return;
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete "${habit.name}"?\n\nThis will remove the habit and its logs permanently.`
+      )
+    ) {
+      try {
+        await deleteHabit(habit.id);
+        navigate('/dashboard');
+      } catch (err) {
+        console.error('Failed to delete habit:', err);
+      }
+    }
   };
 
   const handleArchive = async () => {
@@ -215,7 +231,7 @@ export const HabitDetailPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Right: Actions */}
+        {/* Right: Actions (Edit, Archive, Delete) */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
@@ -224,14 +240,24 @@ export const HabitDetailPage: React.FC = () => {
             className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[18px]">edit</span>
-            <span>Edit Habit</span>
+            <span>Edit</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="text-error hover:bg-error-container/20 px-3"
+            title="Delete Habit Permanently"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete</span>
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={handleArchive}
-            className="text-error hover:bg-error-container/20 px-3"
+            className="text-on-surface-variant hover:bg-surface-container-high px-2.5"
             title="Archive Habit"
           >
             <span className="material-symbols-outlined text-[18px]">archive</span>
@@ -258,6 +284,7 @@ export const HabitDetailPage: React.FC = () => {
         habitToEdit={habit}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
+        onDelete={handleDelete}
         onArchive={handleArchive}
       />
 
