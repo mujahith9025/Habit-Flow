@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en" class="light notranslate" translate="no">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
+    <!-- Disable Google Translate Bar / Popups on Mobile PWA & Desktop -->
+    <meta name="google" content="notranslate" />
+    <meta name="googlebot" content="notranslate" />
+
     <!-- PWA & Mobile Web App Meta -->
     <title>HabitFlow — Gentle Persistence Habit Tracker</title>
     <meta name="description" content="Build lasting habits with gentle persistence. Calming, distraction-free habit tracking available anywhere." />
@@ -20,8 +24,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   </head>
-  <body class="bg-background text-on-surface font-body-text antialiased selection:bg-primary-container selection:text-on-primary-container">
-    <div id="root"></div>
+  <body class="bg-background text-on-surface font-body-text antialiased selection:bg-primary-container selection:text-on-primary-container notranslate" translate="no">
+    <div id="root" class="notranslate" translate="no"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
