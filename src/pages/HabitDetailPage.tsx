@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useHabits } from '../hooks/useHabits';
 import { useSingleHabitHistory } from '../hooks/useSingleHabitHistory';
 import { HabitStatsGrid } from '../components/habit/HabitStatsGrid';
+import { HabitWeeklyGraphsView } from '../components/habit/HabitWeeklyGraphsView';
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { Button } from '../components/ui/Button';
@@ -30,6 +31,7 @@ export const HabitDetailPage: React.FC = () => {
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [activeAnalyticsView, setActiveAnalyticsView] = useState<'graphs' | 'calendar'>('graphs');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -96,7 +98,6 @@ export const HabitDetailPage: React.FC = () => {
     setSelectedCategory(cat);
     const habitsInCat = categoryHabitsMap[cat] || [];
     if (habitsInCat.length > 0) {
-      // If current habit is not in this category, navigate to the first habit in this category
       if (!habitsInCat.some((h) => h.id === habit?.id)) {
         navigate(`/habit/${habitsInCat[0].id}`);
       }
@@ -168,7 +169,7 @@ export const HabitDetailPage: React.FC = () => {
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
         <p className="font-body-text text-sm text-on-surface-variant">
-          Loading habit progress and history...
+          Loading habit analytics and performance graphs...
         </p>
       </div>
     );
@@ -186,7 +187,7 @@ export const HabitDetailPage: React.FC = () => {
             No Active Habits Yet
           </h2>
           <p className="font-body-text text-xs text-on-surface-variant max-w-xs mx-auto">
-            Create your first habit to start tracking daily consistency and calendar heatmaps.
+            Create your first habit to start tracking weekly performance graphs and consistency gauges.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
@@ -380,15 +381,56 @@ export const HabitDetailPage: React.FC = () => {
       {/* 3. Metrics Summary Grid for the selected habit */}
       <HabitStatsGrid metrics={metrics} habitColor={habit.color || '#006398'} />
 
-      {/* 4. Monthly Calendar Activity Heatmap for the selected habit */}
-      <HabitCalendarHeatmap
-        currentDate={selectedDate}
-        onChangeMonth={handleMonthChange}
-        isCompleted={isCompleted}
-        onToggleDate={toggleEntry}
-        habitColor={habit.color || '#006398'}
-        habitName={habit.name}
-      />
+      {/* 4. Graph / Calendar View Switcher Tabs */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
+          <button
+            onClick={() => setActiveAnalyticsView('graphs')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeAnalyticsView === 'graphs'
+                ? 'bg-primary text-on-primary shadow-soft'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">bar_chart</span>
+            <span>Weekly Performance Graphs</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAnalyticsView('calendar')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeAnalyticsView === 'calendar'
+                ? 'bg-primary text-on-primary shadow-soft'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+            <span>Calendar Heatmap</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 5. Main Analytics Visualization: Weekly Performance Graphs or Calendar Heatmap */}
+      {activeAnalyticsView === 'graphs' ? (
+        <HabitWeeklyGraphsView
+          currentDate={selectedDate}
+          onChangeMonth={handleMonthChange}
+          isCompleted={isCompleted}
+          onToggleDate={toggleEntry}
+          habitName={habit.name}
+          habitFrequency={habit.frequency}
+          goalCount={habit.goalCount}
+        />
+      ) : (
+        <HabitCalendarHeatmap
+          currentDate={selectedDate}
+          onChangeMonth={handleMonthChange}
+          isCompleted={isCompleted}
+          onToggleDate={toggleEntry}
+          habitColor={habit.color || '#006398'}
+          habitName={habit.name}
+        />
+      )}
 
       {/* Edit Habit Modal */}
       <HabitFormModal
