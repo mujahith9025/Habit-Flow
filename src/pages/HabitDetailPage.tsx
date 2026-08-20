@@ -7,6 +7,7 @@ import { HabitStatsGrid } from '../components/habit/HabitStatsGrid';
 import { HabitWeeklyGraphsView } from '../components/habit/HabitWeeklyGraphsView';
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
 import { CategoryAggregateGraphsView } from '../components/habit/CategoryAggregateGraphsView';
+import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
@@ -212,7 +213,6 @@ export const HabitDetailPage: React.FC = () => {
     navigate(`/habit/${newHabit.id}`);
   };
 
-  const selectedYear = selectedDate.getFullYear();
   const selectedMonthIdx = selectedDate.getMonth();
   const { formattedTitle } = formatMonthYear(selectedDate);
 
@@ -265,186 +265,24 @@ export const HabitDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fadeIn pb-12">
-      {/* 1. Categorized 2-Tier Habit Navigator */}
-      <div className="bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-5 rounded-2xl border border-outline-variant/15 shadow-soft space-y-4">
-        {/* Tier 1: Tracker Board / Category Selector */}
-        <div>
-          <div className="flex items-center justify-between gap-2 mb-2 px-1">
-            <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                dashboard_customize
-              </span>
-              1. Select Tracker Board:
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {categories.map((cat) => {
-              const isSelected = currentCategory.toLowerCase() === cat.toLowerCase();
-              const count = categoryHabitsMap[cat]?.length || 0;
-
-              return (
-                <button
-                  key={cat}
-                  onClick={() => handleSelectCategory(cat)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
-                    isSelected
-                      ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-                  }`}
-                >
-                  <span>{getCategoryIcon(cat)}</span>
-                  <span>{cat}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      isSelected
-                        ? 'bg-white/20 text-white'
-                        : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tier 2: Habits under Selected Tracker Board (Aggregate or Individual Habit) */}
-        <div className="pt-3 border-t border-outline-variant/15">
-          <div className="flex items-center justify-between gap-2 mb-2 px-1">
-            <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-secondary text-[18px]">
-                checklist
-              </span>
-              2. Select Analytics View for {currentCategory}:
-            </span>
-
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 active:scale-95 transition-all"
-            >
-              <span className="material-symbols-outlined text-[16px]">add</span>
-              <span>New Habit</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {/* Aggregate All Habits Option */}
-            <button
-              onClick={() => handleSelectHabit('all')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
-                selectedHabitId === 'all'
-                  ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-                  : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">
-                {selectedHabitId === 'all' ? 'radio_button_checked' : 'radio_button_unchecked'}
-              </span>
-              <span>All Habits</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  selectedHabitId === 'all'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-surface-container-highest text-on-surface-variant'
-                }`}
-              >
-                {habitsInCurrentCategory.length}
-              </span>
-            </button>
-
-            {/* Individual Habit Buttons */}
-            {habitsInCurrentCategory.map((h) => {
-              const isSelected = selectedHabitId === h.id;
-              return (
-                <button
-                  key={h.id}
-                  onClick={() => handleSelectHabit(h.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
-                    isSelected
-                      ? 'bg-secondary text-on-secondary shadow-soft scale-[1.02]'
-                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">
-                    {isSelected ? 'radio_button_checked' : 'radio_button_unchecked'}
-                  </span>
-                  <span className="truncate max-w-[150px]">{h.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Interactive 12-Month Navigation Bar */}
-      <div className="bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 rounded-2xl border border-outline-variant/15 shadow-soft space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[20px]">
-              calendar_month
-            </span>
-            <h3 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
-              Analytics Month: <span className="text-primary dark:text-primary-fixed-dim">{formattedTitle}</span>
-            </h3>
-          </div>
-
-          {/* Year Switcher Stepper */}
-          <div className="flex items-center gap-1.5 self-end sm:self-auto">
-            <button
-              onClick={() => handleSelectYear(-1)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors"
-              title="Previous Year"
-            >
-              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-            </button>
-            <span className="font-stat-label text-xs font-bold px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface">
-              {selectedYear}
-            </span>
-            <button
-              onClick={() => handleSelectYear(1)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors"
-              title="Next Year"
-            >
-              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-            </button>
-
-            <button
-              onClick={() => setSelectedDate(new Date())}
-              className="ml-1 text-[11px] font-stat-label font-semibold text-primary hover:underline px-2 py-1 rounded-lg hover:bg-primary-fixed/15 transition-colors"
-            >
-              Current Month
-            </button>
-          </div>
-        </div>
-
-        {/* 12 Months Pill Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {MONTH_NAMES.map((name, idx) => {
-            const isSelected = selectedMonthIdx === idx;
-            const isCurrentMonthNow =
-              new Date().getMonth() === idx && new Date().getFullYear() === selectedYear;
-
-            return (
-              <button
-                key={name}
-                onClick={() => handleSelectMonthIndex(idx)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 flex items-center gap-1 ${
-                  isSelected
-                    ? 'bg-primary text-on-primary shadow-soft font-bold scale-[1.02]'
-                    : 'bg-surface-container-low dark:bg-surface-container-high/30 text-on-surface hover:bg-surface-container-high border border-outline-variant/15'
-                }`}
-              >
-                <span>{name.slice(0, 3)}</span>
-                {isCurrentMonthNow && !isSelected && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* 1. Streamlined Unified Header & Navigation Bar */}
+      <HabitUnifiedHeader
+        categories={categories}
+        currentCategory={currentCategory}
+        categoryHabitsMap={categoryHabitsMap}
+        selectedHabitId={selectedHabitId}
+        habitsInCurrentCategory={habitsInCurrentCategory}
+        selectedDate={selectedDate}
+        formattedMonthTitle={formattedTitle}
+        getCategoryIcon={getCategoryIcon}
+        onSelectCategory={handleSelectCategory}
+        onSelectHabit={handleSelectHabit}
+        onMonthChange={handleMonthChange}
+        onSelectMonthIndex={handleSelectMonthIndex}
+        onSelectYear={handleSelectYear}
+        onResetToCurrentMonth={() => setSelectedDate(new Date())}
+        onOpenCreateHabitModal={() => setIsCreateModalOpen(true)}
+      />
 
       {/* 3. Main Analytics Content Area */}
       {selectedHabitId === 'all' ? (
