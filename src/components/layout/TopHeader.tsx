@@ -2,10 +2,12 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 export const TopHeader: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { isInstalled } = usePWAInstall();
   const location = useLocation();
 
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
@@ -27,15 +29,17 @@ export const TopHeader: React.FC = () => {
 
         {/* Right: Actions & User Profile in the Right Corner */}
         <div className="flex items-center gap-2.5 sm:gap-3">
-          {/* How to Install App / PWA Install Guide Link */}
-          <Link
-            to="/install"
-            title="How to Install HabitFlow on Phone & PC"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors border border-primary/20 shadow-xs"
-          >
-            <span className="material-symbols-outlined text-[16px]">install_mobile</span>
-            <span className="hidden xs:inline">Install App</span>
-          </Link>
+          {/* How to Install App / PWA Install Guide Link (Hidden if already installed) */}
+          {!isInstalled && (
+            <Link
+              to="/install"
+              title="How to Install HabitFlow on Phone & PC"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors border border-primary/20 shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[16px]">install_mobile</span>
+              <span className="hidden xs:inline">Install App</span>
+            </Link>
+          )}
 
           {/* Theme Toggle */}
           <button

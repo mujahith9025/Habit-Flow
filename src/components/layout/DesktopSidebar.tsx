@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useHabits } from '../../hooks/useHabits';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface DesktopSidebarProps {
   isCollapsed?: boolean;
@@ -14,6 +15,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 }) => {
   const { user, signOut } = useAuth();
   const { habits } = useHabits();
+  const { isInstalled } = usePWAInstall();
   const navigate = useNavigate();
 
   // Internal state if not controlled externally
@@ -48,7 +50,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/habit', label: 'Habit View', icon: 'task_alt' },
-    { to: '/install', label: 'Install App', icon: 'install_mobile' },
+    ...(!isInstalled ? [{ to: '/install', label: 'Install App', icon: 'install_mobile' }] : []),
     { to: '/debug', label: 'Real-time Sync', icon: 'sync', badge: 'Live' },
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];
