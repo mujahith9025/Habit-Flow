@@ -186,37 +186,17 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                     key={habit.id}
                     className="hover:bg-surface-container-low/40 dark:hover:bg-surface-container-high/20 transition-colors"
                   >
-                    {/* Sticky Left Column: Habit Info (Compact on mobile with multi-line wrap) */}
+                    {/* Sticky Left Column: Habit Info (Clean, slightly increased font size, multi-line wrap) */}
                     <td
                       onClick={() => onEditHabit?.(habit)}
                       title="Click to edit habit"
-                      className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/20 cursor-pointer group min-w-[100px] max-w-[110px] sm:min-w-[190px] sm:max-w-none"
+                      className="sticky left-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2.5 sm:p-4 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.06)] border-r border-outline-variant/20 cursor-pointer group min-w-[105px] max-w-[120px] sm:min-w-[190px] sm:max-w-none"
                     >
                       <div className="flex flex-col min-w-0">
-                        {/* Habit Title (Multi-line wrap on mobile) */}
-                        <div className="flex items-center">
-                          <span className="font-habit-name text-xs sm:text-sm font-semibold text-on-surface group-hover:text-primary transition-colors break-words whitespace-normal leading-snug">
-                            {habit.name}
-                          </span>
-                        </div>
-
-                        {/* Goal & Streak Subtitle */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mt-1">
-                          <span className="text-[9px] sm:text-[10px] font-stat-label text-on-surface-variant leading-none">
-                            {metrics.targetCount}/d
-                          </span>
-                          <div className="flex items-center gap-0.5 text-tertiary">
-                            <span
-                              className="material-symbols-outlined text-[12px] sm:text-[13px]"
-                              style={{ fontVariationSettings: "'FILL' 1" }}
-                            >
-                              local_fire_department
-                            </span>
-                            <span className="font-stat-label text-[9px] sm:text-[10px] font-bold">
-                              {metrics.streakCount}d
-                            </span>
-                          </div>
-                        </div>
+                        {/* Habit Title (Slightly increased text size & multi-line wrap) */}
+                        <span className="font-habit-name text-[13px] sm:text-[15px] font-bold text-on-surface group-hover:text-primary transition-colors break-words whitespace-normal leading-snug">
+                          {habit.name}
+                        </span>
                       </div>
                     </td>
 
@@ -236,11 +216,24 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                       );
                     })}
 
-                    {/* Month % Complete Column (Stable / Sticky on Right) */}
-                    <td className="sticky right-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 text-right border-l border-outline-variant/20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
-                      <span className="font-stat-label text-xs sm:text-sm font-bold text-primary dark:text-primary-fixed-dim">
-                        {metrics.monthProgressPercent}%
-                      </span>
+                    {/* Month % Complete & Fire Streak Column (Stable / Sticky on Right) */}
+                    <td className="sticky right-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-2 sm:p-3 text-right border-l border-outline-variant/20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)] min-w-[64px] sm:min-w-[72px]">
+                      <div className="flex flex-col items-end justify-center gap-1">
+                        <span className="font-stat-label text-xs sm:text-sm font-extrabold text-primary dark:text-primary-fixed-dim leading-none">
+                          {metrics.monthProgressPercent}%
+                        </span>
+                        <div className="flex items-center gap-0.5 text-tertiary">
+                          <span
+                            className="material-symbols-outlined text-[13px] sm:text-[14px]"
+                            style={{ fontVariationSettings: "'FILL' 1" }}
+                          >
+                            local_fire_department
+                          </span>
+                          <span className="font-stat-label text-[10px] sm:text-[11px] font-bold leading-none">
+                            {metrics.streakCount}d
+                          </span>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 );
