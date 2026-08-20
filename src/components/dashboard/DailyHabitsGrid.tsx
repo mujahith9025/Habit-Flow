@@ -35,16 +35,23 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
   formattedMonthTitle,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolledMonthRef = useRef<string | null>(null);
 
-  // Auto-scroll horizontally to today's column on initial load
+  // Auto-scroll horizontally to today's column on initial load or month change only (not on entry toggle)
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      const todayEl = scrollContainerRef.current.querySelector('[data-is-today="true"]');
-      if (todayEl) {
-        todayEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      }
+    if (formattedMonthTitle && hasScrolledMonthRef.current !== formattedMonthTitle) {
+      const timer = setTimeout(() => {
+        if (scrollContainerRef.current) {
+          const todayEl = scrollContainerRef.current.querySelector('[data-is-today="true"]');
+          if (todayEl) {
+            todayEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            hasScrolledMonthRef.current = formattedMonthTitle;
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [daysInMonth]);
+  }, [formattedMonthTitle, dailyHabits.length]);
 
   if (dailyHabits.length === 0) {
     return (
