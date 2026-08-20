@@ -13,7 +13,7 @@ import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useDailyHabitsData } from '../hooks/useDailyHabitsData';
 import { useHabits } from '../hooks/useHabits';
-import { DashboardViewTab, Habit, HabitFrequency, TimeOfDay } from '../types';
+import { DashboardViewTab, Habit, HabitFrequency } from '../types';
 
 export const DashboardPage: React.FC = () => {
   // Month/Year navigation state
@@ -78,7 +78,6 @@ export const DashboardPage: React.FC = () => {
     category?: string;
     frequency: HabitFrequency;
     goalCount: number;
-    timeOfDay?: TimeOfDay;
     color?: string;
     icon?: string;
   }) => {
@@ -87,7 +86,6 @@ export const DashboardPage: React.FC = () => {
         name: data.name,
         category: data.category,
         frequency: data.frequency,
-        timeOfDay: data.timeOfDay,
         goalCount: data.goalCount,
         color: data.color,
       });
@@ -96,7 +94,6 @@ export const DashboardPage: React.FC = () => {
         name: data.name,
         category: data.category || (effectiveCategory !== 'all' ? effectiveCategory : 'General'),
         frequency: data.frequency,
-        timeOfDay: data.timeOfDay,
         goalCount: data.goalCount,
         color: data.color,
         sortOrder: habits.length,
