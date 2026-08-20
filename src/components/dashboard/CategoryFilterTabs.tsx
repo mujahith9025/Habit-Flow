@@ -9,7 +9,6 @@ interface CategoryFilterTabsProps {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  all: '🌟',
   'self challenges': '🎯',
   'diet & nutrition': '🥗',
   diet: '🥗',
@@ -63,34 +62,12 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
           className="text-xs font-semibold text-primary hover:text-primary-fixed-dim hover:underline flex items-center gap-1 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
-          <span>Add Habit to Tracker</span>
+          <span>Add Habit</span>
         </button>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {/* All Habits Tab */}
-        <button
-          onClick={() => onSelectCategory('all')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
-            selectedCategory === 'all'
-              ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-              : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-          }`}
-        >
-          <span>🌟</span>
-          <span>All Trackers</span>
-          <span
-            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-              selectedCategory === 'all'
-                ? 'bg-white/20 text-white'
-                : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
-            }`}
-          >
-            {activeHabits.length}
-          </span>
-        </button>
-
-        {/* Dynamic Category Tabs */}
+        {/* Dynamic Category Tabs Only */}
         {categories.map((cat) => {
           const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
           const count = categoryCounts[cat];

@@ -15,10 +15,10 @@ import { DashboardViewTab, Habit, HabitFrequency } from '../types';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
-  // Month/Year navigation state (defaulting to current date)
+  // Month/Year navigation state
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [activeTab, setActiveTab] = useState<DashboardViewTab>('daily');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   // Add / Edit Habit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,9 +26,27 @@ export const DashboardPage: React.FC = () => {
 
   const selectedMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
 
-  // Live real-time dashboard summary metrics (filtered by selected tracker board)
-  const metrics = useDashboardMetrics(selectedMonthKey, selectedCategory);
   const { habits, loading: habitsLoading, createHabit, updateHabit, archiveHabit } = useHabits();
+
+  const activeHabits = habits.filter((h) => !h.archived);
+
+  // Group categories
+  const categoryCounts: Record<string, number> = {};
+  activeHabits.forEach((h) => {
+    const cat = h.category?.trim() || 'General';
+    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+  });
+  const categories = Object.keys(categoryCounts).sort();
+
+  // Effective category defaults to the first available category (no 'all' tab)
+  const effectiveCategory = categories.length > 0
+    ? (!selectedCategory || selectedCategory === 'all' || !categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
+        ? categories[0]
+        : selectedCategory)
+    : 'General';
+
+  // Live real-time dashboard summary metrics (filtered by category)
+  const metrics = useDashboardMetrics(selectedMonthKey, effectiveCategory);
 
   const handleMonthChange = (offset: number) => {
     setSelectedDate((prev) => {
@@ -68,7 +86,7 @@ export const DashboardPage: React.FC = () => {
     } else {
       await createHabit({
         name: data.name,
-        category: data.category || (selectedCategory !== 'all' ? selectedCategory : 'General'),
+        category: data.category || (effectiveCategory !== 'all' ? effectiveCategory : 'General'),
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
@@ -148,10 +166,10 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Category / Tracker Board Selector Tabs */}
+      {/* 3. Category / Tracker Board Selector Tabs (Only specific categories) */}
       <CategoryFilterTabs
         habits={habits}
-        selectedCategory={selectedCategory}
+        selectedCategory={effectiveCategory}
         onSelectCategory={setSelectedCategory}
         onAddNewCategory={handleOpenAddModal}
       />
@@ -165,7 +183,7 @@ export const DashboardPage: React.FC = () => {
       {activeTab === 'daily' && (
         <DailyTabContent
           currentDate={selectedDate}
-          selectedCategory={selectedCategory}
+          selectedCategory={effectiveCategory}
           onEditHabit={handleOpenEditModal}
         />
       )}
@@ -173,7 +191,7 @@ export const DashboardPage: React.FC = () => {
       {activeTab === 'weekly' && (
         <WeeklyTabContent
           currentDate={selectedDate}
-          selectedCategory={selectedCategory}
+          selectedCategory={effectiveCategory}
           onEditHabit={handleOpenEditModal}
         />
       )}
@@ -181,7 +199,7 @@ export const DashboardPage: React.FC = () => {
       {activeTab === 'monthly' && (
         <MonthlyTabContent
           currentDate={selectedDate}
-          selectedCategory={selectedCategory}
+          selectedCategory={effectiveCategory}
           onEditHabit={handleOpenEditModal}
         />
       )}
@@ -193,7 +211,7 @@ export const DashboardPage: React.FC = () => {
       <HabitFormModal
         isOpen={isModalOpen}
         habitToEdit={editingHabit}
-        defaultCategory={selectedCategory !== 'all' ? selectedCategory : undefined}
+        defaultCategory={effectiveCategory !== 'all' ? effectiveCategory : undefined}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveHabit}
         onArchive={handleArchiveHabit}

@@ -15,46 +15,20 @@ export const TopHeader: React.FC = () => {
   return (
     <header className="sticky top-0 z-30 w-full bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/15 transition-colors">
       <div className="flex items-center justify-between px-container-padding py-3 max-w-7xl mx-auto">
-        {/* Left: Avatar (Mobile & Desktop) + Branding */}
-        <div className="flex items-center gap-3">
-          {/* User Profile Avatar linking to /settings */}
-          {user ? (
-            <Link
-              to="/settings"
-              title="Go to Settings"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-soft flex items-center justify-center"
-            >
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.name || 'User Profile'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-primary-container text-on-primary-container flex items-center justify-center font-stat-label font-bold text-xs sm:text-sm">
-                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
-            </Link>
-          ) : (
-            <Link
-              to="/login"
-              className="text-xs font-semibold px-3 py-1.5 rounded-full text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low transition-colors"
-            >
-              Sign In
-            </Link>
-          )}
-
-          {/* Title Branding */}
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="font-app-title text-xl sm:text-2xl font-bold text-primary dark:text-primary-fixed-dim">
-              HabitFlow
+        {/* Left: Branding & App Logo */}
+        <Link to="/dashboard" className="flex items-center gap-2.5 active:scale-98 transition-transform">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-soft">
+            <span className="material-symbols-outlined text-[20px] sm:text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              energy_savings_leaf
             </span>
-          </Link>
-        </div>
+          </div>
+          <span className="font-app-title text-xl sm:text-2xl font-bold text-primary dark:text-primary-fixed-dim">
+            HabitFlow
+          </span>
+        </Link>
 
-        {/* Right: Actions (PWA install, Theme toggle, Calendar action) */}
-        <div className="flex items-center gap-2">
+        {/* Right: Actions & User Profile in the Right Corner */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {/* PWA Install Button */}
           {isInstallable && (
             <button
@@ -87,6 +61,34 @@ export const TopHeader: React.FC = () => {
               className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-primary dark:text-primary-fixed-dim rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
             >
               <span className="material-symbols-outlined text-[22px]">calendar_today</span>
+            </Link>
+          )}
+
+          {/* User Profile Avatar in the Right Corner linking to /settings */}
+          {user ? (
+            <Link
+              to="/settings"
+              title="Go to Settings & Profile"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-soft flex items-center justify-center ring-2 ring-primary/20 hover:ring-primary/40"
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.name || 'User Profile'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary text-on-primary flex items-center justify-center font-stat-label font-bold text-xs sm:text-sm">
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors shadow-soft"
+            >
+              Sign In
             </Link>
           )}
         </div>
