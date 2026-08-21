@@ -383,76 +383,208 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
         </div>
       )}
 
-      {/* MODE C: MONTHLY GRAPH (Habit-by-Habit Progress Comparison & Streaks) */}
-      {graphMode === 'monthly' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold">
-              Habits Comparison & Consistency Meters ({selectedMonthTitle})
-            </span>
-            <span className="text-xs font-stat-label font-bold text-primary">
-              {habits.length} Habits Tracked
-            </span>
-          </div>
+      {/* MODE C: MONTHLY GRAPH (Overall Month Circular Donut Gauge + Individual Habit Meters) */}
+      {graphMode === 'monthly' && (() => {
+        const monthRadius = 40;
+        const monthCircumference = 2 * Math.PI * monthRadius; // ~251.32
+        const monthStrokeDashoffset =
+          monthCircumference - (monthCircumference * Math.min(100, Math.max(0, monthAveragePercent))) / 100;
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {habits.map((h, idx) => {
-              const metrics = habitMetricsMap[h.id] || {
-                completedCount: 0,
-                monthProgressPercent: 0,
-                streakCount: 0,
-                targetCount: totalDaysInMonth,
-              };
+        return (
+          <div className="space-y-5">
+            {/* 1. Overall Month Circular Progress Hero Banner */}
+            <div className="bg-surface-container-low/80 dark:bg-surface-container-high/40 rounded-2xl p-4 sm:p-6 border border-outline-variant/20 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+              {/* Background Ambient Glow */}
+              <div className="absolute -top-10 -right-10 w-44 h-44 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
-              return (
-                <div
-                  key={h.id}
-                  className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/15 space-y-3 hover:border-primary/40 transition-all shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-stat-label text-xs font-bold px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface">
-                        #{idx + 1}
-                      </span>
-                      <h4 className="font-habit-name text-sm font-semibold text-on-surface truncate">
-                        {h.name}
-                      </h4>
-                    </div>
+              {/* Left: Text Details & Statistics */}
+              <div className="space-y-2 text-center md:text-left flex-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary dark:text-primary-fixed-dim text-xs font-bold font-stat-label">
+                  <span className="material-symbols-outlined text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    pie_chart
+                  </span>
+                  <span>Overall Monthly Consistency</span>
+                </div>
 
-                    <div className="flex items-center gap-1 text-tertiary">
-                      <span className="material-symbols-outlined text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        local_fire_department
-                      </span>
-                      <span className="font-stat-label text-xs font-bold">
-                        {metrics.streakCount}d streak
-                      </span>
-                    </div>
+                <h4 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
+                  {categoryName} • {selectedMonthTitle} Performance
+                </h4>
+
+                <p className="font-body-text text-xs text-on-surface-variant max-w-md">
+                  Cumulative consistency score across all {totalHabits} habit{totalHabits === 1 ? '' : 's'} tracked in {categoryName} over {totalDaysInMonth} calendar days.
+                </p>
+
+                {/* Stat Chips */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                  <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                    <span className="text-on-surface-variant">Checks Completed: </span>
+                    <span className="font-bold text-primary dark:text-primary-fixed-dim">
+                      {totalCompletionsAcrossMonth} / {totalPossibleChecks}
+                    </span>
                   </div>
 
-                  {/* Progress Meter */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-stat-label">
-                      <span className="text-on-surface-variant">
-                        {metrics.completedCount} of {totalDaysInMonth} days done
-                      </span>
-                      <span className="font-bold text-primary dark:text-primary-fixed-dim">
-                        {metrics.monthProgressPercent}%
-                      </span>
-                    </div>
+                  <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                    <span className="text-on-surface-variant">Habits Tracked: </span>
+                    <span className="font-bold text-on-surface">{totalHabits}</span>
+                  </div>
 
-                    <div className="h-2.5 w-full bg-surface-container-highest dark:bg-surface-container rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500 bg-primary"
-                        style={{ width: `${metrics.monthProgressPercent}%` }}
-                      />
-                    </div>
+                  <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                    <span className="text-on-surface-variant">Days in Month: </span>
+                    <span className="font-bold text-on-surface">{totalDaysInMonth}</span>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Right: Large Circular Donut Gauge (matching Week circular design) */}
+              <div className="flex flex-col items-center justify-center shrink-0">
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    {/* Background Track Circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={monthRadius}
+                      fill="transparent"
+                      stroke="rgba(0, 99, 152, 0.15)"
+                      strokeWidth="7"
+                    />
+                    {/* Active Progress Circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={monthRadius}
+                      fill="transparent"
+                      stroke="#006398"
+                      strokeWidth="7"
+                      strokeDasharray={monthCircumference}
+                      strokeDashoffset={monthStrokeDashoffset}
+                      strokeLinecap="round"
+                      className="transition-all duration-1000 ease-out"
+                    />
+                  </svg>
+
+                  {/* Inner Text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="font-app-title text-xl sm:text-2xl font-black text-on-surface">
+                      {monthAveragePercent}%
+                    </span>
+                    <span className="text-[8px] uppercase tracking-wider text-on-surface-variant font-stat-label font-bold">
+                      MONTH AVG
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Individual Habit Cards with Circular Donut Rings */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold">
+                  Individual Habit Progress Breakdown ({selectedMonthTitle})
+                </span>
+                <span className="text-xs font-stat-label font-bold text-primary">
+                  {habits.length} Habits Tracked
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {habits.map((h, idx) => {
+                  const metrics = habitMetricsMap[h.id] || {
+                    completedCount: 0,
+                    monthProgressPercent: 0,
+                    streakCount: 0,
+                    targetCount: totalDaysInMonth,
+                  };
+
+                  const habitRadius = 22;
+                  const habitCircumference = 2 * Math.PI * habitRadius; // ~138.23
+                  const habitStrokeDashoffset =
+                    habitCircumference -
+                    (habitCircumference * Math.min(100, Math.max(0, metrics.monthProgressPercent))) / 100;
+                  const habitColor = h.color || '#006398';
+
+                  return (
+                    <div
+                      key={h.id}
+                      className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/15 flex items-center justify-between gap-4 hover:border-primary/40 transition-all shadow-sm"
+                    >
+                      {/* Left: Habit Details & Streak */}
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-stat-label text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface">
+                            #{idx + 1}
+                          </span>
+                          <h4 className="font-habit-name text-sm font-semibold text-on-surface truncate">
+                            {h.name}
+                          </h4>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+                          <span>
+                            {metrics.completedCount} of {totalDaysInMonth} days done
+                          </span>
+                          <div className="flex items-center gap-1 text-tertiary">
+                            <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                              local_fire_department
+                            </span>
+                            <span className="font-stat-label text-xs font-bold">
+                              {metrics.streakCount}d streak
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Linear Mini Bar */}
+                        <div className="h-1.5 w-full bg-surface-container-highest dark:bg-surface-container rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${metrics.monthProgressPercent}%`,
+                              backgroundColor: habitColor,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right: Circular Gauge for this Habit */}
+                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 54 54">
+                          <circle
+                            cx="27"
+                            cy="27"
+                            r={habitRadius}
+                            fill="transparent"
+                            stroke="rgba(0,0,0,0.06)"
+                            className="dark:stroke-white/10"
+                            strokeWidth="4.5"
+                          />
+                          <circle
+                            cx="27"
+                            cy="27"
+                            r={habitRadius}
+                            fill="transparent"
+                            stroke={habitColor}
+                            strokeWidth="4.5"
+                            strokeDasharray={habitCircumference}
+                            strokeDashoffset={habitStrokeDashoffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-out"
+                          />
+                        </svg>
+
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <span className="font-stat-label text-[11px] sm:text-xs font-extrabold text-on-surface">
+                            {metrics.monthProgressPercent}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 3. Interactive Daily Habit Matrix (Quick 1-Tap Toggle for all habits in title) */}
       <div className="pt-4 border-t border-outline-variant/15 space-y-3">
