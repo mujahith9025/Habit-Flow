@@ -4,10 +4,17 @@ import { DesktopSidebar } from './DesktopSidebar';
 import { TopHeader } from './TopHeader';
 import { MobileBottomNav } from './MobileBottomNav';
 import { OfflineBanner } from '../ui/OfflineBanner';
+import { ExitToast } from '../ui/ExitToast';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 
 export const AppShell: React.FC = () => {
+  const { showExitToast } = useBackButtonHandler();
+
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row antialiased selection:bg-primary-container selection:text-on-primary-container">
+      {/* Back Button Exit Warning Toast */}
+      <ExitToast show={showExitToast} />
+
       {/* Offline Status Warning Bar */}
       <OfflineBanner />
 
