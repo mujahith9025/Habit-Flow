@@ -12,6 +12,7 @@ import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { isHabitActiveInMonth } from '../types';
 
 const CATEGORY_ICONS: Record<string, string> = {
   'self challenges': '🎯',
@@ -46,7 +47,13 @@ const MONTH_NAMES = [
 export const HabitDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { habits, loading: habitsLoading, createHabit, deleteHabit } = useHabits();
+  const {
+    habits,
+    loading: habitsLoading,
+    createHabit,
+    removeHabitFromMonth,
+    deleteHabit,
+  } = useHabits();
 
   // Selected date defaults to current date / current month on initial entry
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
@@ -56,8 +63,11 @@ export const HabitDetailPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Active habits list
-  const activeHabits = habits.filter((h) => !h.archived);
+  const currentMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
+  const { formattedTitle } = formatMonthYear(selectedDate);
+
+  // Active habits list filtered for the currently selected month
+  const activeHabits = habits.filter((h) => isHabitActiveInMonth(h, currentMonthKey));
 
   // Group habits by category
   const categoryHabitsMap: Record<string, typeof activeHabits> = {};
@@ -163,7 +173,7 @@ export const HabitDetailPage: React.FC = () => {
     if (!habit) return;
     if (
       window.confirm(
-        `Are you sure you want to permanently delete "${habit.name}"?\n\nThis will remove the habit and its logs permanently.`
+        `Are you sure you want to permanently delete "${habit.name}" across ALL months?\n\nThis will remove the habit and its logs permanently.\n\nTip: To remove it from ${formattedTitle} only, use the Edit button.`
       )
     ) {
       try {
@@ -173,6 +183,16 @@ export const HabitDetailPage: React.FC = () => {
       } catch (err) {
         console.error('Failed to delete habit:', err);
       }
+    }
+  };
+
+  const handleRemoveFromMonth = async (habitId: string, monthKey: string) => {
+    try {
+      await removeHabitFromMonth(habitId, monthKey);
+      setSelectedHabitId('all');
+      navigate('/habit');
+    } catch (err) {
+      console.error('Failed to remove habit from month:', err);
     }
   };
 
@@ -196,6 +216,8 @@ export const HabitDetailPage: React.FC = () => {
     goalCount: number;
     color?: string;
     icon?: string;
+    startMonth?: string;
+    endMonth?: string;
   }) => {
     await updateHabit(data);
   };
@@ -207,6 +229,8 @@ export const HabitDetailPage: React.FC = () => {
     goalCount: number;
     color?: string;
     icon?: string;
+    startMonth?: string;
+    endMonth?: string;
   }) => {
     const newHabit = await createHabit(data);
     setIsCreateModalOpen(false);
@@ -214,7 +238,6 @@ export const HabitDetailPage: React.FC = () => {
   };
 
   const selectedMonthIdx = selectedDate.getMonth();
-  const { formattedTitle } = formatMonthYear(selectedDate);
 
   if (habitsLoading) {
     return (
@@ -421,8 +444,11 @@ export const HabitDetailPage: React.FC = () => {
       <HabitFormModal
         isOpen={isEditModalOpen}
         habitToEdit={habit}
+        currentMonthKey={currentMonthKey}
+        formattedMonthTitle={formattedTitle}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
+        onRemoveFromMonth={handleRemoveFromMonth}
         onDelete={handleDelete}
         onArchive={handleArchive}
       />
@@ -431,6 +457,8 @@ export const HabitDetailPage: React.FC = () => {
       <HabitFormModal
         isOpen={isCreateModalOpen}
         defaultCategory={currentCategory}
+        currentMonthKey={currentMonthKey}
+        formattedMonthTitle={formattedTitle}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateHabit}
       />

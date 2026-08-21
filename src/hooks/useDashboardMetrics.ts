@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { onSnapshot, query, where, getEntriesCollectionRef } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
-import { DashboardMetrics, HabitEntryMap } from '../types';
+import { DashboardMetrics, HabitEntryMap, isHabitActiveInMonth } from '../types';
 import { calculateGentleOverallStreak } from '../lib/calculations';
 
 /**
@@ -26,8 +26,8 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
   const todayDateKey = formatDateKey(today);
   const activeMonthKey = selectedMonthKey || todayDateKey.substring(0, 7);
 
-  // Filter daily habits by category
-  const activeDailyHabits = habits.filter((h) => !h.archived);
+  // Filter daily habits active in the selected month
+  const activeDailyHabits = habits.filter((h) => isHabitActiveInMonth(h, activeMonthKey));
   const dailyHabits = selectedCategory === 'all'
     ? activeDailyHabits
     : activeDailyHabits.filter(

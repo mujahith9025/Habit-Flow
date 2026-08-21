@@ -6,6 +6,8 @@ interface HabitFormModalProps {
   isOpen: boolean;
   habitToEdit?: Habit | null;
   defaultCategory?: string;
+  currentMonthKey?: string; // e.g. "2026-08"
+  formattedMonthTitle?: string; // e.g. "August 2026"
   onClose: () => void;
   onSave: (data: {
     name: string;
@@ -14,7 +16,11 @@ interface HabitFormModalProps {
     goalCount: number;
     color?: string;
     icon?: string;
+    startMonth?: string;
+    endMonth?: string;
+    excludedMonths?: string[];
   }) => Promise<void>;
+  onRemoveFromMonth?: (habitId: string, monthKey: string) => Promise<void>;
   onDelete?: (habitId: string) => Promise<void>;
   onArchive?: (habitId: string) => Promise<void>;
 }
@@ -32,8 +38,11 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   isOpen,
   habitToEdit,
   defaultCategory,
+  currentMonthKey,
+  formattedMonthTitle,
   onClose,
   onSave,
+  onRemoveFromMonth,
   onDelete,
   onArchive,
 }) => {
@@ -45,8 +54,11 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
   const [goalCount, setGoalCount] = useState(1);
+  const [monthScope, setMonthScope] = useState<'all' | 'from_current' | 'current_only'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const activeMonthTitle = formattedMonthTitle || 'Current Month';
 
   // Initialize or reset form values
   useEffect(() => {
@@ -65,6 +77,14 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       }
       setFrequency(habitToEdit.frequency || 'daily');
       setGoalCount(habitToEdit.goalCount || 1);
+
+      if (habitToEdit.startMonth && habitToEdit.endMonth && habitToEdit.startMonth === habitToEdit.endMonth) {
+        setMonthScope('current_only');
+      } else if (habitToEdit.startMonth) {
+        setMonthScope('from_current');
+      } else {
+        setMonthScope('all');
+      }
     } else {
       setName('');
       const initialCat = defaultCategory || 'General';
@@ -80,6 +100,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       }
       setFrequency('daily');
       setGoalCount(1);
+      setMonthScope('all');
     }
     setError(null);
   }, [habitToEdit, defaultCategory, isOpen]);
@@ -114,6 +135,16 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
       ? customCategory.trim() || 'General'
       : category;
 
+    let startMonth: string | undefined = undefined;
+    let endMonth: string | undefined = undefined;
+
+    if (monthScope === 'from_current' && currentMonthKey) {
+      startMonth = currentMonthKey;
+    } else if (monthScope === 'current_only' && currentMonthKey) {
+      startMonth = currentMonthKey;
+      endMonth = currentMonthKey;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
@@ -122,6 +153,8 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         category: finalCategory,
         frequency,
         goalCount: Math.max(1, goalCount),
+        startMonth,
+        endMonth,
       });
       onClose();
     } catch (err: unknown) {
@@ -137,11 +170,31 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
     }
   };
 
-  const handleDelete = async () => {
+  const handleRemoveFromMonth = async () => {
+    if (!habitToEdit || !currentMonthKey || !onRemoveFromMonth) return;
+    if (
+      window.confirm(
+        `Remove "${habitToEdit.name}" from ${activeMonthTitle} only?\n\nIt will be hidden from ${activeMonthTitle}, but your habit and data will remain preserved in other months.`
+      )
+    ) {
+      try {
+        setIsSubmitting(true);
+        await onRemoveFromMonth(habitToEdit.id, currentMonthKey);
+        onClose();
+      } catch (err) {
+        console.error('Failed to remove habit from month:', err);
+        setError('Failed to remove habit from month. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleDeleteAllMonths = async () => {
     if (!habitToEdit || !onDelete) return;
     if (
       window.confirm(
-        `Are you sure you want to permanently delete "${habitToEdit.name}"?\n\nThis will remove the habit and its logs permanently.`
+        `Are you sure you want to permanently delete "${habitToEdit.name}" ACROSS ALL MONTHS?\n\nThis will remove the habit and all its historical logs permanently.`
       )
     ) {
       try {
@@ -193,9 +246,16 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-outline-variant/15">
-          <h2 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-            {isEditMode ? 'Edit Habit' : 'Create New Habit'}
-          </h2>
+          <div>
+            <h2 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
+              {isEditMode ? 'Edit Habit' : 'Create New Habit'}
+            </h2>
+            {currentMonthKey && (
+              <p className="text-[11px] font-stat-label text-primary dark:text-primary-fixed-dim font-semibold">
+                Viewing: {activeMonthTitle}
+              </p>
+            )}
+          </div>
 
           <button
             type="button"
@@ -280,7 +340,62 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             )}
           </div>
 
-          {/* 3. Frequency Selector Tabs */}
+          {/* 3. Month Scope (All Months vs Specific Month) */}
+          {currentMonthKey && (
+            <div className="space-y-2 p-3.5 rounded-2xl bg-surface-container-low/70 dark:bg-surface-container-high/30 border border-outline-variant/20">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-primary text-[17px]">
+                  calendar_month
+                </span>
+                <label className="block font-section-header text-xs font-bold text-on-surface">
+                  Month Scope & Availability
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMonthScope('all')}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    monthScope === 'all'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-xs'
+                      : 'border-outline-variant/20 hover:bg-surface-container text-on-surface-variant'
+                  }`}
+                >
+                  <div className="text-xs font-bold">🌐 All Months</div>
+                  <div className="text-[10px] text-on-surface-variant mt-0.5">Reflects across every month</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMonthScope('from_current')}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    monthScope === 'from_current'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-xs'
+                      : 'border-outline-variant/20 hover:bg-surface-container text-on-surface-variant'
+                  }`}
+                >
+                  <div className="text-xs font-bold">📅 From {activeMonthTitle}</div>
+                  <div className="text-[10px] text-on-surface-variant mt-0.5">Starts from this month onwards</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMonthScope('current_only')}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    monthScope === 'current_only'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-xs'
+                      : 'border-outline-variant/20 hover:bg-surface-container text-on-surface-variant'
+                  }`}
+                >
+                  <div className="text-xs font-bold">🎯 {activeMonthTitle} Only</div>
+                  <div className="text-[10px] text-on-surface-variant mt-0.5">Only active in this month</div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Frequency Selector Tabs */}
           <div className="space-y-1.5">
             <label className="block font-section-header text-xs font-semibold text-on-surface">
               Frequency
@@ -303,7 +418,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Goal Stepper */}
+          {/* 5. Goal Stepper */}
           <div className="space-y-1.5">
             <label className="block font-section-header text-xs font-semibold text-on-surface">
               {goalLabels[frequency]}
@@ -334,17 +449,32 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
           {/* Actions Area */}
           <div className="pt-4 border-t border-outline-variant/15 flex flex-col sm:flex-row items-center justify-between gap-3">
             {isEditMode && (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                {/* Remove from this month only button */}
+                {currentMonthKey && onRemoveFromMonth && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveFromMonth}
+                    disabled={isSubmitting}
+                    className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 px-2.5 py-1.5 rounded-xl transition-colors flex items-center gap-1 border border-amber-500/20"
+                    title={`Remove from ${activeMonthTitle} only (keeps habit in other months)`}
+                  >
+                    <span className="material-symbols-outlined text-[15px]">event_busy</span>
+                    <span>Remove from {activeMonthTitle}</span>
+                  </button>
+                )}
+
+                {/* Permanent Delete across all months */}
                 {onDelete && (
                   <button
                     type="button"
-                    onClick={handleDelete}
+                    onClick={handleDeleteAllMonths}
                     disabled={isSubmitting}
-                    className="text-xs font-semibold text-error hover:bg-error-container/20 px-3 py-2 rounded-xl transition-colors flex items-center gap-1"
-                    title="Permanently delete habit"
+                    className="text-xs font-semibold text-error hover:bg-error-container/20 px-2.5 py-1.5 rounded-xl transition-colors flex items-center gap-1"
+                    title="Permanently delete habit across all months"
                   >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
-                    <span>Delete</span>
+                    <span className="material-symbols-outlined text-[15px]">delete</span>
+                    <span>Delete All Months</span>
                   </button>
                 )}
 
@@ -353,10 +483,10 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                     type="button"
                     onClick={handleArchive}
                     disabled={isSubmitting}
-                    className="text-xs font-semibold text-on-surface-variant hover:bg-surface-container-low px-3 py-2 rounded-xl transition-colors flex items-center gap-1"
+                    className="text-xs font-semibold text-on-surface-variant hover:bg-surface-container-low px-2 py-1.5 rounded-xl transition-colors flex items-center gap-1"
                     title="Archive habit"
                   >
-                    <span className="material-symbols-outlined text-[16px]">archive</span>
+                    <span className="material-symbols-outlined text-[15px]">archive</span>
                     <span>Archive</span>
                   </button>
                 )}

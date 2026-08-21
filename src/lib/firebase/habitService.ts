@@ -3,6 +3,8 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  arrayUnion,
+  arrayRemove,
   getHabitDocRef,
   getHabitsCollectionRef,
   getEntryDocRef,
@@ -96,6 +98,9 @@ export async function createHabit(
     frequency?: HabitFrequency;
     goalCount?: number;
     sortOrder?: number;
+    startMonth?: string;
+    endMonth?: string;
+    excludedMonths?: string[];
   }
 ): Promise<Habit> {
   const habitsCol = getHabitsCollectionRef(uid);
@@ -115,6 +120,12 @@ export async function createHabit(
     sortOrder: data.sortOrder ?? 0,
   };
 
+  if (data.startMonth) newHabit.startMonth = data.startMonth;
+  if (data.endMonth) newHabit.endMonth = data.endMonth;
+  if (data.excludedMonths && data.excludedMonths.length > 0) {
+    newHabit.excludedMonths = data.excludedMonths;
+  }
+
   await setDoc(newHabitRef, newHabit);
   return newHabit;
 }
@@ -132,6 +143,35 @@ export async function updateHabit(
 }
 
 /**
+ * Removes a habit from a specific month only (adds monthKey to excludedMonths array)
+ * without deleting historical records or presence in other months.
+ */
+export async function removeHabitFromMonth(
+  uid: string,
+  habitId: string,
+  monthKey: string
+): Promise<void> {
+  const habitRef = getHabitDocRef(uid, habitId);
+  await updateDoc(habitRef, {
+    excludedMonths: arrayUnion(monthKey),
+  });
+}
+
+/**
+ * Restores a habit to a specific month (removes monthKey from excludedMonths array)
+ */
+export async function restoreHabitToMonth(
+  uid: string,
+  habitId: string,
+  monthKey: string
+): Promise<void> {
+  const habitRef = getHabitDocRef(uid, habitId);
+  await updateDoc(habitRef, {
+    excludedMonths: arrayRemove(monthKey),
+  });
+}
+
+/**
  * Archives or unarchives a habit
  */
 export async function archiveHabit(
@@ -144,7 +184,7 @@ export async function archiveHabit(
 }
 
 /**
- * Deletes a habit document
+ * Deletes a habit document permanently across all months
  */
 export async function deleteHabit(uid: string, habitId: string): Promise<void> {
   const habitRef = getHabitDocRef(uid, habitId);

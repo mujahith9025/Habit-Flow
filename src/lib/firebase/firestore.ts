@@ -15,6 +15,8 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
   Firestore,
   CollectionReference,
   DocumentReference,
@@ -81,6 +83,8 @@ export {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
   type DocumentData,
   type Query,
 };

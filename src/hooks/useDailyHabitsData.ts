@@ -9,7 +9,7 @@ import {
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
-import { Habit, HabitEntry, HabitEntryMap } from '../types';
+import { Habit, HabitEntry, HabitEntryMap, isHabitActiveInMonth } from '../types';
 import { calculateGentleHabitStreak, formatDateKey } from '../lib/calculations';
 
 export interface MonthDayInfo {
@@ -91,8 +91,8 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
   const entriesRef = useRef(entriesByHabit);
   entriesRef.current = entriesByHabit;
 
-  // Filter habits that are not archived, optionally filtered by category
-  const activeHabits = habits.filter((h) => !h.archived);
+  // Filter habits active in the selected month (respecting month lifecycle, exclusions, startMonth, endMonth)
+  const activeHabits = habits.filter((h) => isHabitActiveInMonth(h, monthKey));
   const normalizedCategory = selectedCategory.trim().toLowerCase();
 
   const dailyHabits =

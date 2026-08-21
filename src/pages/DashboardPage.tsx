@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DateNavigator } from '../components/dashboard/DateNavigator';
+import { DateNavigator, formatMonthYear } from '../components/dashboard/DateNavigator';
 import { SummaryCard } from '../components/dashboard/SummaryCard';
 import { TodayFocusCard } from '../components/dashboard/TodayFocusCard';
 import { CategoryFilterTabs } from '../components/dashboard/CategoryFilterTabs';
@@ -13,7 +13,7 @@ import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useDailyHabitsData } from '../hooks/useDailyHabitsData';
 import { useHabits } from '../hooks/useHabits';
-import { DashboardViewTab, Habit, HabitFrequency } from '../types';
+import { DashboardViewTab, Habit, HabitFrequency, isHabitActiveInMonth } from '../types';
 
 export const DashboardPage: React.FC = () => {
   // Month/Year navigation state
@@ -26,10 +26,20 @@ export const DashboardPage: React.FC = () => {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
   const selectedMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
+  const { formattedTitle } = formatMonthYear(selectedDate);
 
-  const { habits, loading: habitsLoading, createHabit, updateHabit, archiveHabit, deleteHabit } = useHabits();
+  const {
+    habits,
+    loading: habitsLoading,
+    createHabit,
+    updateHabit,
+    removeHabitFromMonth,
+    archiveHabit,
+    deleteHabit,
+  } = useHabits();
 
-  const activeHabits = habits.filter((h) => !h.archived);
+  // Filter active habits for the selected month
+  const activeHabits = habits.filter((h) => isHabitActiveInMonth(h, selectedMonthKey));
 
   // Group categories
   const categoryCounts: Record<string, number> = {};
@@ -82,6 +92,8 @@ export const DashboardPage: React.FC = () => {
     goalCount: number;
     color?: string;
     icon?: string;
+    startMonth?: string;
+    endMonth?: string;
   }) => {
     if (editingHabit) {
       await updateHabit(editingHabit.id, {
@@ -90,6 +102,8 @@ export const DashboardPage: React.FC = () => {
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
+        startMonth: data.startMonth,
+        endMonth: data.endMonth,
       });
     } else {
       await createHabit({
@@ -98,6 +112,8 @@ export const DashboardPage: React.FC = () => {
         frequency: data.frequency,
         goalCount: data.goalCount,
         color: data.color,
+        startMonth: data.startMonth,
+        endMonth: data.endMonth,
         sortOrder: habits.length,
       });
     }
@@ -194,8 +210,11 @@ export const DashboardPage: React.FC = () => {
         isOpen={isModalOpen}
         habitToEdit={editingHabit}
         defaultCategory={effectiveCategory !== 'all' ? effectiveCategory : undefined}
+        currentMonthKey={selectedMonthKey}
+        formattedMonthTitle={formattedTitle}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveHabit}
+        onRemoveFromMonth={removeHabitFromMonth}
         onDelete={handleDeleteHabit}
         onArchive={handleArchiveHabit}
       />

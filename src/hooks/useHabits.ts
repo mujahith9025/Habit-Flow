@@ -5,6 +5,8 @@ import {
   getHabitsCollectionRef,
   createHabit as createHabitService,
   updateHabit as updateHabitService,
+  removeHabitFromMonth as removeHabitFromMonthService,
+  restoreHabitToMonth as restoreHabitToMonthService,
   archiveHabit as archiveHabitService,
   deleteHabit as deleteHabitService,
   seedSampleHabits as seedSampleHabitsService,
@@ -25,8 +27,13 @@ export interface UseHabitsResult {
     frequency?: HabitFrequency;
     goalCount?: number;
     sortOrder?: number;
+    startMonth?: string;
+    endMonth?: string;
+    excludedMonths?: string[];
   }) => Promise<Habit>;
   updateHabit: (habitId: string, updates: Partial<Omit<Habit, 'id' | 'createdAt'>>) => Promise<void>;
+  removeHabitFromMonth: (habitId: string, monthKey: string) => Promise<void>;
+  restoreHabitToMonth: (habitId: string, monthKey: string) => Promise<void>;
   archiveHabit: (habitId: string, archived: boolean) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
   seedHabits: () => Promise<Habit[]>;
@@ -115,6 +122,22 @@ export function useHabits(
     [user?.uid]
   );
 
+  const removeHabitFromMonth = useCallback(
+    async (habitId: string, monthKey: string): Promise<void> => {
+      if (!user?.uid) throw new Error('User must be logged in to remove a habit from a month');
+      await removeHabitFromMonthService(user.uid, habitId, monthKey);
+    },
+    [user?.uid]
+  );
+
+  const restoreHabitToMonth = useCallback(
+    async (habitId: string, monthKey: string): Promise<void> => {
+      if (!user?.uid) throw new Error('User must be logged in to restore a habit to a month');
+      await restoreHabitToMonthService(user.uid, habitId, monthKey);
+    },
+    [user?.uid]
+  );
+
   const archiveHabit = useCallback(
     async (habitId: string, archived: boolean): Promise<void> => {
       if (!user?.uid) throw new Error('User must be logged in to archive a habit');
@@ -143,6 +166,8 @@ export function useHabits(
     lastUpdated,
     createHabit,
     updateHabit,
+    removeHabitFromMonth,
+    restoreHabitToMonth,
     archiveHabit,
     deleteHabit,
     seedHabits,

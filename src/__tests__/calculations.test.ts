@@ -6,7 +6,7 @@ import {
   calculateMonthProgressPercent,
   calculateWeeklyProgressPercent,
 } from '../lib/calculations';
-import { Habit, HabitEntryMap } from '../types';
+import { Habit, HabitEntryMap, isHabitActiveInMonth } from '../types';
 
 describe('HabitFlow Calculations Unit Test Suite', () => {
   const sampleDailyHabits: Habit[] = [
@@ -203,6 +203,69 @@ describe('HabitFlow Calculations Unit Test Suite', () => {
       };
 
       expect(calculateOverallDailyStreak(entriesByHabit, sampleDailyHabits, asOfDate)).toBe(3);
+    });
+  });
+
+  describe('isHabitActiveInMonth (Month-Specific Habit Lifecycle & Scoping)', () => {
+    const baseHabit: Habit = {
+      id: 'h-test',
+      name: 'Morning Workout',
+      icon: 'fitness_center',
+      color: '#006398',
+      frequency: 'daily',
+      goalCount: 1,
+      createdAt: '2026-08-01T00:00:00.000Z',
+      archived: false,
+      sortOrder: 0,
+    };
+
+    it('defaults to active across all months when no month scoping is defined', () => {
+      expect(isHabitActiveInMonth(baseHabit, '2026-07')).toBe(true);
+      expect(isHabitActiveInMonth(baseHabit, '2026-08')).toBe(true);
+      expect(isHabitActiveInMonth(baseHabit, '2026-09')).toBe(true);
+      expect(isHabitActiveInMonth(baseHabit, '2027-01')).toBe(true);
+    });
+
+    it('returns false when habit is archived', () => {
+      const archivedHabit = { ...baseHabit, archived: true };
+      expect(isHabitActiveInMonth(archivedHabit, '2026-08')).toBe(false);
+    });
+
+    it('excludes habit only from specified excluded months while keeping it active in all others', () => {
+      const habitWithExclusion: Habit = {
+        ...baseHabit,
+        excludedMonths: ['2026-08'],
+      };
+
+      // Excluded in August 2026
+      expect(isHabitActiveInMonth(habitWithExclusion, '2026-08')).toBe(false);
+      // Fully active in July 2026, September 2026, October 2026
+      expect(isHabitActiveInMonth(habitWithExclusion, '2026-07')).toBe(true);
+      expect(isHabitActiveInMonth(habitWithExclusion, '2026-09')).toBe(true);
+      expect(isHabitActiveInMonth(habitWithExclusion, '2026-10')).toBe(true);
+    });
+
+    it('respects startMonth (only active on or after startMonth)', () => {
+      const habitStartingAug: Habit = {
+        ...baseHabit,
+        startMonth: '2026-08',
+      };
+
+      expect(isHabitActiveInMonth(habitStartingAug, '2026-07')).toBe(false);
+      expect(isHabitActiveInMonth(habitStartingAug, '2026-08')).toBe(true);
+      expect(isHabitActiveInMonth(habitStartingAug, '2026-09')).toBe(true);
+    });
+
+    it('respects endMonth (only active on or before endMonth)', () => {
+      const habitThisMonthOnly: Habit = {
+        ...baseHabit,
+        startMonth: '2026-08',
+        endMonth: '2026-08',
+      };
+
+      expect(isHabitActiveInMonth(habitThisMonthOnly, '2026-07')).toBe(false);
+      expect(isHabitActiveInMonth(habitThisMonthOnly, '2026-08')).toBe(true);
+      expect(isHabitActiveInMonth(habitThisMonthOnly, '2026-09')).toBe(false);
     });
   });
 });
