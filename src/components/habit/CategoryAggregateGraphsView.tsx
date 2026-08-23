@@ -836,83 +836,85 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
         </div>
       )}
 
-      {/* 3. Interactive Daily Habit Matrix (Quick 1-Tap Toggle for all habits in title) */}
-      <div className="pt-4 border-t border-outline-variant/15 space-y-3">
-        <h4 className="font-section-header text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-secondary text-[16px]">
-            table_chart
-          </span>
-          Daily Habit Check-in Matrix for {categoryName}
-        </h4>
+      {/* 3. Interactive Daily Habit Matrix (Quick 1-Tap Toggle for all habits in title) - Hidden in All-Time Analytics */}
+      {graphMode !== 'alltime' && (
+        <div className="pt-4 border-t border-outline-variant/15 space-y-3">
+          <h4 className="font-section-header text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-secondary text-[16px]">
+              table_chart
+            </span>
+            Daily Habit Check-in Matrix for {categoryName}
+          </h4>
 
-        <div className="overflow-x-auto scrollbar-thin rounded-xl border border-outline-variant/20">
-          <table className="w-full border-collapse min-w-[680px]">
-            <thead>
-              <tr className="bg-surface-container-low dark:bg-surface-container-high/60 border-b border-outline-variant/20 text-left">
-                <th className="p-2 sm:p-3 text-xs font-stat-label uppercase font-bold text-on-surface-variant sticky left-0 z-10 bg-surface-container-low dark:bg-surface-container-high min-w-[95px] max-w-[105px] sm:min-w-[150px] sm:max-w-none">
-                  Habit
-                </th>
-                {daysInMonth.map((day) => (
-                  <th
-                    key={day.dateKey}
-                    className={`p-1.5 text-center min-w-[32px] text-[10px] font-stat-label ${
-                      day.isToday ? 'bg-primary text-on-primary font-bold' : 'text-on-surface-variant'
-                    }`}
-                  >
-                    <div>{day.dayOfWeek}</div>
-                    <div>{day.dayNum}</div>
+          <div className="overflow-x-auto scrollbar-thin rounded-xl border border-outline-variant/20">
+            <table className="w-full border-collapse min-w-[680px]">
+              <thead>
+                <tr className="bg-surface-container-low dark:bg-surface-container-high/60 border-b border-outline-variant/20 text-left">
+                  <th className="p-2 sm:p-3 text-xs font-stat-label uppercase font-bold text-on-surface-variant sticky left-0 z-10 bg-surface-container-low dark:bg-surface-container-high min-w-[95px] max-w-[105px] sm:min-w-[150px] sm:max-w-none">
+                    Habit
                   </th>
-                ))}
-                <th className="sticky right-0 z-20 bg-surface-container-low dark:bg-surface-container-high p-3 text-right text-xs font-stat-label uppercase font-bold text-on-surface-variant min-w-[60px] border-l border-outline-variant/20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
-                  %
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/15 text-xs">
-              {habits.map((h) => {
-                const metrics = habitMetricsMap[h.id];
-                return (
-                  <tr key={h.id} className="hover:bg-surface-container-low/40">
-                    <td className="p-2 sm:p-3 font-semibold text-on-surface sticky left-0 z-10 bg-surface-container-lowest dark:bg-surface-container border-r border-outline-variant/15 min-w-[95px] max-w-[105px] sm:min-w-[150px] sm:max-w-none break-words whitespace-normal leading-snug">
-                      {h.name}
-                    </td>
-                    {daysInMonth.map((day) => {
-                      const done = isCompleted(h.id, day.dateKey);
-                      return (
-                        <td
-                          key={day.dateKey}
-                          className={`p-1 text-center border-r border-outline-variant/10 ${
-                            day.isToday ? 'bg-primary-fixed/20 dark:bg-primary-fixed-dim/15' : ''
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic(done ? 'medium' : 'light');
-                              onToggleEntry(h.id, day.dateKey);
-                            }}
-                            title={`${h.name} - ${day.dateKey}: ${done ? 'Completed' : 'Pending'}`}
-                            className={`w-5 h-5 rounded-md mx-auto flex items-center justify-center transition-all ${
-                              done
-                                ? 'bg-primary text-on-primary font-bold shadow-xs'
-                                : 'border border-outline-variant/40 hover:border-primary'
+                  {daysInMonth.map((day) => (
+                    <th
+                      key={day.dateKey}
+                      className={`p-1.5 text-center min-w-[32px] text-[10px] font-stat-label ${
+                        day.isToday ? 'bg-primary text-on-primary font-bold' : 'text-on-surface-variant'
+                      }`}
+                    >
+                      <div>{day.dayOfWeek}</div>
+                      <div>{day.dayNum}</div>
+                    </th>
+                  ))}
+                  <th className="sticky right-0 z-20 bg-surface-container-low dark:bg-surface-container-high p-3 text-right text-xs font-stat-label uppercase font-bold text-on-surface-variant min-w-[60px] border-l border-outline-variant/20 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
+                    %
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/15 text-xs">
+                {habits.map((h) => {
+                  const metrics = habitMetricsMap[h.id];
+                  return (
+                    <tr key={h.id} className="hover:bg-surface-container-low/40">
+                      <td className="p-2 sm:p-3 font-semibold text-on-surface sticky left-0 z-10 bg-surface-container-lowest dark:bg-surface-container border-r border-outline-variant/15 min-w-[95px] max-w-[105px] sm:min-w-[150px] sm:max-w-none break-words whitespace-normal leading-snug">
+                        {h.name}
+                      </td>
+                      {daysInMonth.map((day) => {
+                        const done = isCompleted(h.id, day.dateKey);
+                        return (
+                          <td
+                            key={day.dateKey}
+                            className={`p-1 text-center border-r border-outline-variant/10 ${
+                              day.isToday ? 'bg-primary-fixed/20 dark:bg-primary-fixed-dim/15' : ''
                             }`}
                           >
-                            {done && <span className="material-symbols-outlined text-[13px]">check</span>}
-                          </button>
-                        </td>
-                      );
-                    })}
-                    <td className="sticky right-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 text-right font-bold text-primary border-l border-outline-variant/15 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
-                      {metrics?.monthProgressPercent ?? 0}%
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic(done ? 'medium' : 'light');
+                                onToggleEntry(h.id, day.dateKey);
+                              }}
+                              title={`${h.name} - ${day.dateKey}: ${done ? 'Completed' : 'Pending'}`}
+                              className={`w-5 h-5 rounded-md mx-auto flex items-center justify-center transition-all ${
+                                done
+                                  ? 'bg-primary text-on-primary font-bold shadow-xs'
+                                  : 'border border-outline-variant/40 hover:border-primary'
+                              }`}
+                            >
+                              {done && <span className="material-symbols-outlined text-[13px]">check</span>}
+                            </button>
+                          </td>
+                        );
+                      })}
+                      <td className="sticky right-0 z-20 bg-surface-container-lowest dark:bg-surface-container p-3 text-right font-bold text-primary border-l border-outline-variant/15 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
+                        {metrics?.monthProgressPercent ?? 0}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
