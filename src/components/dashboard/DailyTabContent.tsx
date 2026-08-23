@@ -24,6 +24,7 @@ export const DailyTabContent: React.FC<DailyTabContentProps> = ({
     isCompleted,
     getHabitEntry,
     toggleHabitEntry,
+    batchCompleteTodayHabits,
     seedHabits,
   } = useDailyHabitsData(currentDate, selectedCategory);
 
@@ -39,6 +40,7 @@ export const DailyTabContent: React.FC<DailyTabContentProps> = ({
         isCompleted={isCompleted}
         getHabitEntry={getHabitEntry}
         onToggleEntry={toggleHabitEntry}
+        onBatchCompleteToday={batchCompleteTodayHabits}
         onEditHabit={onEditHabit}
         onSeedHabits={() => seedHabits().catch(console.error)}
         formattedMonthTitle={formattedTitle}

@@ -40,6 +40,8 @@ export interface UseDailyHabitsDataResult {
   isCompleted: (habitId: string, dateKey: string) => boolean;
   getHabitEntry: (habitId: string, dateKey: string) => HabitEntry | undefined;
   toggleHabitEntry: (habitId: string, dateKey: string) => Promise<void>;
+  batchCompleteTodayHabits: (habitIdsToComplete: string[]) => Promise<void>;
+  batchResetTodayHabits: (habitIdsToReset: string[]) => Promise<void>;
   saveHabitNote: (habitId: string, dateKey: string, note: string, mood?: string, tags?: string[]) => Promise<void>;
   seedHabits: () => Promise<Habit[]>;
 }
@@ -297,6 +299,96 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     [user?.uid]
   );
 
+  // Batch Complete All Pending Habits for Today
+  const batchCompleteTodayHabits = useCallback(
+    async (habitIdsToComplete: string[]): Promise<void> => {
+      if (!user?.uid || habitIdsToComplete.length === 0) return;
+
+      const previousEntriesSnapshot = { ...entriesRef.current };
+
+      // 1. Optimistic UI update
+      setEntriesByHabit((prev) => {
+        const next = { ...prev };
+        habitIdsToComplete.forEach((hId) => {
+          const prevEntry = next[hId]?.[todayDateKey] || {
+            date: todayDateKey,
+            completed: false,
+            weekOfMonth: Math.ceil(Number(todayDateKey.split('-')[2] || 1) / 7),
+            monthKey: todayDateKey.substring(0, 7),
+            updatedAt: new Date().toISOString(),
+          };
+          next[hId] = {
+            ...(next[hId] || {}),
+            [todayDateKey]: {
+              ...prevEntry,
+              completed: true,
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        });
+        return next;
+      });
+
+      // 2. Persist in parallel
+      try {
+        await Promise.all(
+          habitIdsToComplete.map((hId) =>
+            toggleEntryService(user.uid, hId, todayDateKey, true)
+          )
+        );
+      } catch (err) {
+        console.error('Failed to batch complete habits for today:', err);
+        setEntriesByHabit(previousEntriesSnapshot);
+      }
+    },
+    [user?.uid, todayDateKey]
+  );
+
+  // Batch Reset Habits for Today
+  const batchResetTodayHabits = useCallback(
+    async (habitIdsToReset: string[]): Promise<void> => {
+      if (!user?.uid || habitIdsToReset.length === 0) return;
+
+      const previousEntriesSnapshot = { ...entriesRef.current };
+
+      // 1. Optimistic UI update
+      setEntriesByHabit((prev) => {
+        const next = { ...prev };
+        habitIdsToReset.forEach((hId) => {
+          const prevEntry = next[hId]?.[todayDateKey] || {
+            date: todayDateKey,
+            completed: true,
+            weekOfMonth: Math.ceil(Number(todayDateKey.split('-')[2] || 1) / 7),
+            monthKey: todayDateKey.substring(0, 7),
+            updatedAt: new Date().toISOString(),
+          };
+          next[hId] = {
+            ...(next[hId] || {}),
+            [todayDateKey]: {
+              ...prevEntry,
+              completed: false,
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        });
+        return next;
+      });
+
+      // 2. Persist in parallel
+      try {
+        await Promise.all(
+          habitIdsToReset.map((hId) =>
+            toggleEntryService(user.uid, hId, todayDateKey, false)
+          )
+        );
+      } catch (err) {
+        console.error('Failed to batch reset habits for today:', err);
+        setEntriesByHabit(previousEntriesSnapshot);
+      }
+    },
+    [user?.uid, todayDateKey]
+  );
+
   return {
     dailyHabits,
     daysInMonth,
@@ -306,6 +398,8 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     isCompleted,
     getHabitEntry,
     toggleHabitEntry,
+    batchCompleteTodayHabits,
+    batchResetTodayHabits,
     saveHabitNote,
     seedHabits,
   };

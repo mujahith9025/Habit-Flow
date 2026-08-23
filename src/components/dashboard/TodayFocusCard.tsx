@@ -12,6 +12,8 @@ interface TodayFocusCardProps {
   isCompleted: (habitId: string, dateKey: string) => boolean;
   getHabitEntry?: (habitId: string, dateKey: string) => HabitEntry | undefined;
   onToggleEntry: (habitId: string, dateKey: string) => Promise<void>;
+  onBatchCompleteToday?: (habitIds: string[]) => Promise<void>;
+  onBatchResetToday?: (habitIds: string[]) => Promise<void>;
   onSaveNote?: (habitId: string, dateKey: string, note: string, mood?: string, tags?: string[]) => Promise<void>;
   onAddNewHabit?: () => void;
   className?: string;
@@ -31,6 +33,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   isCompleted,
   getHabitEntry,
   onToggleEntry,
+  onBatchCompleteToday,
+  onBatchResetToday,
   onSaveNote,
   onAddNewHabit,
   className = '',
@@ -39,6 +43,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const todayDateKey = formatDateKey(today);
 
   const [activeNoteHabit, setActiveNoteHabit] = useState<Habit | null>(null);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [showUndoBanner, setShowUndoBanner] = useState(false);
+  const [lastBatchCompletedIds, setLastBatchCompletedIds] = useState<string[]>([]);
 
   const activeHabits = habits.filter((h) => !h.archived);
 
@@ -51,6 +58,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   });
 
   const totalCount = activeHabits.length;
+  const remainingCount = totalCount - completedCount;
   const percentDone = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
 
@@ -69,6 +77,61 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     }
 
     await onToggleEntry(habitId, todayDateKey);
+  };
+
+  // 1-Tap Finish All Today
+  const handleQuickFinishAll = async () => {
+    if (isBatchProcessing || remainingCount <= 0) return;
+
+    const pendingHabitIds = activeHabits
+      .filter((h) => !isCompleted(h.id, todayDateKey))
+      .map((h) => h.id);
+
+    if (pendingHabitIds.length === 0) return;
+
+    setIsBatchProcessing(true);
+    triggerHaptic('success');
+    triggerMilestoneCelebration();
+
+    setLastBatchCompletedIds(pendingHabitIds);
+
+    try {
+      if (onBatchCompleteToday) {
+        await onBatchCompleteToday(pendingHabitIds);
+      } else {
+        await Promise.all(pendingHabitIds.map((id) => onToggleEntry(id, todayDateKey)));
+      }
+      setShowUndoBanner(true);
+      setTimeout(() => {
+        setShowUndoBanner(false);
+      }, 6000);
+    } catch (err) {
+      console.error('Failed to quick finish all today:', err);
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  // Undo Quick Finish All
+  const handleUndoQuickFinishAll = async () => {
+    if (lastBatchCompletedIds.length === 0) return;
+
+    setIsBatchProcessing(true);
+    triggerHaptic('medium');
+    setShowUndoBanner(false);
+
+    try {
+      if (onBatchResetToday) {
+        await onBatchResetToday(lastBatchCompletedIds);
+      } else {
+        await Promise.all(lastBatchCompletedIds.map((id) => onToggleEntry(id, todayDateKey)));
+      }
+      setLastBatchCompletedIds([]);
+    } catch (err) {
+      console.error('Failed to undo quick finish all:', err);
+    } finally {
+      setIsBatchProcessing(false);
+    }
   };
 
   const handleSaveNote = async (
@@ -92,9 +155,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       {/* Decorative background accent */}
       <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-primary-container/20 dark:bg-primary-container/10 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Card Header */}
+      {/* Card Header with Quick Finish All Button */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <span
               className="material-symbols-outlined text-primary text-[20px]"
@@ -107,18 +170,54 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             </span>
           </div>
 
-          {totalCount > 0 && (
-            <span
-              className={`text-[11px] font-stat-label font-bold px-2.5 py-0.5 rounded-full transition-colors ${
-                allDone
-                  ? 'bg-secondary-container text-on-secondary-container'
-                  : 'bg-surface-container-high dark:bg-surface-container-highest text-on-surface'
-              }`}
-            >
-              {completedCount} of {totalCount} Done ({percentDone}%)
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Quick Finish All Today Button */}
+            {!allDone && totalCount > 0 && remainingCount > 0 && (
+              <button
+                type="button"
+                onClick={handleQuickFinishAll}
+                disabled={isBatchProcessing}
+                title={`Mark all ${remainingCount} remaining habits as done for today`}
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-primary to-primary-container hover:from-primary-focus hover:to-primary text-on-primary text-[11px] font-bold font-stat-label shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px] group-hover:animate-bounce">
+                  task_alt
+                </span>
+                <span>Finish All ({remainingCount} left)</span>
+              </button>
+            )}
+
+            {/* Progress Pill */}
+            {totalCount > 0 && (
+              <span
+                className={`text-[11px] font-stat-label font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
+                  allDone
+                    ? 'bg-secondary-container text-on-secondary-container'
+                    : 'bg-surface-container-high dark:bg-surface-container-highest text-on-surface'
+                }`}
+              >
+                {allDone && <span className="material-symbols-outlined text-[14px]">done_all</span>}
+                {completedCount} of {totalCount} Done ({percentDone}%)
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Temporary Undo Banner */}
+        {showUndoBanner && (
+          <div className="mb-2 px-3 py-1.5 rounded-xl bg-secondary-container/90 text-on-secondary-container text-xs font-medium flex items-center justify-between shadow-sm animate-fadeIn">
+            <span className="flex items-center gap-1.5">
+              <span>🎉 All habits checked off for today!</span>
+            </span>
+            <button
+              type="button"
+              onClick={handleUndoQuickFinishAll}
+              className="px-2 py-0.5 rounded-lg bg-surface-container-lowest dark:bg-surface-container text-primary font-bold hover:underline text-[11px] shadow-xs active:scale-90 transition-all"
+            >
+              Undo
+            </button>
+          </div>
+        )}
 
         {/* Habit Checklist or Empty State */}
         {totalCount === 0 ? (

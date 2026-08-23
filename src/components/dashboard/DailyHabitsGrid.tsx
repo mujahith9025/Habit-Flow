@@ -4,6 +4,9 @@ import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { DailyGridCell } from './DailyGridCell';
 import { Button } from '../ui/Button';
 
+import { triggerHaptic } from '../../utils/haptics';
+import { triggerMilestoneCelebration } from '../../utils/confetti';
+
 interface DayColumnHeader {
   dayNum: number;
   dayOfWeek: string;
@@ -20,6 +23,7 @@ interface DailyHabitsGridProps {
   isCompleted: (habitId: string, dateKey: string) => boolean;
   getHabitEntry?: (habitId: string, dateKey: string) => HabitEntry | undefined;
   onToggleEntry: (habitId: string, dateKey: string) => void;
+  onBatchCompleteToday?: (habitIds: string[]) => Promise<void>;
   onEditHabit?: (habit: Habit) => void;
   onSeedHabits?: () => void;
   formattedMonthTitle: string;
@@ -32,6 +36,7 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
   isCompleted,
   getHabitEntry,
   onToggleEntry,
+  onBatchCompleteToday,
   onEditHabit,
   onSeedHabits,
   formattedMonthTitle,
@@ -84,19 +89,49 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
     );
   }
 
+  const todayDay = daysInMonth.find((d) => d.isToday);
+  const pendingTodayHabits = todayDay
+    ? dailyHabits.filter((h) => !isCompleted(h.id, todayDay.dateKey))
+    : [];
+
+  const handleQuickFinishToday = async () => {
+    if (pendingTodayHabits.length === 0) return;
+    triggerHaptic('success');
+    triggerMilestoneCelebration();
+    if (onBatchCompleteToday) {
+      await onBatchCompleteToday(pendingTodayHabits.map((h) => h.id));
+    } else if (todayDay) {
+      await Promise.all(pendingTodayHabits.map((h) => onToggleEntry(h.id, todayDay.dateKey)));
+    }
+  };
+
   return (
     <div className="space-y-3">
       {/* Section Header */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_month</span>
           <h2 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
             Daily Habits Performance Grid
           </h2>
         </div>
-        <span className="font-stat-label text-xs font-semibold text-on-surface-variant">
-          {formattedMonthTitle}
-        </span>
+
+        <div className="flex items-center gap-3">
+          {pendingTodayHabits.length > 0 && (
+            <button
+              type="button"
+              onClick={handleQuickFinishToday}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-on-primary border border-primary/20 text-[11px] font-bold font-stat-label transition-all active:scale-95 cursor-pointer shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[14px]">task_alt</span>
+              <span>Finish Today ({pendingTodayHabits.length} left)</span>
+            </button>
+          )}
+
+          <span className="font-stat-label text-xs font-semibold text-on-surface-variant">
+            {formattedMonthTitle}
+          </span>
+        </div>
       </div>
 
       {/* Grid Table Container */}

@@ -64,6 +64,8 @@ export const DashboardPage: React.FC = () => {
     isCompleted,
     getHabitEntry,
     toggleHabitEntry,
+    batchCompleteTodayHabits,
+    batchResetTodayHabits,
     saveHabitNote,
   } = useDailyHabitsData(selectedDate, effectiveCategory);
 
@@ -157,6 +159,8 @@ export const DashboardPage: React.FC = () => {
             isCompleted={isCompleted}
             getHabitEntry={getHabitEntry}
             onToggleEntry={toggleHabitEntry}
+            onBatchCompleteToday={batchCompleteTodayHabits}
+            onBatchResetToday={batchResetTodayHabits}
             onSaveNote={saveHabitNote}
             onAddNewHabit={handleOpenAddModal}
             className="h-full min-h-[220px]"
