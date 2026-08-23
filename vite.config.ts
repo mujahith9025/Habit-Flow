@@ -2,14 +2,41 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import fs from 'fs';
+
+const currentBuildVersion = Date.now().toString();
+
+function versionGeneratorPlugin() {
+  return {
+    name: 'version-generator',
+    buildStart() {
+      try {
+        const publicDir = path.resolve(__dirname, 'public');
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true });
+        }
+        fs.writeFileSync(
+          path.resolve(publicDir, 'version.json'),
+          JSON.stringify({ version: currentBuildVersion, builtAt: new Date().toISOString() }, null, 2)
+        );
+      } catch (e) {
+        console.error('Failed to generate version.json', e);
+      }
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(currentBuildVersion),
+  },
   plugins: [
     react(),
+    versionGeneratorPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons/*.png', 'robots.txt'],
+      includeAssets: ['favicon.svg', 'icons/*.png', 'robots.txt', 'version.json'],
       devOptions: {
         enabled: false, // Keep service worker disabled in development for maximum speed
       },
@@ -45,8 +72,17 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,json}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
+          {
+            urlPattern: /\/version\.json/i,
+            handler: 'NetworkOnly',
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
