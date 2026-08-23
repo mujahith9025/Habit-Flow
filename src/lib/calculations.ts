@@ -343,3 +343,150 @@ export function calculateHabitTotalTrackedDays(
   return Math.max(1, Math.max(completedCount, totalDays));
 }
 
+export interface DayOfWeekOccurrenceStat {
+  day: string;
+  shortLabel: string;
+  dayIndex: number;
+  totalDays: number;
+  completedCount: number;
+  percentage: number;
+}
+
+export const DAYS_OF_WEEK_CONFIG = [
+  { day: 'Monday', shortLabel: 'Mon', dayIndex: 1 },
+  { day: 'Tuesday', shortLabel: 'Tue', dayIndex: 2 },
+  { day: 'Wednesday', shortLabel: 'Wed', dayIndex: 3 },
+  { day: 'Thursday', shortLabel: 'Thu', dayIndex: 4 },
+  { day: 'Friday', shortLabel: 'Fri', dayIndex: 5 },
+  { day: 'Saturday', shortLabel: 'Sat', dayIndex: 6 },
+  { day: 'Sunday', shortLabel: 'Sun', dayIndex: 0 },
+];
+
+/**
+ * Calculates day-of-week occurrence counts, completed checks, and exact daily percentages
+ */
+export function calculateHabitDayOfWeekStats(
+  habit: Habit,
+  entries: HabitEntryMap,
+  today: Date = new Date()
+): {
+  dayStats: DayOfWeekOccurrenceStat[];
+  peakDay: DayOfWeekOccurrenceStat | null;
+  lowestDay: DayOfWeekOccurrenceStat | null;
+} {
+  const dayOccurrences: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const dayCompletions: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+  // 1. Find start and end date for habit
+  let startDate: Date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  if (habit.createdAt) {
+    const cDate = new Date(habit.createdAt);
+    if (!isNaN(cDate.getTime())) {
+      const cNormalized = new Date(cDate.getFullYear(), cDate.getMonth(), cDate.getDate());
+      if (cNormalized < startDate) {
+        startDate = cNormalized;
+      }
+    }
+  }
+
+  if (habit.startMonth) {
+    const [sy, sm] = habit.startMonth.split('-').map(Number);
+    if (sy && sm) {
+      startDate = new Date(sy, sm - 1, 1);
+    }
+  }
+
+  Object.keys(entries).forEach((dateKey) => {
+    if (dateKey.length === 10) {
+      const [y, m, d] = dateKey.split('-').map(Number);
+      if (y && m && d) {
+        const eDate = new Date(y, m - 1, d);
+        if (!habit.startMonth && eDate < startDate) {
+          startDate = eDate;
+        }
+      }
+    }
+  });
+
+  let endDate: Date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (habit.endMonth) {
+    const [ey, em] = habit.endMonth.split('-').map(Number);
+    if (ey && em) {
+      const lastDayOfEndMonth = new Date(ey, em, 0);
+      if (lastDayOfEndMonth < endDate) {
+        endDate = lastDayOfEndMonth;
+      }
+    }
+  }
+
+  // 2. Count day of week occurrences
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    const mKey = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+    const isExcluded = habit.excludedMonths?.includes(mKey);
+
+    if (!isExcluded) {
+      const dIdx = cursor.getDay();
+      dayOccurrences[dIdx] = (dayOccurrences[dIdx] || 0) + 1;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  // 3. Count completed entries for each day of week
+  Object.values(entries).forEach((entry) => {
+    if (entry.completed && entry.date && entry.date.length === 10) {
+      const [y, m, d] = entry.date.split('-').map(Number);
+      if (y && m && d) {
+        const eDate = new Date(y, m - 1, d);
+        const dIdx = eDate.getDay();
+        dayCompletions[dIdx] = (dayCompletions[dIdx] || 0) + 1;
+      }
+    }
+  });
+
+  // 4. Build 7-day stats
+  const dayStats: DayOfWeekOccurrenceStat[] = DAYS_OF_WEEK_CONFIG.map(({ day, shortLabel, dayIndex }) => {
+    const completed = dayCompletions[dayIndex] || 0;
+    const total = Math.max(1, Math.max(dayOccurrences[dayIndex] || 0, completed));
+    const percentage = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
+
+    return {
+      day,
+      shortLabel,
+      dayIndex,
+      totalDays: total,
+      completedCount: completed,
+      percentage,
+    };
+  });
+
+  // 5. Peak of the Day (highest percentage & completions)
+  let peakDay: DayOfWeekOccurrenceStat | null = null;
+  let lowestDay: DayOfWeekOccurrenceStat | null = null;
+
+  const activeDays = dayStats.filter((d) => d.completedCount > 0);
+  if (activeDays.length > 0) {
+    peakDay = activeDays.reduce((max, d) => {
+      if (d.percentage !== max.percentage) {
+        return d.percentage > max.percentage ? d : max;
+      }
+      return d.completedCount > max.completedCount ? d : max;
+    }, activeDays[0]);
+
+    lowestDay = dayStats.reduce((min, d) => {
+      if (d.percentage !== min.percentage) {
+        return d.percentage < min.percentage ? d : min;
+      }
+      return d.completedCount < min.completedCount ? d : min;
+    }, dayStats[0]);
+  }
+
+  return {
+    dayStats,
+    peakDay,
+    lowestDay,
+  };
+}
+
+

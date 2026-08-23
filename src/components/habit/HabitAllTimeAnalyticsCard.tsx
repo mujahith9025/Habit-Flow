@@ -24,12 +24,11 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
     monthlyHistory,
   } = metrics;
 
-  // Find day with maximum completions
-  const maxDayCount = Math.max(...dayOfWeekStats.map((d) => d.count), 1);
-  const bestDay = dayOfWeekStats.reduce(
-    (max, d) => (d.count > max.count ? d : max),
-    dayOfWeekStats[0]
-  );
+  const bestDay =
+    metrics.peakDayOfWeek ||
+    (dayOfWeekStats.length > 0
+      ? dayOfWeekStats.reduce((max, d) => (d.percent > max.percent ? d : max), dayOfWeekStats[0])
+      : null);
 
   return (
     <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-6">
@@ -166,7 +165,7 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
                 <p className="text-[11px] text-on-surface-variant mt-0.5">
                   {bestDay && bestDay.count > 0 ? (
                     <>
-                      Peak momentum on <span className="font-bold text-amber-600 dark:text-amber-400">{bestDay.day}s</span> ({bestDay.count} checks)
+                      Peak momentum on <span className="font-bold text-amber-600 dark:text-amber-400">{bestDay.day}s</span> ({bestDay.percent}% consistency)
                     </>
                   ) : (
                     'Track entries to reveal peak days'
@@ -179,28 +178,31 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
             {/* Peak day pill */}
             {bestDay && bestDay.count > 0 && (
               <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-bold font-stat-label">
-                <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
-                <span>Strongest: <strong>{bestDay.day}</strong> ({bestDay.percent}% share)</span>
+                <span className="material-symbols-outlined text-[14px]">emoji_events</span>
+                <span>Peak of the Day: <strong>{bestDay.day}</strong> ({bestDay.percent}% • {bestDay.count}/{bestDay.totalDays} days)</span>
               </div>
             )}
           </div>
 
           {/* Vertical Bars for Days of Week */}
-          <div className="h-36 flex items-end justify-between gap-1.5 sm:gap-2 pt-3 pb-1 border-b border-outline-variant/15 px-1">
+          <div className="h-38 flex items-end justify-between gap-1.5 sm:gap-2 pt-3 pb-1 border-b border-outline-variant/15 px-1">
             {dayOfWeekStats.map((d) => {
-              const heightPct = maxDayCount > 0 ? Math.max(14, Math.round((d.count / maxDayCount) * 100)) : 14;
+              const heightPct = Math.max(14, d.percent);
               const isPeak = bestDay && d.day === bestDay.day && d.count > 0;
 
               return (
                 <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group relative">
                   {/* Tooltip */}
                   <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[10px] font-bold px-2 py-0.5 rounded shadow-soft whitespace-nowrap border border-outline-variant/20">
-                    {d.day}: {d.count} checks ({d.percent}%)
+                    {d.day}: {d.count} of {d.totalDays} days completed ({d.percent}%)
                   </div>
 
-                  {/* Count on top of bar */}
-                  <span className="text-[10px] font-stat-label font-bold text-on-surface mb-1">
-                    {d.count}
+                  {/* Percentage & Count on top of bar */}
+                  <span className="text-[10px] font-stat-label font-black text-on-surface mb-0.5">
+                    {d.percent}%
+                  </span>
+                  <span className="text-[8px] font-stat-label text-on-surface-variant mb-1">
+                    {d.count}/{d.totalDays}
                   </span>
 
                   <div
@@ -223,9 +225,6 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
                     }`}
                   >
                     {d.shortLabel}
-                  </span>
-                  <span className="text-[9px] font-stat-label text-on-surface-variant leading-none">
-                    {d.percent}%
                   </span>
                 </div>
               );

@@ -6,6 +6,7 @@ import {
   calculateMonthProgressPercent,
   calculateWeeklyProgressPercent,
   calculateHabitTotalTrackedDays,
+  calculateHabitDayOfWeekStats,
 } from '../lib/calculations';
 import { Habit, HabitEntryMap, isHabitActiveInMonth } from '../types';
 
@@ -343,6 +344,49 @@ describe('HabitFlow Calculations Unit Test Suite', () => {
       // Excluding July (31 days) -> 84 - 31 = 53 days.
       const days = calculateHabitTotalTrackedDays(habitWithExclusion, {}, today);
       expect(days).toBe(53);
+    });
+  });
+
+  describe('calculateHabitDayOfWeekStats (Total days per day of week & true percentages)', () => {
+    const today = new Date(2026, 7, 23); // Sunday, Aug 23, 2026
+
+    it('calculates total occurrences for each day and identifies peak day', () => {
+      const habit: Habit = {
+        id: 'h-dow',
+        name: 'Gym Workout',
+        icon: 'fitness_center',
+        color: '#006398',
+        frequency: 'daily',
+        goalCount: 1,
+        createdAt: '2026-08-01T00:00:00.000Z', // 23 days (Aug 1 - Aug 23)
+        archived: false,
+        sortOrder: 0,
+      };
+
+      // In Aug 1 (Sat) to Aug 23 (Sun):
+      // Mondays: Aug 3, Aug 10, Aug 17 (3 Mondays)
+      // Fridays: Aug 7, Aug 14, Aug 21 (3 Fridays)
+      const entries: HabitEntryMap = {
+        '2026-08-07': { date: '2026-08-07', completed: true, weekOfMonth: 1, monthKey: '2026-08', updatedAt: '' },
+        '2026-08-14': { date: '2026-08-14', completed: true, weekOfMonth: 2, monthKey: '2026-08', updatedAt: '' },
+        '2026-08-21': { date: '2026-08-21', completed: true, weekOfMonth: 3, monthKey: '2026-08', updatedAt: '' },
+        '2026-08-03': { date: '2026-08-03', completed: true, weekOfMonth: 1, monthKey: '2026-08', updatedAt: '' },
+      };
+
+      const result = calculateHabitDayOfWeekStats(habit, entries, today);
+
+      const fridayStat = result.dayStats.find((d) => d.day === 'Friday');
+      expect(fridayStat?.totalDays).toBe(3);
+      expect(fridayStat?.completedCount).toBe(3);
+      expect(fridayStat?.percentage).toBe(100);
+
+      const mondayStat = result.dayStats.find((d) => d.day === 'Monday');
+      expect(mondayStat?.totalDays).toBe(3);
+      expect(mondayStat?.completedCount).toBe(1);
+      expect(mondayStat?.percentage).toBe(33);
+
+      expect(result.peakDay?.day).toBe('Friday');
+      expect(result.peakDay?.percentage).toBe(100);
     });
   });
 });

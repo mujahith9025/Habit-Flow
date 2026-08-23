@@ -7,9 +7,14 @@ import {
   updateHabit as updateHabitService,
   archiveHabit as archiveHabitService,
 } from '../lib/firebase';
+import {
+  calculateSingleHabitStreak,
+  calculateLongestStreak,
+  calculateHabitTotalTrackedDays,
+  calculateHabitDayOfWeekStats,
+} from '../lib/calculations';
 import { useAuth } from './useAuth';
 import { Habit, HabitEntryMap } from '../types';
-import { formatDateKey } from './useDashboardMetrics';
 
 export interface MonthPerformance {
   monthKey: string;
@@ -23,6 +28,7 @@ export interface DayOfWeekStat {
   day: string;
   shortLabel: string;
   count: number;
+  totalDays: number;
   percent: number;
 }
 
@@ -42,6 +48,7 @@ export interface HabitHistoryMetrics {
   totalNotesCount: number;
   bestMonth: MonthPerformance | null;
   dayOfWeekStats: DayOfWeekStat[];
+  peakDayOfWeek: DayOfWeekStat | null;
   monthlyHistory: MonthPerformance[];
 }
 
@@ -62,16 +69,6 @@ const MONTH_NAMES_SHORT = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-const DAYS_OF_WEEK = [
-  { day: 'Monday', shortLabel: 'Mon', dayIndex: 1 },
-  { day: 'Tuesday', shortLabel: 'Tue', dayIndex: 2 },
-  { day: 'Wednesday', shortLabel: 'Wed', dayIndex: 3 },
-  { day: 'Thursday', shortLabel: 'Thu', dayIndex: 4 },
-  { day: 'Friday', shortLabel: 'Fri', dayIndex: 5 },
-  { day: 'Saturday', shortLabel: 'Sat', dayIndex: 6 },
-  { day: 'Sunday', shortLabel: 'Sun', dayIndex: 0 },
-];
-
 export function useSingleHabitHistory(
   habitId?: string,
   selectedMonthDate?: Date
@@ -86,7 +83,6 @@ export function useSingleHabitHistory(
   entriesRef.current = entries;
 
   const today = new Date();
-  const todayKey = formatDateKey(today);
 
   const activeDate = selectedMonthDate || today;
   const activeYear = activeDate.getFullYear();
@@ -217,33 +213,36 @@ export function useSingleHabitHistory(
     }
   });
 
-  const daysSinceCreation = Math.max(
-    1,
-    Math.ceil((today.getTime() - earliestHabitDate.getTime()) / (1000 * 3600 * 24)) + 1
-  );
-
-  const totalTrackedDays = Math.max(daysSinceCreation, Math.max(1, totalLifetimeCompletions));
+  const totalTrackedDays = habit
+    ? calculateHabitTotalTrackedDays(habit, entries, today)
+    : Math.max(1, totalLifetimeCompletions);
 
   const allTimeRatePercent =
     totalTrackedDays > 0
       ? Math.min(100, Math.round((totalLifetimeCompletions / totalTrackedDays) * 100))
       : 0;
 
-  // Day of Week Distribution Stats
-  const dayOfWeekStats: DayOfWeekStat[] = DAYS_OF_WEEK.map(({ day, shortLabel, dayIndex }) => {
-    const count = dayOfWeekCounts[dayIndex] || 0;
-    const percent =
-      totalLifetimeCompletions > 0
-        ? Math.round((count / totalLifetimeCompletions) * 100)
-        : 0;
+  // Day of Week Distribution Stats with individual totalDays and true daily percentages
+  const habitDowResult = habit ? calculateHabitDayOfWeekStats(habit, entries, today) : null;
+  const dayOfWeekStats: DayOfWeekStat[] = habitDowResult
+    ? habitDowResult.dayStats.map((d) => ({
+        day: d.day,
+        shortLabel: d.shortLabel,
+        count: d.completedCount,
+        totalDays: d.totalDays,
+        percent: d.percentage,
+      }))
+    : [];
 
-    return {
-      day,
-      shortLabel,
-      count,
-      percent,
-    };
-  });
+  const peakDayOfWeek: DayOfWeekStat | null = habitDowResult?.peakDay
+    ? {
+        day: habitDowResult.peakDay.day,
+        shortLabel: habitDowResult.peakDay.shortLabel,
+        count: habitDowResult.peakDay.completedCount,
+        totalDays: habitDowResult.peakDay.totalDays,
+        percent: habitDowResult.peakDay.percentage,
+      }
+    : null;
 
   // Month-by-Month All-Time History & Best Month
   const allMonthKeys = Array.from(
@@ -275,54 +274,9 @@ export function useSingleHabitHistory(
     return perf;
   });
 
-  // Compute Current Streak
-  let currentStreak = 0;
-  if (entries[todayKey]?.completed) {
-    currentStreak = 1;
-  }
-
-  const checkDate = new Date(today);
-  checkDate.setDate(checkDate.getDate() - 1);
-
-  for (let i = 0; i < 365; i++) {
-    const dKey = formatDateKey(checkDate);
-    if (entries[dKey]?.completed) {
-      currentStreak++;
-      checkDate.setDate(checkDate.getDate() - 1);
-    } else {
-      break;
-    }
-  }
-
-  // Compute Longest Streak Ever
-  let longestStreak = currentStreak;
-  const sortedDates = Object.keys(entries)
-    .filter((k) => entries[k].completed && k.length === 10)
-    .sort();
-
-  let tempStreak = 0;
-  let lastDate: Date | null = null;
-
-  sortedDates.forEach((dStr) => {
-    const [y, m, d] = dStr.split('-').map(Number);
-    const curDate = new Date(y, m - 1, d);
-
-    if (!lastDate) {
-      tempStreak = 1;
-    } else {
-      const diffDays = Math.round((curDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
-      if (diffDays === 1) {
-        tempStreak++;
-      } else if (diffDays > 1) {
-        tempStreak = 1;
-      }
-    }
-
-    lastDate = curDate;
-    if (tempStreak > longestStreak) {
-      longestStreak = tempStreak;
-    }
-  });
+  // Compute Current and Longest Streaks
+  const currentStreak = calculateSingleHabitStreak(entries, today, true);
+  const longestStreak = calculateLongestStreak(entries);
 
   const isCompleted = useCallback(
     (dateKey: string): boolean => {
@@ -401,10 +355,11 @@ export function useSingleHabitHistory(
       selectedMonthKey: activeMonthKey,
       allTimeRatePercent,
       totalTrackedDays,
-      daysSinceCreation,
+      daysSinceCreation: totalTrackedDays,
       totalNotesCount,
       bestMonth,
       dayOfWeekStats,
+      peakDayOfWeek,
       monthlyHistory,
     },
     loading,

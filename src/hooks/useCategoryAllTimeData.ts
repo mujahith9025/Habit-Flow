@@ -6,6 +6,7 @@ import {
   calculateSingleHabitStreak,
   calculateLongestStreak,
   calculateHabitTotalTrackedDays,
+  calculateHabitDayOfWeekStats,
 } from '../lib/calculations';
 
 export interface CategoryHabitAllTimeStat {
@@ -25,6 +26,7 @@ export interface CategoryDayOfWeekStat {
   day: string;
   shortLabel: string;
   count: number;
+  totalDays: number;
   percent: number;
   dayIndex: number;
 }
@@ -242,18 +244,30 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
         )
       : 0;
 
-  // Day of week distribution for category
+  // 1. Calculate each habit's DayOfWeek occurrences and check-ins
+  const dayCompletedSum: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const dayTotalDaysSum: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+  habits.forEach((h) => {
+    const entries = entriesByHabit[h.id] || {};
+    const habitDow = calculateHabitDayOfWeekStats(h, entries, today);
+    habitDow.dayStats.forEach((s) => {
+      dayCompletedSum[s.dayIndex] = (dayCompletedSum[s.dayIndex] || 0) + s.completedCount;
+      dayTotalDaysSum[s.dayIndex] = (dayTotalDaysSum[s.dayIndex] || 0) + s.totalDays;
+    });
+  });
+
+  // Day of week distribution for category with total days and true consistency percentage
   const categoryDayOfWeekStats: CategoryDayOfWeekStat[] = DAYS_OF_WEEK.map(({ day, shortLabel, dayIndex }) => {
-    const count = categoryDayCounts[dayIndex] || 0;
-    const percent =
-      totalCategoryCompletions > 0
-        ? Math.round((count / totalCategoryCompletions) * 100)
-        : 0;
+    const count = dayCompletedSum[dayIndex] || 0;
+    const totalDays = Math.max(1, Math.max(dayTotalDaysSum[dayIndex] || 0, count));
+    const percent = totalDays > 0 ? Math.min(100, Math.round((count / totalDays) * 100)) : 0;
 
     return {
       day,
       shortLabel,
       count,
+      totalDays,
       percent,
       dayIndex,
     };
@@ -265,21 +279,40 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
   let weekdayChecks = 0;
   let weekendChecks = 0;
 
-  if (categoryDayOfWeekStats.length > 0 && totalCategoryCompletions > 0) {
-    peakDay = categoryDayOfWeekStats.reduce((max, d) => (d.count > max.count ? d : max), categoryDayOfWeekStats[0]);
-    lowestDay = categoryDayOfWeekStats.reduce((min, d) => (d.count < min.count ? d : min), categoryDayOfWeekStats[0]);
-
-    categoryDayOfWeekStats.forEach((d) => {
-      if (d.dayIndex >= 1 && d.dayIndex <= 5) {
-        weekdayChecks += d.count;
-      } else {
-        weekendChecks += d.count;
+  const activeDays = categoryDayOfWeekStats.filter((d) => d.count > 0);
+  if (activeDays.length > 0) {
+    peakDay = activeDays.reduce((max, d) => {
+      if (d.percent !== max.percent) {
+        return d.percent > max.percent ? d : max;
       }
-    });
+      return d.count > max.count ? d : max;
+    }, activeDays[0]);
+
+    lowestDay = categoryDayOfWeekStats.reduce((min, d) => {
+      if (d.percent !== min.percent) {
+        return d.percent < min.percent ? d : min;
+      }
+      return d.count < min.count ? d : min;
+    }, categoryDayOfWeekStats[0]);
   }
 
-  const weekdayPercent = totalCategoryCompletions > 0 ? Math.round((weekdayChecks / totalCategoryCompletions) * 100) : 0;
-  const weekendPercent = totalCategoryCompletions > 0 ? Math.round((weekendChecks / totalCategoryCompletions) * 100) : 0;
+  categoryDayOfWeekStats.forEach((d) => {
+    if (d.dayIndex >= 1 && d.dayIndex <= 5) {
+      weekdayChecks += d.count;
+    } else {
+      weekendChecks += d.count;
+    }
+  });
+
+  const totalWeekdayPossible = categoryDayOfWeekStats
+    .filter((d) => d.dayIndex >= 1 && d.dayIndex <= 5)
+    .reduce((sum, d) => sum + d.totalDays, 0);
+  const totalWeekendPossible = categoryDayOfWeekStats
+    .filter((d) => d.dayIndex === 0 || d.dayIndex === 6)
+    .reduce((sum, d) => sum + d.totalDays, 0);
+
+  const weekdayPercent = totalWeekdayPossible > 0 ? Math.min(100, Math.round((weekdayChecks / totalWeekdayPossible) * 100)) : 0;
+  const weekendPercent = totalWeekendPossible > 0 ? Math.min(100, Math.round((weekendChecks / totalWeekendPossible) * 100)) : 0;
 
   // Monthly trend for category
   const sortedMonthKeys = Object.keys(monthlyCategoryCompletionsMap).sort();

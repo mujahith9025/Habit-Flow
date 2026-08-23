@@ -817,15 +817,15 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
               <div className="flex flex-wrap items-center gap-2">
                 {allTimeData.peakDay && allTimeData.peakDay.count > 0 && (
                   <div className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold font-stat-label flex items-center gap-1.5 shadow-xs">
-                    <span className="material-symbols-outlined text-[15px]">local_fire_department</span>
-                    <span>Peak Day: <strong className="font-black">{allTimeData.peakDay.day}</strong> ({allTimeData.peakDay.count} checks • {allTimeData.peakDay.percent}%)</span>
+                    <span className="material-symbols-outlined text-[15px]">emoji_events</span>
+                    <span>Peak of the Day: <strong className="font-black">{allTimeData.peakDay.day}</strong> ({allTimeData.peakDay.percent}% • {allTimeData.peakDay.count}/{allTimeData.peakDay.totalDays} checks)</span>
                   </div>
                 )}
 
                 {allTimeData.lowestDay && allTimeData.lowestDay.count >= 0 && (
                   <div className="px-3 py-1 rounded-full bg-primary/10 text-primary dark:text-primary-fixed-dim border border-primary/20 text-xs font-bold font-stat-label flex items-center gap-1.5 shadow-xs">
                     <span className="material-symbols-outlined text-[15px]">flag</span>
-                    <span>Growth Day: <strong className="font-black">{allTimeData.lowestDay.day}</strong> ({allTimeData.lowestDay.count} checks)</span>
+                    <span>Growth Day: <strong className="font-black">{allTimeData.lowestDay.day}</strong> ({allTimeData.lowestDay.percent}% • {allTimeData.lowestDay.count}/{allTimeData.lowestDay.totalDays} checks)</span>
                   </div>
                 )}
               </div>
@@ -837,11 +837,11 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                 <div className="flex items-center justify-between text-xs font-stat-label font-bold">
                   <span className="flex items-center gap-1.5 text-primary">
                     <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>
-                    Weekdays (Mon–Fri): {allTimeData.weekdayChecks} checks ({allTimeData.weekdayPercent}%)
+                    Weekdays (Mon–Fri): {allTimeData.weekdayChecks} checks ({allTimeData.weekdayPercent}% consistency)
                   </span>
                   <span className="flex items-center gap-1.5 text-tertiary">
                     <span className="w-2.5 h-2.5 rounded-full bg-tertiary inline-block"></span>
-                    Weekends (Sat–Sun): {allTimeData.weekendChecks} checks ({allTimeData.weekendPercent}%)
+                    Weekends (Sat–Sun): {allTimeData.weekendChecks} checks ({allTimeData.weekendPercent}% consistency)
                   </span>
                 </div>
                 {/* Segmented Bar */}
@@ -861,18 +861,17 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
             )}
 
             {/* Vertical Bar Chart with Peak Highlighting */}
-            <div className="h-40 flex items-end justify-between gap-2 sm:gap-3 pt-4 pb-2 border-b border-outline-variant/15 px-2">
+            <div className="h-44 flex items-end justify-between gap-2 sm:gap-3 pt-4 pb-2 border-b border-outline-variant/15 px-2">
               {allTimeData.categoryDayOfWeekStats.map((d) => {
-                const maxCount = Math.max(...allTimeData.categoryDayOfWeekStats.map((s) => s.count), 1);
-                const heightPct = maxCount > 0 ? Math.max(14, Math.round((d.count / maxCount) * 100)) : 14;
+                const heightPct = Math.max(14, d.percent);
                 const isPeak = allTimeData.peakDay && d.day === allTimeData.peakDay.day && d.count > 0;
-                const isLowest = allTimeData.lowestDay && d.day === allTimeData.lowestDay.day && d.count > 0 && d.count < maxCount;
+                const isLowest = allTimeData.lowestDay && d.day === allTimeData.lowestDay.day && d.count > 0 && d.percent < 100;
 
                 return (
                   <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group relative">
                     {/* Tooltip */}
                     <div className="absolute -top-9 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[10px] font-bold px-2 py-1 rounded-lg shadow-soft whitespace-nowrap border border-outline-variant/20">
-                      <span className="font-extrabold">{d.day}:</span> {d.count} checks ({d.percent}% of total)
+                      <span className="font-extrabold">{d.day}:</span> {d.count} of {d.totalDays} checks completed ({d.percent}%)
                     </div>
 
                     {/* Top Peak Badge on Bar */}
@@ -883,9 +882,12 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                       </span>
                     )}
 
-                    {/* Check count label on top of bar */}
-                    <span className="text-[11px] font-stat-label font-black text-on-surface mb-1">
-                      {d.count}
+                    {/* Consistency percentage on top of bar */}
+                    <span className="text-[11px] font-stat-label font-black text-on-surface mb-0.5">
+                      {d.percent}%
+                    </span>
+                    <span className="text-[9px] font-stat-label text-on-surface-variant mb-1">
+                      {d.count}/{d.totalDays}
                     </span>
 
                     {/* Bar Pill */}
@@ -909,9 +911,6 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                       }`}
                     >
                       {d.shortLabel}
-                    </span>
-                    <span className="text-[10px] font-stat-label font-semibold text-on-surface-variant/80">
-                      {d.percent}%
                     </span>
                   </div>
                 );
@@ -939,12 +938,11 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                         </span>
                       )}
                     </div>
-                    <div className="font-app-title text-base sm:text-lg font-black text-on-surface mt-1">
-                      {d.count}
-                      <span className="text-[10px] font-normal text-on-surface-variant ml-0.5">checks</span>
+                    <div className="font-app-title text-base sm:text-lg font-black text-primary dark:text-primary-fixed-dim mt-1">
+                      {d.percent}%
                     </div>
-                    <div className="text-[10px] font-stat-label font-bold text-primary dark:text-primary-fixed-dim mt-0.5">
-                      {d.percent}% of total
+                    <div className="text-[10px] font-stat-label text-on-surface-variant mt-0.5">
+                      {d.count} of {d.totalDays} done
                     </div>
                   </div>
                 );
