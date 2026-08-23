@@ -37,6 +37,7 @@ export interface HabitHistoryMetrics {
 
   // All-Time Analytics fields
   allTimeRatePercent: number;
+  totalTrackedDays: number;
   daysSinceCreation: number;
   totalNotesCount: number;
   bestMonth: MonthPerformance | null;
@@ -195,16 +196,37 @@ export function useSingleHabitHistory(
       ? Math.min(100, Math.round((monthCompletedDays / daysInMonth) * 100))
       : 0;
 
-  // Days since creation
-  const createdAtDate = habit?.createdAt ? new Date(habit.createdAt) : today;
+  // Find earliest date across habit creation and all entries
+  let earliestHabitDate: Date = today;
+  if (habit?.createdAt) {
+    const cDate = new Date(habit.createdAt);
+    if (!isNaN(cDate.getTime()) && cDate < earliestHabitDate) {
+      earliestHabitDate = cDate;
+    }
+  }
+
+  Object.keys(entries).forEach((dateKey) => {
+    if (dateKey.length === 10) {
+      const [y, m, d] = dateKey.split('-').map(Number);
+      if (y && m && d) {
+        const eDate = new Date(y, m - 1, d);
+        if (eDate < earliestHabitDate) {
+          earliestHabitDate = eDate;
+        }
+      }
+    }
+  });
+
   const daysSinceCreation = Math.max(
     1,
-    Math.ceil((today.getTime() - createdAtDate.getTime()) / (1000 * 3600 * 24))
+    Math.ceil((today.getTime() - earliestHabitDate.getTime()) / (1000 * 3600 * 24)) + 1
   );
 
+  const totalTrackedDays = Math.max(daysSinceCreation, Math.max(1, totalLifetimeCompletions));
+
   const allTimeRatePercent =
-    daysSinceCreation > 0
-      ? Math.min(100, Math.round((totalLifetimeCompletions / daysSinceCreation) * 100))
+    totalTrackedDays > 0
+      ? Math.min(100, Math.round((totalLifetimeCompletions / totalTrackedDays) * 100))
       : 0;
 
   // Day of Week Distribution Stats
@@ -378,6 +400,7 @@ export function useSingleHabitHistory(
       daysInMonth,
       selectedMonthKey: activeMonthKey,
       allTimeRatePercent,
+      totalTrackedDays,
       daysSinceCreation,
       totalNotesCount,
       bestMonth,

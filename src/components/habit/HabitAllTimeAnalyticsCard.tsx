@@ -14,6 +14,7 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
 }) => {
   const {
     totalLifetimeCompletions,
+    totalTrackedDays,
     longestStreak,
     allTimeRatePercent,
     daysSinceCreation,
@@ -70,7 +71,7 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/15 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-              Lifetime Checks
+              Days Completed
             </span>
             <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <span className="material-symbols-outlined text-[17px]">task_alt</span>
@@ -79,10 +80,10 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
           <div>
             <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
               {totalLifetimeCompletions}
-              <span className="text-xs font-normal text-on-surface-variant ml-1">times</span>
+              <span className="text-xs font-normal text-on-surface-variant ml-1">/ {totalTrackedDays || daysSinceCreation}d</span>
             </div>
             <p className="text-[10px] text-on-surface-variant mt-0.5">
-              {daysSinceCreation}d active • Best streak: <span className="font-bold text-tertiary">{longestStreak}d</span>
+              {totalLifetimeCompletions} of {totalTrackedDays || daysSinceCreation} days done • Best: <span className="font-bold text-tertiary">{longestStreak}d</span>
             </p>
           </div>
         </div>

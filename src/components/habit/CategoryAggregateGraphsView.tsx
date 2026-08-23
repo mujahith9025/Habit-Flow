@@ -611,9 +611,9 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                   🌐 Category Lifetime Intelligence
                 </span>
                 {allTimeData.topHabit && (
-                  <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold font-stat-label flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px]">emoji_events</span>
-                    <span>Top: {allTimeData.topHabit.habit.name}</span>
+                  <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-extrabold font-stat-label flex items-center gap-1 shadow-xs">
+                    <span className="material-symbols-outlined text-[16px]">military_tech</span>
+                    <span>Top #1 Habit: {allTimeData.topHabit.habit.name} ({allTimeData.topHabit.allTimeRate}% • {allTimeData.topHabit.totalCompletions}/{allTimeData.topHabit.totalTrackedDays}d)</span>
                   </span>
                 )}
               </div>
@@ -623,7 +623,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                   {categoryName} • All-Time Records
                 </h4>
                 <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
-                  Lifetime consistency, streak records, and completion trends across all habits in {categoryName}.
+                  Lifetime consistency calculated across all {allTimeData.totalCategoryDays} days tracked for {categoryName}.
                 </p>
               </div>
 
@@ -631,17 +631,22 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                 <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
                   <span className="text-on-surface-variant">Lifetime Checks: </span>
                   <span className="font-bold text-primary dark:text-primary-fixed-dim">
-                    {allTimeData.totalCategoryCompletions} times
+                    {allTimeData.totalCategoryCompletions} / {allTimeData.totalCategoryPossibleChecks}
                   </span>
                 </div>
 
                 <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
-                  <span className="text-on-surface-variant">Habits Tracked: </span>
+                  <span className="text-on-surface-variant">Days Tracked: </span>
+                  <span className="font-bold text-on-surface">{allTimeData.totalCategoryDays} days</span>
+                </div>
+
+                <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                  <span className="text-on-surface-variant">Habits: </span>
                   <span className="font-bold text-on-surface">{habits.length}</span>
                 </div>
 
                 <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
-                  <span className="text-on-surface-variant">Reflections Logged: </span>
+                  <span className="text-on-surface-variant">Reflections: </span>
                   <span className="font-bold text-purple-600 dark:text-purple-400">{allTimeData.totalNotesInBoard} notes</span>
                 </div>
               </div>
@@ -684,46 +689,67 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                 All-Time Leaderboard & Habit Performance in {categoryName}
               </span>
               <span className="text-xs font-stat-label font-bold text-primary">
-                Ranked by Lifetime Checks
+                Ranked by Lifetime Checks & Days Done
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {allTimeData.habitStatsList.map((stat, idx) => {
                 const habitColor = stat.habit.color || '#006398';
+                const isTop1 = idx === 0;
+
                 return (
                   <div
                     key={stat.habit.id}
-                    className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/15 hover:border-primary/40 transition-all shadow-sm space-y-3"
+                    className={`rounded-2xl p-4 border transition-all shadow-sm space-y-3 ${
+                      isTop1
+                        ? 'bg-gradient-to-br from-amber-500/10 via-surface-container-low to-surface-container-lowest dark:from-amber-500/15 dark:to-surface-container-high/40 border-amber-500/40 ring-1 ring-amber-500/30'
+                        : 'bg-surface-container-low/60 dark:bg-surface-container-high/30 border-outline-variant/15 hover:border-primary/40'
+                    }`}
                   >
                     {/* Header */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0">
                         <span
                           className={`font-stat-label text-xs font-black px-2 py-0.5 rounded-full ${
-                            idx === 0
-                              ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/30'
+                            isTop1
+                              ? 'bg-amber-500 text-white dark:bg-amber-400 dark:text-black shadow-xs font-extrabold flex items-center gap-0.5'
                               : idx === 1
-                              ? 'bg-slate-300/40 text-slate-700 dark:text-slate-300'
+                              ? 'bg-slate-300/60 text-slate-800 dark:text-slate-200'
                               : idx === 2
-                              ? 'bg-amber-700/20 text-amber-800 dark:text-amber-400'
+                              ? 'bg-amber-700/30 text-amber-900 dark:text-amber-300'
                               : 'bg-surface-container text-on-surface-variant'
                           }`}
                         >
+                          {isTop1 && <span className="material-symbols-outlined text-[13px]">emoji_events</span>}
                           #{idx + 1}
                         </span>
-                        <h4 className="font-habit-name text-sm font-bold text-on-surface truncate">
-                          {stat.habit.name}
-                        </h4>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-habit-name text-sm font-bold text-on-surface truncate">
+                              {stat.habit.name}
+                            </h4>
+                            {isTop1 && (
+                              <span className="text-[9px] uppercase font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                Top 1
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-stat-label text-on-surface-variant">
+                            {stat.totalCompletions} of {stat.totalTrackedDays} days done
+                          </span>
+                        </div>
                       </div>
 
-                      <span className="font-app-title text-base font-extrabold text-primary dark:text-primary-fixed-dim">
-                        {stat.allTimeRate}%
-                      </span>
+                      <div className="text-right">
+                        <span className="font-app-title text-xl font-extrabold text-primary dark:text-primary-fixed-dim">
+                          {stat.allTimeRate}%
+                        </span>
+                      </div>
                     </div>
 
                     {/* Progress bar */}
-                    <div className="h-1.5 w-full bg-surface-container-highest dark:bg-surface-container rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-surface-container-highest dark:bg-surface-container rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -737,9 +763,11 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                     <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] font-stat-label">
                       <div className="bg-surface-container-lowest dark:bg-surface-container p-2 rounded-xl border border-outline-variant/15">
                         <div className="text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">
-                          Lifetime
+                          Completed Days
                         </div>
-                        <div className="font-bold text-on-surface mt-0.5">{stat.totalCompletions} times</div>
+                        <div className="font-bold text-on-surface mt-0.5">
+                          {stat.totalCompletions} / {stat.totalTrackedDays}d
+                        </div>
                       </div>
 
                       <div className="bg-surface-container-lowest dark:bg-surface-container p-2 rounded-xl border border-outline-variant/15">
