@@ -269,3 +269,77 @@ export function calculateWeeklyProgressPercent(
   const target = goalCount > 0 ? goalCount : 4;
   return Math.min(100, Math.max(0, Math.round((completedWeeksCount / target) * 100)));
 }
+
+/**
+ * Calculates the exact total calendar days a habit has been active/tracked
+ * based on its individual creation date, startMonth, endMonth, excludedMonths, and entry history.
+ */
+export function calculateHabitTotalTrackedDays(
+  habit: Habit,
+  entries: HabitEntryMap,
+  today: Date = new Date()
+): number {
+  const completedCount = Object.values(entries).filter((e) => e?.completed).length;
+
+  // 1. Find earliest date for THIS specific habit
+  let earliestDate: Date = today;
+
+  if (habit.createdAt) {
+    const cDate = new Date(habit.createdAt);
+    if (!isNaN(cDate.getTime()) && cDate < earliestDate) {
+      earliestDate = cDate;
+    }
+  }
+
+  if (habit.startMonth) {
+    const [sy, sm] = habit.startMonth.split('-').map(Number);
+    if (sy && sm) {
+      const sDate = new Date(sy, sm - 1, 1);
+      earliestDate = sDate;
+    }
+  }
+
+  // Check earliest recorded entry date for this habit
+  Object.keys(entries).forEach((dateKey) => {
+    if (dateKey.length === 10) {
+      const [y, m, d] = dateKey.split('-').map(Number);
+      if (y && m && d) {
+        const eDate = new Date(y, m - 1, d);
+        if (!habit.startMonth && eDate < earliestDate) {
+          earliestDate = eDate;
+        }
+      }
+    }
+  });
+
+  // End boundary for habit (endMonth or today)
+  let endDate: Date = today;
+  if (habit.endMonth) {
+    const [ey, em] = habit.endMonth.split('-').map(Number);
+    if (ey && em) {
+      const lastDayOfEndMonth = new Date(ey, em, 0);
+      if (lastDayOfEndMonth < today) {
+        endDate = lastDayOfEndMonth;
+      }
+    }
+  }
+
+  // Calculate gross days between earliestDate and endDate
+  const rawDiffDays = Math.ceil((endDate.getTime() - earliestDate.getTime()) / (1000 * 3600 * 24)) + 1;
+  let totalDays = Math.max(1, rawDiffDays);
+
+  // Subtract days from excluded months if any
+  if (habit.excludedMonths && habit.excludedMonths.length > 0) {
+    habit.excludedMonths.forEach((mKey) => {
+      const [y, m] = mKey.split('-').map(Number);
+      if (y && m) {
+        const daysInExcluded = new Date(y, m, 0).getDate();
+        totalDays = Math.max(1, totalDays - daysInExcluded);
+      }
+    });
+  }
+
+  // Ensure total days is at least the number of completed checks
+  return Math.max(1, Math.max(completedCount, totalDays));
+}
+

@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { onSnapshot, getEntriesCollectionRef } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { Habit, HabitEntryMap } from '../types';
-import { calculateSingleHabitStreak, calculateLongestStreak } from '../lib/calculations';
+import {
+  calculateSingleHabitStreak,
+  calculateLongestStreak,
+  calculateHabitTotalTrackedDays,
+} from '../lib/calculations';
 
 export interface CategoryHabitAllTimeStat {
   habit: Habit;
@@ -112,7 +116,7 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
   const categoryDayCounts: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
   const monthlyCategoryCompletionsMap: Record<string, number> = {};
 
-  // 1. First pass: Find earliest entry date across the entire category
+  // Find earliest entry date across the entire category
   let earliestCategoryDate: Date = today;
 
   habits.forEach((habit) => {
@@ -142,20 +146,12 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
     Math.ceil((today.getTime() - earliestCategoryDate.getTime()) / (1000 * 3600 * 24)) + 1
   );
 
-  // 2. Second pass: Calculate statistics for each habit
+  // Calculate statistics for each individual habit
   const habitStatsList: CategoryHabitAllTimeStat[] = habits.map((habit) => {
     const entries = entriesByHabit[habit.id] || {};
     let totalCompletions = 0;
     let totalNotes = 0;
     const monthCountsMap: Record<string, number> = {};
-
-    let earliestHabitDate: Date = today;
-    if (habit.createdAt) {
-      const cDate = new Date(habit.createdAt);
-      if (!isNaN(cDate.getTime()) && cDate < earliestHabitDate) {
-        earliestHabitDate = cDate;
-      }
-    }
 
     Object.values(entries).forEach((entry) => {
       if (entry.note || entry.mood || (entry.tags && entry.tags.length > 0)) {
@@ -174,23 +170,14 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
         const [y, m, d] = entry.date.split('-').map(Number);
         if (y && m && d) {
           const entryDate = new Date(y, m - 1, d);
-          if (entryDate < earliestHabitDate) {
-            earliestHabitDate = entryDate;
-          }
           const dIdx = entryDate.getDay();
           categoryDayCounts[dIdx] = (categoryDayCounts[dIdx] || 0) + 1;
         }
       }
     });
 
-    // Total tracked days for this habit is the span of active days tracked (at least totalCategoryDays or habit days)
-    const habitDaysSpan = Math.max(
-      1,
-      Math.ceil((today.getTime() - earliestHabitDate.getTime()) / (1000 * 3600 * 24)) + 1
-    );
-
-    // Tracked days is normalized to category tracking window or habit tracking window (minimum totalCompletions)
-    const totalTrackedDays = Math.max(totalCategoryDays, Math.max(habitDaysSpan, totalCompletions));
+    // Individual habit total tracked days (custom to this habit's creation/start)
+    const totalTrackedDays = calculateHabitTotalTrackedDays(habit, entries, today);
     const allTimeRate = totalTrackedDays > 0 ? Math.min(100, Math.round((totalCompletions / totalTrackedDays) * 100)) : 0;
 
     const currentStreak = calculateSingleHabitStreak(entries, today, true);
@@ -219,7 +206,7 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
       longestStreak,
       currentStreak,
       allTimeRate,
-      daysSinceCreation: habitDaysSpan,
+      daysSinceCreation: totalTrackedDays,
       totalNotes,
       bestMonthTitle,
       bestMonthPercent,
@@ -228,19 +215,24 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
 
   // Sort habitStatsList descending by allTimeRate, then totalCompletions
   habitStatsList.sort((a, b) => {
-    if (b.totalCompletions !== a.totalCompletions) {
-      return b.totalCompletions - a.totalCompletions;
+    if (a.totalCompletions === 0 && b.totalCompletions > 0) return 1;
+    if (b.totalCompletions === 0 && a.totalCompletions > 0) return -1;
+    if (b.allTimeRate !== a.allTimeRate) {
+      return b.allTimeRate - a.allTimeRate;
     }
-    return b.allTimeRate - a.allTimeRate;
+    return b.totalCompletions - a.totalCompletions;
   });
 
   // Crown the #1 Top Habit in this category
   const topHabit = habitStatsList.length > 0 && habitStatsList[0].totalCompletions > 0 ? habitStatsList[0] : null;
 
-  const totalCategoryPossibleChecks = habits.length * totalCategoryDays;
+  const totalCategoryPossibleChecks = habitStatsList.reduce((acc, curr) => acc + curr.totalTrackedDays, 0);
+
   const overallConsistencyPercent =
-    totalCategoryPossibleChecks > 0
-      ? Math.min(100, Math.round((totalCategoryCompletions / totalCategoryPossibleChecks) * 100))
+    habitStatsList.length > 0
+      ? Math.round(
+          habitStatsList.reduce((acc, curr) => acc + curr.allTimeRate, 0) / habitStatsList.length
+        )
       : 0;
 
   // Day of week distribution for category

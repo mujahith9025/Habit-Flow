@@ -5,6 +5,7 @@ import {
   calculateLongestStreak,
   calculateMonthProgressPercent,
   calculateWeeklyProgressPercent,
+  calculateHabitTotalTrackedDays,
 } from '../lib/calculations';
 import { Habit, HabitEntryMap, isHabitActiveInMonth } from '../types';
 
@@ -266,6 +267,82 @@ describe('HabitFlow Calculations Unit Test Suite', () => {
       expect(isHabitActiveInMonth(habitThisMonthOnly, '2026-07')).toBe(false);
       expect(isHabitActiveInMonth(habitThisMonthOnly, '2026-08')).toBe(true);
       expect(isHabitActiveInMonth(habitThisMonthOnly, '2026-09')).toBe(false);
+    });
+  });
+
+  describe('calculateHabitTotalTrackedDays (Individualized habit tracking window)', () => {
+    const today = new Date(2026, 7, 23); // 2026-08-23
+
+    it('calculates exact days for a habit created 10 days ago', () => {
+      const recentHabit: Habit = {
+        id: 'h-recent',
+        name: 'New Habit',
+        icon: 'star',
+        color: '#006398',
+        frequency: 'daily',
+        goalCount: 1,
+        createdAt: '2026-08-14T00:00:00.000Z',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      const days = calculateHabitTotalTrackedDays(recentHabit, {}, today);
+      expect(days).toBe(10); // Aug 14 to Aug 23 = 10 days
+    });
+
+    it('calculates exact days for a habit created in Feb (204 days ago)', () => {
+      const olderHabit: Habit = {
+        id: 'h-old',
+        name: 'Older Habit',
+        icon: 'star',
+        color: '#006398',
+        frequency: 'daily',
+        goalCount: 1,
+        createdAt: '2026-02-01T00:00:00.000Z',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      const days = calculateHabitTotalTrackedDays(olderHabit, {}, today);
+      expect(days).toBe(204); // Feb 1 to Aug 23 = 204 days
+    });
+
+    it('respects startMonth lower bound', () => {
+      const julyHabit: Habit = {
+        id: 'h-july',
+        name: 'July Habit',
+        icon: 'star',
+        color: '#006398',
+        frequency: 'daily',
+        goalCount: 1,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        startMonth: '2026-07',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      const days = calculateHabitTotalTrackedDays(julyHabit, {}, today);
+      expect(days).toBe(54); // July 1 (31d) + Aug 23 (23d) = 54 days
+    });
+
+    it('subtracts days in excludedMonths', () => {
+      const habitWithExclusion: Habit = {
+        id: 'h-excluded',
+        name: 'Habit Excluded July',
+        icon: 'star',
+        color: '#006398',
+        frequency: 'daily',
+        goalCount: 1,
+        createdAt: '2026-06-01T00:00:00.000Z',
+        excludedMonths: ['2026-07'],
+        archived: false,
+        sortOrder: 0,
+      };
+
+      // June 1 to Aug 23 is 30 + 31 + 23 = 84 days.
+      // Excluding July (31 days) -> 84 - 31 = 53 days.
+      const days = calculateHabitTotalTrackedDays(habitWithExclusion, {}, today);
+      expect(days).toBe(53);
     });
   });
 });
