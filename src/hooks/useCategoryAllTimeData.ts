@@ -26,6 +26,7 @@ export interface CategoryDayOfWeekStat {
   shortLabel: string;
   count: number;
   percent: number;
+  dayIndex: number;
 }
 
 export interface CategoryMonthlyTrend {
@@ -43,6 +44,12 @@ export interface UseCategoryAllTimeDataResult {
   topHabit: CategoryHabitAllTimeStat | null;
   habitStatsList: CategoryHabitAllTimeStat[];
   categoryDayOfWeekStats: CategoryDayOfWeekStat[];
+  peakDay: CategoryDayOfWeekStat | null;
+  lowestDay: CategoryDayOfWeekStat | null;
+  weekdayChecks: number;
+  weekendChecks: number;
+  weekdayPercent: number;
+  weekendPercent: number;
   monthlyCategoryTrend: CategoryMonthlyTrend[];
   totalNotesInBoard: number;
   loading: boolean;
@@ -248,8 +255,31 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
       shortLabel,
       count,
       percent,
+      dayIndex,
     };
   });
+
+  // Calculate Peak & Lowest Days + Weekday/Weekend split
+  let peakDay: CategoryDayOfWeekStat | null = null;
+  let lowestDay: CategoryDayOfWeekStat | null = null;
+  let weekdayChecks = 0;
+  let weekendChecks = 0;
+
+  if (categoryDayOfWeekStats.length > 0 && totalCategoryCompletions > 0) {
+    peakDay = categoryDayOfWeekStats.reduce((max, d) => (d.count > max.count ? d : max), categoryDayOfWeekStats[0]);
+    lowestDay = categoryDayOfWeekStats.reduce((min, d) => (d.count < min.count ? d : min), categoryDayOfWeekStats[0]);
+
+    categoryDayOfWeekStats.forEach((d) => {
+      if (d.dayIndex >= 1 && d.dayIndex <= 5) {
+        weekdayChecks += d.count;
+      } else {
+        weekendChecks += d.count;
+      }
+    });
+  }
+
+  const weekdayPercent = totalCategoryCompletions > 0 ? Math.round((weekdayChecks / totalCategoryCompletions) * 100) : 0;
+  const weekendPercent = totalCategoryCompletions > 0 ? Math.round((weekendChecks / totalCategoryCompletions) * 100) : 0;
 
   // Monthly trend for category
   const sortedMonthKeys = Object.keys(monthlyCategoryCompletionsMap).sort();
@@ -279,6 +309,12 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
     topHabit,
     habitStatsList,
     categoryDayOfWeekStats,
+    peakDay,
+    lowestDay,
+    weekdayChecks,
+    weekendChecks,
+    weekdayPercent,
+    weekendPercent,
     monthlyCategoryTrend,
     totalNotesInBoard,
     loading,

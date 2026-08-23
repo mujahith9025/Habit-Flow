@@ -156,61 +156,76 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
       {/* Day-of-Week Breakdown + Month-by-Month Trend */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2">
         {/* Left 5 Cols: Day-of-Week Consistency Pattern */}
-        <div className="lg:col-span-5 bg-surface-container-low/50 dark:bg-surface-container-high/20 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 space-y-3.5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
-                Day-of-Week Consistency
-              </h4>
-              <p className="text-[11px] text-on-surface-variant mt-0.5">
-                {bestDay && bestDay.count > 0 ? (
-                  <>
-                    Strongest on <span className="font-bold text-primary">{bestDay.day}s</span> ({bestDay.count} times)
-                  </>
-                ) : (
-                  'Track entries to reveal peak days'
-                )}
-              </p>
+        <div className="lg:col-span-5 bg-surface-container-low/50 dark:bg-surface-container-high/20 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 space-y-3.5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
+                  Day-of-Week Consistency
+                </h4>
+                <p className="text-[11px] text-on-surface-variant mt-0.5">
+                  {bestDay && bestDay.count > 0 ? (
+                    <>
+                      Peak momentum on <span className="font-bold text-amber-600 dark:text-amber-400">{bestDay.day}s</span> ({bestDay.count} checks)
+                    </>
+                  ) : (
+                    'Track entries to reveal peak days'
+                  )}
+                </p>
+              </div>
+              <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_week</span>
             </div>
-            <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_week</span>
+
+            {/* Peak day pill */}
+            {bestDay && bestDay.count > 0 && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-bold font-stat-label">
+                <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
+                <span>Strongest: <strong>{bestDay.day}</strong> ({bestDay.percent}% share)</span>
+              </div>
+            )}
           </div>
 
           {/* Vertical Bars for Days of Week */}
-          <div className="h-32 flex items-end justify-between gap-2 pt-3 pb-1 border-b border-outline-variant/15">
+          <div className="h-36 flex items-end justify-between gap-1.5 sm:gap-2 pt-3 pb-1 border-b border-outline-variant/15 px-1">
             {dayOfWeekStats.map((d) => {
-              const heightPct = maxDayCount > 0 ? Math.max(12, Math.round((d.count / maxDayCount) * 100)) : 12;
+              const heightPct = maxDayCount > 0 ? Math.max(14, Math.round((d.count / maxDayCount) * 100)) : 14;
               const isPeak = bestDay && d.day === bestDay.day && d.count > 0;
 
               return (
                 <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group relative">
                   {/* Tooltip */}
-                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
-                    {d.count} checks ({d.percent}%)
+                  <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[10px] font-bold px-2 py-0.5 rounded shadow-soft whitespace-nowrap border border-outline-variant/20">
+                    {d.day}: {d.count} checks ({d.percent}%)
                   </div>
 
+                  {/* Count on top of bar */}
+                  <span className="text-[10px] font-stat-label font-bold text-on-surface mb-1">
+                    {d.count}
+                  </span>
+
                   <div
-                    className={`w-full max-w-[20px] rounded-t-md transition-all duration-500 ${
+                    className={`w-full max-w-[24px] rounded-t-lg transition-all duration-500 ${
                       isPeak
-                        ? 'bg-primary shadow-xs ring-1 ring-primary/40'
+                        ? 'shadow-xs ring-1 ring-amber-500/50'
                         : d.count > 0
-                        ? 'bg-primary/60'
+                        ? 'opacity-85 group-hover:opacity-100'
                         : 'bg-outline-variant/20'
                     }`}
                     style={{
                       height: `${heightPct}%`,
-                      backgroundColor: d.count > 0 ? habitColor : undefined,
+                      backgroundColor: isPeak ? '#f59e0b' : d.count > 0 ? habitColor : undefined,
                     }}
                   />
 
                   <span
                     className={`text-[10px] uppercase font-bold mt-1.5 ${
-                      isPeak ? 'text-primary font-black' : 'text-on-surface-variant'
+                      isPeak ? 'text-amber-600 dark:text-amber-400 font-black' : 'text-on-surface-variant'
                     }`}
                   >
                     {d.shortLabel}
                   </span>
                   <span className="text-[9px] font-stat-label text-on-surface-variant leading-none">
-                    {d.count}
+                    {d.percent}%
                   </span>
                 </div>
               );

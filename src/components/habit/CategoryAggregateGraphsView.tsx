@@ -792,42 +792,160 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
             </div>
           </div>
 
-          {/* 3. Category Day of Week Activity Heatmap */}
-          <div className="bg-surface-container-low/40 dark:bg-surface-container-high/20 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 space-y-3">
-            <div className="flex items-center justify-between">
+          {/* 3. Category Day of Week Activity Pattern & Intelligence */}
+          <div className="bg-surface-container-low/40 dark:bg-surface-container-high/20 rounded-2xl p-5 sm:p-6 border border-outline-variant/15 space-y-5 shadow-sm">
+            {/* Header & Badges */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
               <div>
-                <h4 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
-                  {categoryName} • Day-of-Week Activity Pattern
-                </h4>
-                <p className="text-[11px] text-on-surface-variant mt-0.5">
-                  Lifetime check-in volume distributed across Monday through Sunday.
+                <div className="flex items-center gap-2">
+                  <span
+                    className="material-symbols-outlined text-primary text-[20px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    calendar_view_week
+                  </span>
+                  <h4 className="font-section-header text-sm sm:text-base font-bold text-on-surface uppercase tracking-wider">
+                    {categoryName} • Day-of-Week Activity Pattern
+                  </h4>
+                </div>
+                <p className="text-xs font-body-text text-on-surface-variant mt-0.5">
+                  Lifetime check-in volume, consistency peaks, and momentum trends across Monday through Sunday.
                 </p>
               </div>
-              <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_week</span>
+
+              {/* Peak & Lowest Day Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                {allTimeData.peakDay && allTimeData.peakDay.count > 0 && (
+                  <div className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold font-stat-label flex items-center gap-1.5 shadow-xs">
+                    <span className="material-symbols-outlined text-[15px]">local_fire_department</span>
+                    <span>Peak Day: <strong className="font-black">{allTimeData.peakDay.day}</strong> ({allTimeData.peakDay.count} checks • {allTimeData.peakDay.percent}%)</span>
+                  </div>
+                )}
+
+                {allTimeData.lowestDay && allTimeData.lowestDay.count >= 0 && (
+                  <div className="px-3 py-1 rounded-full bg-primary/10 text-primary dark:text-primary-fixed-dim border border-primary/20 text-xs font-bold font-stat-label flex items-center gap-1.5 shadow-xs">
+                    <span className="material-symbols-outlined text-[15px]">flag</span>
+                    <span>Growth Day: <strong className="font-black">{allTimeData.lowestDay.day}</strong> ({allTimeData.lowestDay.count} checks)</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="h-28 flex items-end justify-between gap-2 pt-2 border-b border-outline-variant/15">
+            {/* Weekday vs Weekend Split Overview Bar */}
+            {allTimeData.totalCategoryCompletions > 0 && (
+              <div className="bg-surface-container-lowest dark:bg-surface-container p-4 rounded-xl border border-outline-variant/15 space-y-2">
+                <div className="flex items-center justify-between text-xs font-stat-label font-bold">
+                  <span className="flex items-center gap-1.5 text-primary">
+                    <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>
+                    Weekdays (Mon–Fri): {allTimeData.weekdayChecks} checks ({allTimeData.weekdayPercent}%)
+                  </span>
+                  <span className="flex items-center gap-1.5 text-tertiary">
+                    <span className="w-2.5 h-2.5 rounded-full bg-tertiary inline-block"></span>
+                    Weekends (Sat–Sun): {allTimeData.weekendChecks} checks ({allTimeData.weekendPercent}%)
+                  </span>
+                </div>
+                {/* Segmented Bar */}
+                <div className="h-2.5 w-full bg-surface-container-highest dark:bg-surface-container-high rounded-full overflow-hidden flex">
+                  <div
+                    className="h-full bg-primary transition-all duration-700 rounded-l-full"
+                    style={{ width: `${allTimeData.weekdayPercent}%` }}
+                    title={`Weekdays: ${allTimeData.weekdayPercent}%`}
+                  />
+                  <div
+                    className="h-full bg-tertiary transition-all duration-700 rounded-r-full"
+                    style={{ width: `${allTimeData.weekendPercent}%` }}
+                    title={`Weekends: ${allTimeData.weekendPercent}%`}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Vertical Bar Chart with Peak Highlighting */}
+            <div className="h-40 flex items-end justify-between gap-2 sm:gap-3 pt-4 pb-2 border-b border-outline-variant/15 px-2">
               {allTimeData.categoryDayOfWeekStats.map((d) => {
                 const maxCount = Math.max(...allTimeData.categoryDayOfWeekStats.map((s) => s.count), 1);
-                const heightPct = maxCount > 0 ? Math.max(12, Math.round((d.count / maxCount) * 100)) : 12;
+                const heightPct = maxCount > 0 ? Math.max(14, Math.round((d.count / maxCount) * 100)) : 14;
+                const isPeak = allTimeData.peakDay && d.day === allTimeData.peakDay.day && d.count > 0;
+                const isLowest = allTimeData.lowestDay && d.day === allTimeData.lowestDay.day && d.count > 0 && d.count < maxCount;
 
                 return (
                   <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group relative">
-                    <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
-                      {d.count} checks ({d.percent}%)
+                    {/* Tooltip */}
+                    <div className="absolute -top-9 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[10px] font-bold px-2 py-1 rounded-lg shadow-soft whitespace-nowrap border border-outline-variant/20">
+                      <span className="font-extrabold">{d.day}:</span> {d.count} checks ({d.percent}% of total)
                     </div>
 
+                    {/* Top Peak Badge on Bar */}
+                    {isPeak && (
+                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[13px]">emoji_events</span>
+                        <span className="hidden sm:inline">Peak</span>
+                      </span>
+                    )}
+
+                    {/* Check count label on top of bar */}
+                    <span className="text-[11px] font-stat-label font-black text-on-surface mb-1">
+                      {d.count}
+                    </span>
+
+                    {/* Bar Pill */}
                     <div
-                      className="w-full max-w-[24px] rounded-t-md transition-all duration-500 bg-primary/70 group-hover:bg-primary"
+                      className={`w-full max-w-[32px] sm:max-w-[40px] rounded-t-xl transition-all duration-500 relative ${
+                        isPeak
+                          ? 'bg-gradient-to-t from-amber-500 to-amber-400 shadow-md ring-2 ring-amber-500/40'
+                          : isLowest
+                          ? 'bg-gradient-to-t from-primary/50 to-primary/70 group-hover:from-primary group-hover:to-primary-focus'
+                          : d.count > 0
+                          ? 'bg-gradient-to-t from-primary/80 to-primary group-hover:brightness-110'
+                          : 'bg-outline-variant/20'
+                      }`}
                       style={{ height: `${heightPct}%` }}
                     />
 
-                    <span className="text-[10px] uppercase font-bold text-on-surface-variant mt-1.5">
+                    {/* Day short label */}
+                    <span
+                      className={`text-[11px] uppercase font-bold mt-2 tracking-wider ${
+                        isPeak ? 'text-amber-600 dark:text-amber-400 font-black' : 'text-on-surface-variant'
+                      }`}
+                    >
                       {d.shortLabel}
                     </span>
-                    <span className="text-[9px] font-stat-label text-on-surface-variant leading-none">
-                      {d.count}
+                    <span className="text-[10px] font-stat-label font-semibold text-on-surface-variant/80">
+                      {d.percent}%
                     </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 7-Day Performance Cards Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-1">
+              {allTimeData.categoryDayOfWeekStats.map((d) => {
+                const isPeak = allTimeData.peakDay && d.day === allTimeData.peakDay.day && d.count > 0;
+                return (
+                  <div
+                    key={d.day}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      isPeak
+                        ? 'bg-amber-500/10 border-amber-500/30 ring-1 ring-amber-500/20'
+                        : 'bg-surface-container-lowest dark:bg-surface-container border-outline-variant/15'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-xs font-bold text-on-surface">{d.shortLabel}</span>
+                      {isPeak && (
+                        <span className="material-symbols-outlined text-amber-500 text-[13px]">
+                          emoji_events
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-app-title text-base sm:text-lg font-black text-on-surface mt-1">
+                      {d.count}
+                      <span className="text-[10px] font-normal text-on-surface-variant ml-0.5">checks</span>
+                    </div>
+                    <div className="text-[10px] font-stat-label font-bold text-primary dark:text-primary-fixed-dim mt-0.5">
+                      {d.percent}% of total
+                    </div>
                   </div>
                 );
               })}
