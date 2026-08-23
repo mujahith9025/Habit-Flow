@@ -11,6 +11,21 @@ import { useAuth } from './useAuth';
 import { Habit, HabitEntryMap } from '../types';
 import { formatDateKey } from './useDashboardMetrics';
 
+export interface MonthPerformance {
+  monthKey: string;
+  monthTitle: string;
+  completedCount: number;
+  daysInMonth: number;
+  percent: number;
+}
+
+export interface DayOfWeekStat {
+  day: string;
+  shortLabel: string;
+  count: number;
+  percent: number;
+}
+
 export interface HabitHistoryMetrics {
   currentStreak: number;
   longestStreak: number;
@@ -19,6 +34,14 @@ export interface HabitHistoryMetrics {
   monthCompletedDays: number;
   daysInMonth: number;
   selectedMonthKey: string;
+
+  // All-Time Analytics fields
+  allTimeRatePercent: number;
+  daysSinceCreation: number;
+  totalNotesCount: number;
+  bestMonth: MonthPerformance | null;
+  dayOfWeekStats: DayOfWeekStat[];
+  monthlyHistory: MonthPerformance[];
 }
 
 export interface UseSingleHabitHistoryResult {
@@ -32,6 +55,21 @@ export interface UseSingleHabitHistoryResult {
   updateHabit: (updates: Partial<Omit<Habit, 'id' | 'createdAt'>>) => Promise<void>;
   archiveHabit: (archived: boolean) => Promise<void>;
 }
+
+const MONTH_NAMES_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const DAYS_OF_WEEK = [
+  { day: 'Monday', shortLabel: 'Mon', dayIndex: 1 },
+  { day: 'Tuesday', shortLabel: 'Tue', dayIndex: 2 },
+  { day: 'Wednesday', shortLabel: 'Wed', dayIndex: 3 },
+  { day: 'Thursday', shortLabel: 'Thu', dayIndex: 4 },
+  { day: 'Friday', shortLabel: 'Fri', dayIndex: 5 },
+  { day: 'Saturday', shortLabel: 'Sat', dayIndex: 6 },
+  { day: 'Sunday', shortLabel: 'Sun', dayIndex: 0 },
+];
 
 export function useSingleHabitHistory(
   habitId?: string,
@@ -118,14 +156,36 @@ export function useSingleHabitHistory(
   // 3. Compute Lifetime & Selected Month Metrics
   let totalLifetimeCompletions = 0;
   let monthCompletedDays = 0;
+  let totalNotesCount = 0;
+
+  const dayOfWeekCounts: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const monthCompletionsMap: Record<string, number> = {};
 
   const daysInMonth = new Date(activeYear, activeMonth + 1, 0).getDate();
 
   Object.values(entries).forEach((entry) => {
+    if (entry.note || entry.mood || (entry.tags && entry.tags.length > 0)) {
+      totalNotesCount++;
+    }
+
     if (entry.completed) {
       totalLifetimeCompletions++;
+
+      // Selected Month
       if (entry.date.startsWith(activeMonthKey)) {
         monthCompletedDays++;
+      }
+
+      // Group by Month Key for All-Time History
+      const mKey = entry.monthKey || entry.date.substring(0, 7);
+      monthCompletionsMap[mKey] = (monthCompletionsMap[mKey] || 0) + 1;
+
+      // Group by Day of Week
+      const [y, m, d] = entry.date.split('-').map(Number);
+      if (y && m && d) {
+        const entryDate = new Date(y, m - 1, d);
+        const dayOfWeekIndex = entryDate.getDay();
+        dayOfWeekCounts[dayOfWeekIndex] = (dayOfWeekCounts[dayOfWeekIndex] || 0) + 1;
       }
     }
   });
@@ -134,6 +194,64 @@ export function useSingleHabitHistory(
     daysInMonth > 0
       ? Math.min(100, Math.round((monthCompletedDays / daysInMonth) * 100))
       : 0;
+
+  // Days since creation
+  const createdAtDate = habit?.createdAt ? new Date(habit.createdAt) : today;
+  const daysSinceCreation = Math.max(
+    1,
+    Math.ceil((today.getTime() - createdAtDate.getTime()) / (1000 * 3600 * 24))
+  );
+
+  const allTimeRatePercent =
+    daysSinceCreation > 0
+      ? Math.min(100, Math.round((totalLifetimeCompletions / daysSinceCreation) * 100))
+      : 0;
+
+  // Day of Week Distribution Stats
+  const dayOfWeekStats: DayOfWeekStat[] = DAYS_OF_WEEK.map(({ day, shortLabel, dayIndex }) => {
+    const count = dayOfWeekCounts[dayIndex] || 0;
+    const percent =
+      totalLifetimeCompletions > 0
+        ? Math.round((count / totalLifetimeCompletions) * 100)
+        : 0;
+
+    return {
+      day,
+      shortLabel,
+      count,
+      percent,
+    };
+  });
+
+  // Month-by-Month All-Time History & Best Month
+  const allMonthKeys = Array.from(
+    new Set([...Object.keys(monthCompletionsMap), activeMonthKey])
+  ).sort();
+
+  let bestMonth: MonthPerformance | null = null;
+  const monthlyHistory: MonthPerformance[] = allMonthKeys.map((mKey) => {
+    const [y, m] = mKey.split('-').map(Number);
+    const mDays = new Date(y, m, 0).getDate();
+    const count = monthCompletionsMap[mKey] || 0;
+    const pct = mDays > 0 ? Math.min(100, Math.round((count / mDays) * 100)) : 0;
+    const mTitle = `${MONTH_NAMES_SHORT[m - 1]} ${y}`;
+
+    const perf: MonthPerformance = {
+      monthKey: mKey,
+      monthTitle: mTitle,
+      completedCount: count,
+      daysInMonth: mDays,
+      percent: pct,
+    };
+
+    if (!bestMonth || perf.percent > bestMonth.percent || (perf.percent === bestMonth.percent && perf.completedCount > bestMonth.completedCount)) {
+      if (perf.completedCount > 0) {
+        bestMonth = perf;
+      }
+    }
+
+    return perf;
+  });
 
   // Compute Current Streak
   let currentStreak = 0;
@@ -259,6 +377,12 @@ export function useSingleHabitHistory(
       monthCompletedDays,
       daysInMonth,
       selectedMonthKey: activeMonthKey,
+      allTimeRatePercent,
+      daysSinceCreation,
+      totalNotesCount,
+      bestMonth,
+      dayOfWeekStats,
+      monthlyHistory,
     },
     loading,
     error,

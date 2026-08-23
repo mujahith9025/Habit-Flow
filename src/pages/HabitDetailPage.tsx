@@ -6,6 +6,7 @@ import { useDailyHabitsData } from '../hooks/useDailyHabitsData';
 import { HabitStatsGrid } from '../components/habit/HabitStatsGrid';
 import { HabitWeeklyGraphsView } from '../components/habit/HabitWeeklyGraphsView';
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
+import { HabitAllTimeAnalyticsCard } from '../components/habit/HabitAllTimeAnalyticsCard';
 import { CategoryAggregateGraphsView } from '../components/habit/CategoryAggregateGraphsView';
 import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
@@ -59,7 +60,7 @@ export const HabitDetailPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
-  const [activeAnalyticsView, setActiveAnalyticsView] = useState<'graphs' | 'calendar'>('graphs');
+  const [activeAnalyticsView, setActiveAnalyticsView] = useState<'graphs' | 'calendar' | 'alltime'>('graphs');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -386,24 +387,24 @@ export const HabitDetailPage: React.FC = () => {
               habitColor={habit.color || '#006398'}
             />
 
-            {/* Graph / Calendar View Switcher Tabs */}
+            {/* Graph / Calendar / All-Time View Switcher Tabs */}
             <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
+              <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
                 <button
                   onClick={() => setActiveAnalyticsView('graphs')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     activeAnalyticsView === 'graphs'
                       ? 'bg-primary text-on-primary shadow-soft'
                       : 'text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">bar_chart</span>
-                  <span>Weekly Performance Graphs</span>
+                  <span>Weekly Graphs</span>
                 </button>
 
                 <button
                   onClick={() => setActiveAnalyticsView('calendar')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     activeAnalyticsView === 'calendar'
                       ? 'bg-primary text-on-primary shadow-soft'
                       : 'text-on-surface-variant hover:text-on-surface'
@@ -412,28 +413,64 @@ export const HabitDetailPage: React.FC = () => {
                   <span className="material-symbols-outlined text-[16px]">calendar_month</span>
                   <span>Calendar Heatmap</span>
                 </button>
+
+                <button
+                  onClick={() => setActiveAnalyticsView('alltime')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeAnalyticsView === 'alltime'
+                      ? 'bg-primary text-on-primary shadow-soft'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">all_inclusive</span>
+                  <span>All-Time Analytics</span>
+                </button>
               </div>
             </div>
 
-            {/* Individual Habit Visualization */}
-            {activeAnalyticsView === 'graphs' ? (
-              <HabitWeeklyGraphsView
-                currentDate={selectedDate}
-                onChangeMonth={handleMonthChange}
-                isCompleted={isSingleCompleted}
-                onToggleDate={toggleSingleEntry}
+            {/* Individual Habit Visualization based on selected view */}
+            {activeAnalyticsView === 'graphs' && (
+              <div className="space-y-6">
+                <HabitWeeklyGraphsView
+                  currentDate={selectedDate}
+                  onChangeMonth={handleMonthChange}
+                  isCompleted={isSingleCompleted}
+                  onToggleDate={toggleSingleEntry}
+                  habitName={habit.name}
+                  habitFrequency={habit.frequency}
+                  goalCount={habit.goalCount}
+                />
+                <HabitAllTimeAnalyticsCard
+                  habitName={habit.name}
+                  habitColor={habit.color}
+                  metrics={singleMetrics}
+                />
+              </div>
+            )}
+
+            {activeAnalyticsView === 'calendar' && (
+              <div className="space-y-6">
+                <HabitCalendarHeatmap
+                  currentDate={selectedDate}
+                  onChangeMonth={handleMonthChange}
+                  isCompleted={isSingleCompleted}
+                  onToggleDate={toggleSingleEntry}
+                  habitColor={habit.color || '#006398'}
+                  habitName={habit.name}
+                />
+                <HabitAllTimeAnalyticsCard
+                  habitName={habit.name}
+                  habitColor={habit.color}
+                  metrics={singleMetrics}
+                />
+              </div>
+            )}
+
+            {activeAnalyticsView === 'alltime' && (
+              <HabitAllTimeAnalyticsCard
                 habitName={habit.name}
-                habitFrequency={habit.frequency}
-                goalCount={habit.goalCount}
-              />
-            ) : (
-              <HabitCalendarHeatmap
-                currentDate={selectedDate}
-                onChangeMonth={handleMonthChange}
-                isCompleted={isSingleCompleted}
-                onToggleDate={toggleSingleEntry}
-                habitColor={habit.color || '#006398'}
-                habitName={habit.name}
+                habitColor={habit.color}
+                metrics={singleMetrics}
               />
             )}
           </div>

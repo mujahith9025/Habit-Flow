@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Habit } from '../../types';
 import { HabitGridMetrics, MonthDayInfo } from '../../hooks/useDailyHabitsData';
+import { useCategoryAllTimeData } from '../../hooks/useCategoryAllTimeData';
 import { Button } from '../ui/Button';
 import { triggerHaptic } from '../../utils/haptics';
 
@@ -33,7 +34,8 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
   selectedMonthTitle,
   onCreateHabit,
 }) => {
-  const [graphMode, setGraphMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [graphMode, setGraphMode] = useState<'daily' | 'weekly' | 'monthly' | 'alltime'>('weekly');
+  const allTimeData = useCategoryAllTimeData(habits);
 
   const totalHabits = habits.length;
   const totalDaysInMonth = daysInMonth.length;
@@ -182,6 +184,18 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
           >
             <span className="material-symbols-outlined text-[15px]">leaderboard</span>
             <span>Month</span>
+          </button>
+
+          <button
+            onClick={() => setGraphMode('alltime')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              graphMode === 'alltime'
+                ? 'bg-primary text-on-primary shadow-soft'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">all_inclusive</span>
+            <span>All-Time</span>
           </button>
         </div>
       </div>
@@ -585,6 +599,214 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
           </div>
         );
       })()}
+
+      {/* MODE D: ALL-TIME CATEGORY & HABIT ANALYTICS */}
+      {graphMode === 'alltime' && (
+        <div className="space-y-6">
+          {/* 1. Category All-Time Hero Banner */}
+          <div className="bg-gradient-to-br from-surface-container-low to-surface-container/70 dark:from-surface-container-high/40 dark:to-surface-container-high/20 rounded-2xl p-5 sm:p-6 border border-outline-variant/15 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+            <div className="space-y-3 flex-1 text-center sm:text-left">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold uppercase tracking-wider font-stat-label">
+                  🌐 Category Lifetime Intelligence
+                </span>
+                {allTimeData.topHabit && (
+                  <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold font-stat-label flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[15px]">emoji_events</span>
+                    <span>Top: {allTimeData.topHabit.habit.name}</span>
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
+                  {categoryName} • All-Time Records
+                </h4>
+                <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                  Lifetime consistency, streak records, and completion trends across all habits in {categoryName}.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                  <span className="text-on-surface-variant">Lifetime Checks: </span>
+                  <span className="font-bold text-primary dark:text-primary-fixed-dim">
+                    {allTimeData.totalCategoryCompletions} times
+                  </span>
+                </div>
+
+                <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                  <span className="text-on-surface-variant">Habits Tracked: </span>
+                  <span className="font-bold text-on-surface">{habits.length}</span>
+                </div>
+
+                <div className="bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant/15 text-xs font-stat-label">
+                  <span className="text-on-surface-variant">Reflections Logged: </span>
+                  <span className="font-bold text-purple-600 dark:text-purple-400">{allTimeData.totalNotesInBoard} notes</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Circular Gauge */}
+            <div className="flex flex-col items-center justify-center shrink-0">
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(0, 99, 152, 0.15)" strokeWidth="7" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#006398"
+                    strokeWidth="7"
+                    strokeDasharray={2 * Math.PI * 40}
+                    strokeDashoffset={2 * Math.PI * 40 - (2 * Math.PI * 40 * Math.min(100, Math.max(0, allTimeData.overallConsistencyPercent))) / 100}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="font-app-title text-xl sm:text-2xl font-black text-on-surface">
+                    {allTimeData.overallConsistencyPercent}%
+                  </span>
+                  <span className="text-[8px] uppercase tracking-wider text-on-surface-variant font-stat-label font-bold">
+                    ALL-TIME AVG
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. All-Time Habit Comparison Cards */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-stat-label text-on-surface-variant uppercase tracking-wider font-bold">
+                All-Time Leaderboard & Habit Performance in {categoryName}
+              </span>
+              <span className="text-xs font-stat-label font-bold text-primary">
+                Ranked by Lifetime Checks
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {allTimeData.habitStatsList.map((stat, idx) => {
+                const habitColor = stat.habit.color || '#006398';
+                return (
+                  <div
+                    key={stat.habit.id}
+                    className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/15 hover:border-primary/40 transition-all shadow-sm space-y-3"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`font-stat-label text-xs font-black px-2 py-0.5 rounded-full ${
+                            idx === 0
+                              ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/30'
+                              : idx === 1
+                              ? 'bg-slate-300/40 text-slate-700 dark:text-slate-300'
+                              : idx === 2
+                              ? 'bg-amber-700/20 text-amber-800 dark:text-amber-400'
+                              : 'bg-surface-container text-on-surface-variant'
+                          }`}
+                        >
+                          #{idx + 1}
+                        </span>
+                        <h4 className="font-habit-name text-sm font-bold text-on-surface truncate">
+                          {stat.habit.name}
+                        </h4>
+                      </div>
+
+                      <span className="font-app-title text-base font-extrabold text-primary dark:text-primary-fixed-dim">
+                        {stat.allTimeRate}%
+                      </span>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="h-1.5 w-full bg-surface-container-highest dark:bg-surface-container rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${stat.allTimeRate}%`,
+                          backgroundColor: habitColor,
+                        }}
+                      />
+                    </div>
+
+                    {/* Badges Grid */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] font-stat-label">
+                      <div className="bg-surface-container-lowest dark:bg-surface-container p-2 rounded-xl border border-outline-variant/15">
+                        <div className="text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">
+                          Lifetime
+                        </div>
+                        <div className="font-bold text-on-surface mt-0.5">{stat.totalCompletions} times</div>
+                      </div>
+
+                      <div className="bg-surface-container-lowest dark:bg-surface-container p-2 rounded-xl border border-outline-variant/15">
+                        <div className="text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">
+                          Best Streak
+                        </div>
+                        <div className="font-bold text-tertiary mt-0.5">{stat.longestStreak} days</div>
+                      </div>
+
+                      <div className="bg-surface-container-lowest dark:bg-surface-container p-2 rounded-xl border border-outline-variant/15">
+                        <div className="text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">
+                          Best Month
+                        </div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400 mt-0.5 truncate">
+                          {stat.bestMonthTitle ? `${stat.bestMonthTitle}` : 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Category Day of Week Activity Heatmap */}
+          <div className="bg-surface-container-low/40 dark:bg-surface-container-high/20 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
+                  {categoryName} • Day-of-Week Activity Pattern
+                </h4>
+                <p className="text-[11px] text-on-surface-variant mt-0.5">
+                  Lifetime check-in volume distributed across Monday through Sunday.
+                </p>
+              </div>
+              <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_week</span>
+            </div>
+
+            <div className="h-28 flex items-end justify-between gap-2 pt-2 border-b border-outline-variant/15">
+              {allTimeData.categoryDayOfWeekStats.map((d) => {
+                const maxCount = Math.max(...allTimeData.categoryDayOfWeekStats.map((s) => s.count), 1);
+                const heightPct = maxCount > 0 ? Math.max(12, Math.round((d.count / maxCount) * 100)) : 12;
+
+                return (
+                  <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                    <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
+                      {d.count} checks ({d.percent}%)
+                    </div>
+
+                    <div
+                      className="w-full max-w-[24px] rounded-t-md transition-all duration-500 bg-primary/70 group-hover:bg-primary"
+                      style={{ height: `${heightPct}%` }}
+                    />
+
+                    <span className="text-[10px] uppercase font-bold text-on-surface-variant mt-1.5">
+                      {d.shortLabel}
+                    </span>
+                    <span className="text-[9px] font-stat-label text-on-surface-variant leading-none">
+                      {d.count}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Interactive Daily Habit Matrix (Quick 1-Tap Toggle for all habits in title) */}
       <div className="pt-4 border-t border-outline-variant/15 space-y-3">
