@@ -11,7 +11,7 @@ interface GoogleNotesLedgerViewProps {
   onOpenAddModal: (prefillDate?: string) => void;
   onOpenSettingsModal: () => void;
   onSeedSampleData: () => void;
-  onAutoFillMonth: (year: number, month: number) => void;
+  onAutoFillMonth: (year: number, month: number, upToDay?: number) => void;
   onOpenDeleteAllModal?: () => void;
 }
 
@@ -128,7 +128,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                   type="button"
                   onClick={() => {
                     const d = new Date();
-                    onAutoFillMonth(d.getFullYear(), d.getMonth());
+                    onAutoFillMonth(d.getFullYear(), d.getMonth(), d.getDate());
                     setShowOptionsMenu(false);
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors"
@@ -259,7 +259,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                 type="button"
                 onClick={() => {
                   const d = new Date();
-                  onAutoFillMonth(d.getFullYear(), d.getMonth());
+                  onAutoFillMonth(d.getFullYear(), d.getMonth(), d.getDate());
                 }}
                 className="px-4 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
               >

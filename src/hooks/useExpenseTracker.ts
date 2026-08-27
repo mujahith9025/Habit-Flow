@@ -12,6 +12,7 @@ import {
   calculateCumulativeLedgerRows,
   groupLedgerByMonth,
   generateMonthTemplateEntries,
+  generateMissingDaysUpToToday,
 } from '../lib/expenseCalculations';
 import {
   DEFAULT_EXPENSE_SETTINGS,
@@ -46,7 +47,12 @@ export interface UseExpenseTrackerResult {
   deleteDayEntry: (dateKey: string) => Promise<void>;
   deleteAllEntries: () => Promise<void>;
   updateSettings: (updates: Partial<ExpenseTrackerSettings>) => Promise<void>;
-  autoFillMonth: (year: number, month: number, defaultSavings?: number) => Promise<void>;
+  autoFillMonth: (
+    year: number,
+    month: number,
+    defaultSavings?: number,
+    upToDay?: number
+  ) => Promise<void>;
   seedSampleData: () => Promise<void>;
 }
 
@@ -115,12 +121,66 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
     return () => unsubEntries();
   }, [user?.uid]);
 
-  // 3. Continuous Cumulative Ledger Calculation
+  // 3. Auto-Progress Daily Savings up to Current Date/Time & at Midnight (12:00 AM)
+  useEffect(() => {
+    if (!user?.uid || loading) return;
+
+    const existingKeys = Object.keys(entriesMap);
+    if (existingKeys.length === 0) return; // Don't auto-create if ledger is empty/cleared
+
+    const checkAndSyncDays = async () => {
+      const now = new Date();
+      const missingEntries = generateMissingDaysUpToToday(
+        Object.keys(entriesMap),
+        settings.defaultDailySavings,
+        now
+      );
+
+      const missingKeys = Object.keys(missingEntries);
+      if (missingKeys.length > 0) {
+        try {
+          await batchSaveDailyMoneyEntriesService(user.uid, missingEntries);
+        } catch (err) {
+          console.warn('[ExpenseTracker] Auto-progression save error:', err);
+        }
+      }
+    };
+
+    // Initial check when entries are loaded
+    checkAndSyncDays();
+
+    // Schedule trigger for the next midnight (12:00:01 AM)
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+    const msUntilMidnight = Math.max(1000, nextMidnight.getTime() - now.getTime());
+
+    const midnightTimer = setTimeout(() => {
+      checkAndSyncDays();
+    }, msUntilMidnight);
+
+    // Also run check when user switches back to tab or device wakes up
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndSyncDays();
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      clearTimeout(midnightTimer);
+      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [user?.uid, loading, entriesMap, settings.defaultDailySavings]);
+
+  // 4. Continuous Cumulative Ledger Calculation
   const allLedgerRows = useMemo(() => {
     return calculateCumulativeLedgerRows(entriesMap, settings.startingBalance, todayKey);
   }, [entriesMap, settings.startingBalance, todayKey]);
 
-  // 4. Monthly Summaries Grouping
+  // 5. Monthly Summaries Grouping
   const monthSummaries = useMemo(() => {
     return groupLedgerByMonth(allLedgerRows, settings.startingBalance);
   }, [allLedgerRows, settings.startingBalance]);
@@ -219,9 +279,23 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
   );
 
   const autoFillMonth = useCallback(
-    async (year: number, month: number, defaultSavings: number = settings.defaultDailySavings) => {
+    async (
+      year: number,
+      month: number,
+      defaultSavings: number = settings.defaultDailySavings,
+      upToDay?: number
+    ) => {
       if (!user?.uid) return;
-      const template = generateMonthTemplateEntries(year, month, defaultSavings);
+      const now = new Date();
+      // If filling current month and upToDay is not explicitly passed, automatically stop at today!
+      const targetUpToDay =
+        upToDay !== undefined
+          ? upToDay
+          : year === now.getFullYear() && month === now.getMonth()
+          ? now.getDate()
+          : undefined;
+
+      const template = generateMonthTemplateEntries(year, month, defaultSavings, targetUpToDay);
       await batchSaveDailyMoneyEntriesService(user.uid, template);
     },
     [user?.uid, settings.defaultDailySavings]

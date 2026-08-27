@@ -155,20 +155,24 @@ export function groupLedgerByMonth(
 }
 
 /**
- * Generates initial boilerplate days for a given month (e.g. 01 to 31) with default daily savings
+ * Generates initial boilerplate days for a given month with default daily savings.
+ * If upToDay is provided, it generates days from 1 up to upToDay (inclusive).
+ * For the current month, it automatically stops at today's day (e.g. Day 1 to Day 27).
  */
 export function generateMonthTemplateEntries(
   year: number,
   month: number, // 0-indexed: 0 = Jan, 7 = Aug
-  defaultDailySavings: number = 25
+  defaultDailySavings: number = 25,
+  upToDay?: number
 ): Record<string, DailyMoneyEntry> {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const maxDay = upToDay !== undefined ? Math.min(Math.max(1, upToDay), daysInMonth) : daysInMonth;
   const entries: Record<string, DailyMoneyEntry> = {};
   const monthStr = String(month + 1).padStart(2, '0');
 
   const nowIso = new Date().toISOString();
 
-  for (let d = 1; d <= daysInMonth; d++) {
+  for (let d = 1; d <= maxDay; d++) {
     const dayStr = String(d).padStart(2, '0');
     const dateKey = `${year}-${monthStr}-${dayStr}`;
     const displayDate = `${dayStr}/${monthStr}`;
@@ -186,4 +190,57 @@ export function generateMonthTemplateEntries(
   }
 
   return entries;
+}
+
+/**
+ * Generates missing entries between the earliest recorded date and today.
+ * Ensures the ledger continuously progresses each day at midnight and seamlessly transitions across months.
+ */
+export function generateMissingDaysUpToToday(
+  existingDateKeys: string[],
+  defaultDailySavings: number = 25,
+  today: Date = new Date()
+): Record<string, DailyMoneyEntry> {
+  if (existingDateKeys.length === 0) {
+    return {};
+  }
+
+  const sortedKeys = [...existingDateKeys].sort();
+  const earliestDateKey = sortedKeys[0]; // e.g. '2026-08-01'
+  const [startYear, startMonth, startDay] = earliestDateKey.split('-').map(Number);
+  const startDate = new Date(startYear, startMonth - 1, startDay);
+
+  const entriesToCreate: Record<string, DailyMoneyEntry> = {};
+  const existingSet = new Set(existingDateKeys);
+  const nowIso = new Date().toISOString();
+
+  const cursor = new Date(startDate);
+  cursor.setHours(0, 0, 0, 0);
+
+  const todayMidnight = new Date(today);
+  todayMidnight.setHours(0, 0, 0, 0);
+
+  while (cursor <= todayMidnight) {
+    const y = cursor.getFullYear();
+    const m = String(cursor.getMonth() + 1).padStart(2, '0');
+    const d = String(cursor.getDate()).padStart(2, '0');
+    const dateKey = `${y}-${m}-${d}`;
+
+    if (!existingSet.has(dateKey)) {
+      entriesToCreate[dateKey] = {
+        id: dateKey,
+        dateKey,
+        displayDate: `${d}/${m}`,
+        savingsAmount: defaultDailySavings,
+        expenses: [],
+        totalExpenses: 0,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return entriesToCreate;
 }

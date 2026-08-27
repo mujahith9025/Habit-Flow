@@ -6,6 +6,7 @@ import {
   calculateCumulativeLedgerRows,
   groupLedgerByMonth,
   generateMonthTemplateEntries,
+  generateMissingDaysUpToToday,
 } from '../lib/expenseCalculations';
 import { DailyMoneyEntry } from '../types/expense';
 
@@ -214,6 +215,35 @@ describe('Money Savings & Expense Calculations Engine', () => {
     expect(template['2026-08-01'].savingsAmount).toBe(25);
     expect(template['2026-08-31'].savingsAmount).toBe(25);
     expect(template['2026-08-01'].displayDate).toBe('01/08');
+  });
+
+  it('generates month template up to specified day (stopping at today)', () => {
+    const template = generateMonthTemplateEntries(2026, 7, 25, 27); // August up to 27th
+    const keys = Object.keys(template);
+    expect(keys.length).toBe(27);
+    expect(template['2026-08-01'].savingsAmount).toBe(25);
+    expect(template['2026-08-27'].savingsAmount).toBe(25);
+    expect(template['2026-08-28']).toBeUndefined(); // Does not generate future days!
+  });
+
+  it('automatically adds missing days on next day 12 AM midnight', () => {
+    const existing = ['2026-08-26', '2026-08-27'];
+    const tomorrowMidnight = new Date('2026-08-28T00:00:00');
+    const missing = generateMissingDaysUpToToday(existing, 25, tomorrowMidnight);
+
+    expect(Object.keys(missing)).toEqual(['2026-08-28']);
+    expect(missing['2026-08-28'].displayDate).toBe('28/08');
+    expect(missing['2026-08-28'].savingsAmount).toBe(25);
+  });
+
+  it('automatically transitions to new month on 1st of month at 12 AM', () => {
+    const existing = ['2026-08-30', '2026-08-31'];
+    const newMonthFirstDay = new Date('2026-09-01T00:00:00');
+    const missing = generateMissingDaysUpToToday(existing, 25, newMonthFirstDay);
+
+    expect(Object.keys(missing)).toEqual(['2026-09-01']);
+    expect(missing['2026-09-01'].displayDate).toBe('01/09');
+    expect(missing['2026-09-01'].savingsAmount).toBe(25);
   });
 
   it('groups rows into monthly summaries correctly', () => {

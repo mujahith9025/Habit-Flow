@@ -55,12 +55,14 @@ export const ExpenseTrackerPage: React.FC = () => {
 
   const handleAutoFillCurrentMonth = async () => {
     const today = new Date();
+    const monthName = today.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const dayNum = today.getDate();
     if (
       window.confirm(
-        `Auto-fill ${today.toLocaleString('en-US', { month: 'long', year: 'numeric' })} with standard ${settings.currencySymbol}${settings.defaultDailySavings}/day savings?`
+        `Auto-fill ${monthName} from Day 1 to Today (1st to ${dayNum}${dayNum === 1 ? 'st' : dayNum === 2 ? 'nd' : dayNum === 3 ? 'rd' : 'th'}) with standard ${settings.currencySymbol}${settings.defaultDailySavings}/day savings?\n\nNext days will automatically be added every day at 12:00 AM midnight!`
       )
     ) {
-      await autoFillMonth(today.getFullYear(), today.getMonth(), settings.defaultDailySavings);
+      await autoFillMonth(today.getFullYear(), today.getMonth(), settings.defaultDailySavings, dayNum);
       triggerMilestoneCelebration();
       triggerHaptic('success');
     }
@@ -110,7 +112,7 @@ export const ExpenseTrackerPage: React.FC = () => {
         onOpenAddModal={handleOpenAddModal}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onSeedSampleData={handleSeedSampleData}
-        onAutoFillMonth={(y, m) => autoFillMonth(y, m)}
+        onAutoFillMonth={(y, m, upToDay) => autoFillMonth(y, m, settings.defaultDailySavings, upToDay)}
         onOpenDeleteAllModal={() => setIsDeleteAllModalOpen(true)}
       />
 
