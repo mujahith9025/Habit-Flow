@@ -6,7 +6,7 @@ import { AddExpenseModal } from '../components/expense/AddExpenseModal';
 import { ExpenseSettingsModal } from '../components/expense/ExpenseSettingsModal';
 import { triggerHaptic } from '../utils/haptics';
 import { triggerMilestoneCelebration } from '../utils/confetti';
-import { ExpenseItem, NoteThemeType } from '../types/expense';
+import { ExpenseItem } from '../types/expense';
 
 export const ExpenseTrackerPage: React.FC = () => {
   const {
@@ -19,9 +19,6 @@ export const ExpenseTrackerPage: React.FC = () => {
     settings,
     loading,
     totalCurrentBalance,
-    totalAllTimeSavings,
-    totalAllTimeExpenses,
-    netAllTimeGrowth,
     saveDailyEntry,
     deleteDayEntry,
     updateSettings,
@@ -78,11 +75,6 @@ export const ExpenseTrackerPage: React.FC = () => {
     }
   };
 
-  const handleUpdateTheme = async (theme: NoteThemeType) => {
-    await updateSettings({ noteTheme: theme });
-    triggerHaptic('light');
-  };
-
   const activeEntryForModal = selectedDateForModal ? entriesMap[selectedDateForModal] : undefined;
 
   if (loading && activeRows.length === 0) {
@@ -96,20 +88,16 @@ export const ExpenseTrackerPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1040px] mx-auto space-y-6 pb-16 animate-fadeIn">
-      {/* 1. Header Total Amount Indication Hero Section */}
+      {/* 1. Header Total Amount Indication Hero Section (Only shows Total Cumulative Savings) */}
       <ExpenseHeaderStats
         totalCurrentBalance={totalCurrentBalance}
-        totalAllTimeSavings={totalAllTimeSavings}
-        totalAllTimeExpenses={totalAllTimeExpenses}
-        netAllTimeGrowth={netAllTimeGrowth}
         activeSummary={activeSummary}
         settings={settings}
         onOpenAddModal={() => handleOpenAddModal()}
-        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onAutoFillCurrentMonth={handleAutoFillCurrentMonth}
       />
 
-      {/* 2. Google Notes "MONEY SAVINGS" Ledger Paper View */}
+      {/* 2. Google Notes "MONEY SAVINGS" Ledger Table (Native Project UI) */}
       <GoogleNotesLedgerView
         rows={activeRows}
         monthSummaries={monthSummaries}
@@ -120,7 +108,6 @@ export const ExpenseTrackerPage: React.FC = () => {
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onSeedSampleData={handleSeedSampleData}
         onAutoFillMonth={(y, m) => autoFillMonth(y, m)}
-        onUpdateTheme={handleUpdateTheme}
       />
 
       {/* 3. Add / Edit Daily Savings & Expense Modal */}

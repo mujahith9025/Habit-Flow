@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExpenseTrackerSettings, NoteThemeType } from '../../types/expense';
+import { ExpenseTrackerSettings } from '../../types/expense';
 
 interface ExpenseSettingsModalProps {
   isOpen: boolean;
@@ -20,14 +20,6 @@ const CURRENCIES = [
   { symbol: 'A$', code: 'AUD', name: 'Australian Dollar (A$)' },
 ];
 
-const THEMES: Array<{ key: NoteThemeType; name: string; desc: string; bg: string }> = [
-  { key: 'night_sky', name: 'Night Sky (Reference)', desc: 'Starry dark blue with umbrella art', bg: '#0e213e' },
-  { key: 'deep_blue', name: 'Deep Ocean Blue', desc: 'Sleek rich navy blue', bg: '#132f58' },
-  { key: 'charcoal_dark', name: 'Charcoal Dark', desc: 'Minimal dark graphite', bg: '#1e1f22' },
-  { key: 'emerald_oasis', name: 'Emerald Oasis', desc: 'Calming forest green', bg: '#0f2c23' },
-  { key: 'warm_sand', name: 'Warm Sand', desc: 'Earthy golden bronze', bg: '#2b241c' },
-];
-
 export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
   isOpen,
   settings,
@@ -38,7 +30,6 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
   const [currencySymbol, setCurrencySymbol] = useState(settings.currencySymbol || '₹');
   const [defaultDailySavings, setDefaultDailySavings] = useState(settings.defaultDailySavings ?? 25);
   const [startingBalance, setStartingBalance] = useState(settings.startingBalance ?? 0);
-  const [noteTheme, setNoteTheme] = useState<NoteThemeType>(settings.noteTheme || 'night_sky');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -47,7 +38,6 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
       setCurrencySymbol(settings.currencySymbol || '₹');
       setDefaultDailySavings(settings.defaultDailySavings ?? 25);
       setStartingBalance(settings.startingBalance ?? 0);
-      setNoteTheme(settings.noteTheme || 'night_sky');
     }
   }, [isOpen, settings]);
 
@@ -62,7 +52,6 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
         currencySymbol,
         defaultDailySavings: Math.max(0, Number(defaultDailySavings) || 0),
         startingBalance: Number(startingBalance) || 0,
-        noteTheme,
       });
       onClose();
     } catch (err) {
@@ -131,7 +120,7 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
                   key={c.code}
                   type="button"
                   onClick={() => setCurrencySymbol(c.symbol)}
-                  className={`p-2 rounded-xl border text-center transition-all text-xs font-bold ${
+                  className={`p-2 rounded-xl border text-center transition-all text-xs font-bold cursor-pointer ${
                     currencySymbol === c.symbol
                       ? 'bg-primary text-on-primary border-primary shadow-xs'
                       : 'bg-surface-container-low dark:bg-surface-container-high/30 text-on-surface border-outline-variant/20 hover:border-primary/40'
@@ -181,38 +170,6 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
                   className="w-full pl-7 pr-3 py-2 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/25 text-on-surface text-xs font-bold focus:ring-2 focus:ring-primary focus:outline-none"
                 />
               </div>
-            </div>
-          </div>
-
-          {/* Note Background Theme Picker */}
-          <div className="space-y-2 pt-2 border-t border-outline-variant/15">
-            <label className="block text-xs font-bold text-on-surface uppercase font-stat-label">
-              Google Notes Background Theme
-            </label>
-            <div className="space-y-2">
-              {THEMES.map((t) => (
-                <div
-                  key={t.key}
-                  onClick={() => setNoteTheme(t.key)}
-                  className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                    noteTheme === t.key
-                      ? 'border-primary ring-2 ring-primary/30 shadow-xs'
-                      : 'border-outline-variant/20 hover:border-outline-variant/50'
-                  }`}
-                  style={{ backgroundColor: t.bg }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-5 h-5 rounded-full border border-white/40 shadow-xs" style={{ backgroundColor: t.bg }} />
-                    <div>
-                      <span className="text-xs font-bold text-white block leading-tight">{t.name}</span>
-                      <span className="text-[10px] text-white/70 block">{t.desc}</span>
-                    </div>
-                  </div>
-                  {noteTheme === t.key && (
-                    <span className="material-symbols-outlined text-cyan-400 text-[18px]">check_circle</span>
-                  )}
-                </div>
-              ))}
             </div>
           </div>
 

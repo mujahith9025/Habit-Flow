@@ -30,7 +30,7 @@ export interface ExpenseTrackerSettings {
   currencySymbol: string; // '₹' default
   defaultDailySavings: number; // 25 default
   startingBalance: number; // initial starting amount
-  noteTheme: NoteThemeType;
+  noteTheme?: NoteThemeType;
   title: string; // 'MONEY SAVINGS' default
 }
 
