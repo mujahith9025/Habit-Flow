@@ -6,6 +6,7 @@ interface ExpenseSettingsModalProps {
   settings: ExpenseTrackerSettings;
   onClose: () => void;
   onSave: (updates: Partial<ExpenseTrackerSettings>) => Promise<void>;
+  onOpenDeleteAllModal?: () => void;
 }
 
 const CURRENCIES = [
@@ -25,6 +26,7 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
   settings,
   onClose,
   onSave,
+  onOpenDeleteAllModal,
 }) => {
   const [title, setTitle] = useState(settings.title || 'MONEY SAVINGS');
   const [currencySymbol, setCurrencySymbol] = useState(settings.currencySymbol || '₹');
@@ -172,6 +174,31 @@ export const ExpenseSettingsModal: React.FC<ExpenseSettingsModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Danger Zone: Delete All Entries */}
+          {onOpenDeleteAllModal && (
+            <div className="pt-3 border-t border-outline-variant/15 space-y-2">
+              <label className="block text-xs font-bold text-error uppercase font-stat-label">
+                Danger Zone
+              </label>
+              <div className="p-3 rounded-2xl bg-error-container/10 border border-error/20 flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold text-on-surface block">Delete All Entries</span>
+                  <span className="text-[10px] text-on-surface-variant block">Wipe entire money savings ledger & reset balance</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenDeleteAllModal();
+                  }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-error text-on-error hover:bg-error/90 transition-all shrink-0 cursor-pointer shadow-xs"
+                >
+                  Delete All
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="pt-4 border-t border-outline-variant/15 flex items-center justify-end gap-2">

@@ -20,6 +20,7 @@ import {
   addExpenseItemToDate as addExpenseItemToDateService,
   deleteExpenseItemFromDate as deleteExpenseItemFromDateService,
   deleteDailyMoneyEntry as deleteDailyMoneyEntryService,
+  deleteAllExpenseEntries as deleteAllExpenseEntriesService,
   updateExpenseTrackerSettings as updateExpenseTrackerSettingsService,
   seedGoogleNotesSampleData as seedGoogleNotesSampleDataService,
 } from '../lib/firebase/expenseService';
@@ -43,6 +44,7 @@ export interface UseExpenseTrackerResult {
   addExpenseItem: (dateKey: string, item: Omit<ExpenseItem, 'id' | 'createdAt'>) => Promise<DailyMoneyEntry | void>;
   deleteExpenseItem: (dateKey: string, expenseItemId: string) => Promise<DailyMoneyEntry | void>;
   deleteDayEntry: (dateKey: string) => Promise<void>;
+  deleteAllEntries: () => Promise<void>;
   updateSettings: (updates: Partial<ExpenseTrackerSettings>) => Promise<void>;
   autoFillMonth: (year: number, month: number, defaultSavings?: number) => Promise<void>;
   seedSampleData: () => Promise<void>;
@@ -199,6 +201,14 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
     [user?.uid]
   );
 
+  const deleteAllEntries = useCallback(
+    async () => {
+      if (!user?.uid) return;
+      await deleteAllExpenseEntriesService(user.uid);
+    },
+    [user?.uid]
+  );
+
   const updateSettings = useCallback(
     async (updates: Partial<ExpenseTrackerSettings>) => {
       if (!user?.uid) return;
@@ -240,6 +250,7 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
     addExpenseItem,
     deleteExpenseItem,
     deleteDayEntry,
+    deleteAllEntries,
     updateSettings,
     autoFillMonth,
     seedSampleData,

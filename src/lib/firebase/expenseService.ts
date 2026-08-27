@@ -1,8 +1,10 @@
 import {
   setDoc,
   getDoc,
+  getDocs,
   deleteDoc,
   getExpenseEntryDocRef,
+  getExpenseEntriesCollectionRef,
   getExpenseSettingsDocRef,
 } from './firestore';
 import { DailyMoneyEntry, ExpenseItem, ExpenseTrackerSettings } from '../../types/expense';
@@ -141,6 +143,16 @@ export async function deleteExpenseItemFromDate(
 export async function deleteDailyMoneyEntry(uid: string, dateKey: string): Promise<void> {
   const docRef = getExpenseEntryDocRef(uid, dateKey);
   await deleteDoc(docRef);
+}
+
+/**
+ * Deletes all money savings and expense entries for a user
+ */
+export async function deleteAllExpenseEntries(uid: string): Promise<void> {
+  const colRef = getExpenseEntriesCollectionRef(uid);
+  const snap = await getDocs(colRef);
+  const deletePromises = snap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+  await Promise.all(deletePromises);
 }
 
 /**

@@ -12,6 +12,7 @@ interface GoogleNotesLedgerViewProps {
   onOpenSettingsModal: () => void;
   onSeedSampleData: () => void;
   onAutoFillMonth: (year: number, month: number) => void;
+  onOpenDeleteAllModal?: () => void;
 }
 
 export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
@@ -24,6 +25,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
   onOpenSettingsModal,
   onSeedSampleData,
   onAutoFillMonth,
+  onOpenDeleteAllModal,
 }) => {
   const sym = settings.currencySymbol || '₹';
 
@@ -160,6 +162,23 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                   <span className="material-symbols-outlined text-[16px]">tune</span>
                   <span>Tracker Settings</span>
                 </button>
+
+                {onOpenDeleteAllModal && rows.length > 0 && (
+                  <>
+                    <div className="border-t border-outline-variant/20 my-1" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenDeleteAllModal();
+                        setShowOptionsMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-error hover:bg-error-container/20 text-left transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-error">delete_forever</span>
+                      <span>Delete All Entries...</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -332,9 +351,22 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
         <span className="font-stat-label text-[11px]">
           Tap any row to edit savings or add expense deductions
         </span>
-        <span className="font-stat-label text-[11px] font-bold text-on-surface">
-          {rows.length} Days Recorded
-        </span>
+        <div className="flex items-center gap-3">
+          {onOpenDeleteAllModal && rows.length > 0 && (
+            <button
+              type="button"
+              onClick={onOpenDeleteAllModal}
+              className="text-[11px] font-semibold text-error hover:text-error/80 hover:underline flex items-center gap-1 transition-colors cursor-pointer"
+              title="Delete all entries in the expense tracker"
+            >
+              <span className="material-symbols-outlined text-[15px]">delete_forever</span>
+              <span>Delete All</span>
+            </button>
+          )}
+          <span className="font-stat-label text-[11px] font-bold text-on-surface">
+            {rows.length} Days Recorded
+          </span>
+        </div>
       </div>
     </div>
   );

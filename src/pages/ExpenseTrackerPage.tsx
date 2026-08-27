@@ -4,6 +4,7 @@ import { ExpenseHeaderStats } from '../components/expense/ExpenseHeaderStats';
 import { GoogleNotesLedgerView } from '../components/expense/GoogleNotesLedgerView';
 import { AddExpenseModal } from '../components/expense/AddExpenseModal';
 import { ExpenseSettingsModal } from '../components/expense/ExpenseSettingsModal';
+import { DeleteAllWarningModal } from '../components/expense/DeleteAllWarningModal';
 import { triggerHaptic } from '../utils/haptics';
 import { triggerMilestoneCelebration } from '../utils/confetti';
 import { ExpenseItem } from '../types/expense';
@@ -21,6 +22,7 @@ export const ExpenseTrackerPage: React.FC = () => {
     totalCurrentBalance,
     saveDailyEntry,
     deleteDayEntry,
+    deleteAllEntries,
     updateSettings,
     autoFillMonth,
     seedSampleData,
@@ -29,6 +31,7 @@ export const ExpenseTrackerPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | undefined>();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
 
   const handleOpenAddModal = (prefillDate?: string) => {
     setSelectedDateForModal(prefillDate);
@@ -108,6 +111,7 @@ export const ExpenseTrackerPage: React.FC = () => {
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onSeedSampleData={handleSeedSampleData}
         onAutoFillMonth={(y, m) => autoFillMonth(y, m)}
+        onOpenDeleteAllModal={() => setIsDeleteAllModalOpen(true)}
       />
 
       {/* 3. Add / Edit Daily Savings & Expense Modal */}
@@ -125,12 +129,24 @@ export const ExpenseTrackerPage: React.FC = () => {
         onDeleteDay={deleteDayEntry}
       />
 
-      {/* 4. Settings & Theme Customization Modal */}
+      {/* 4. Settings & Customization Modal */}
       <ExpenseSettingsModal
         isOpen={isSettingsModalOpen}
         settings={settings}
         onClose={() => setIsSettingsModalOpen(false)}
         onSave={updateSettings}
+        onOpenDeleteAllModal={() => setIsDeleteAllModalOpen(true)}
+      />
+
+      {/* 5. Delete All Entries Warning Modal */}
+      <DeleteAllWarningModal
+        isOpen={isDeleteAllModalOpen}
+        entryCount={Object.keys(entriesMap).length}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirmDelete={async () => {
+          await deleteAllEntries();
+          triggerHaptic('success');
+        }}
       />
     </div>
   );
