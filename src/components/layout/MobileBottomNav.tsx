@@ -5,7 +5,7 @@ export const MobileBottomNav: React.FC = () => {
   const navTabs = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/habit', label: 'Habit', icon: 'task_alt' },
-    { to: '/debug', label: 'Sync Test', icon: 'sync' },
+    { to: '/expenses', label: 'Expenses', icon: 'account_balance_wallet' },
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];
 

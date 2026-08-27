@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -8,9 +8,6 @@ export const TopHeader: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { isInstalled } = usePWAInstall();
-  const location = useLocation();
-
-  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
 
   return (
     <header className="sticky top-0 z-30 w-full bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/15 transition-colors">
@@ -53,16 +50,14 @@ export const TopHeader: React.FC = () => {
             </span>
           </button>
 
-          {/* Quick sync link / action button */}
-          {isDashboard && (
-            <Link
-              to="/debug"
-              title="Real-time Sync Inspector"
-              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-primary dark:text-primary-fixed-dim rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[22px]">calendar_today</span>
-            </Link>
-          )}
+          {/* Money Savings & Expense Tracker Header Shortcut */}
+          <Link
+            to="/expenses"
+            title="Money Savings & Expense Tracker"
+            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-primary dark:text-primary-fixed-dim rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+          </Link>
 
           {/* User Profile Avatar in the Right Corner linking to /settings */}
           {user ? (

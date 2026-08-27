@@ -1,0 +1,189 @@
+import { DailyMoneyEntry, DailyLedgerRow, MonthExpenseSummary } from '../types/expense';
+
+const MONTH_NAMES_FULL = [
+  'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+];
+
+const MONTH_NAMES_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+/**
+ * Format a YYYY-MM-DD date key into DD/MM (e.g., '2026-08-01' -> '01/08')
+ */
+export function formatDayMonth(dateKey: string): string {
+  const parts = dateKey.split('-');
+  if (parts.length === 3) {
+    const [, mm, dd] = parts;
+    return `${dd.padStart(2, '0')}/${mm.padStart(2, '0')}`;
+  }
+  return dateKey;
+}
+
+/**
+ * Format an amount with currency symbol (e.g. 25 -> '₹25', 1250 -> '₹1,250')
+ */
+export function formatMoney(amount: number, symbol: string = '₹'): string {
+  const formattedNumber = Math.abs(amount).toLocaleString('en-IN');
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}${symbol}${formattedNumber}`;
+}
+
+/**
+ * Format expenses note string exactly as in Google Notes reference
+ * e.g., "( ₹ 100 - Cloth Alter & Other )" or "( ₹ 100 - Canteen , ₹ 100 - income Certificate , ₹ 100 - Sadaqah Amount )"
+ */
+export function formatExpensesSummary(
+  expenses: { amount: number; description: string }[],
+  symbol: string = '₹'
+): string {
+  if (!expenses || expenses.length === 0) return '';
+  
+  const itemsStr = expenses
+    .map((e) => `${symbol} ${e.amount.toLocaleString('en-IN')} - ${e.description.trim()}`)
+    .join(' , ');
+
+  return `( ${itemsStr} )`;
+}
+
+/**
+ * Calculates continuous running cumulative balance for all entries chronologically.
+ * Formula: Cumulative_i = Cumulative_(i-1) + Savings_i - Expenses_i
+ */
+export function calculateCumulativeLedgerRows(
+  entriesMap: Record<string, DailyMoneyEntry>,
+  startingBalance: number = 0,
+  todayKey?: string
+): DailyLedgerRow[] {
+  const sortedDateKeys = Object.keys(entriesMap).sort(); // chronological: '2026-07-01' -> '2026-08-31'
+  
+  let currentCumulative = startingBalance;
+  const ledgerRows: DailyLedgerRow[] = [];
+
+  for (const dateKey of sortedDateKeys) {
+    const entry = entriesMap[dateKey];
+    const totalExpenses = (entry.expenses || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const savingsAmount = Number(entry.savingsAmount) || 0;
+
+    // Update running cumulative balance
+    currentCumulative = currentCumulative + savingsAmount - totalExpenses;
+
+    const parts = dateKey.split('-');
+    const monthKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : dateKey.substring(0, 7);
+
+    ledgerRows.push({
+      ...entry,
+      savingsAmount,
+      totalExpenses,
+      cumulativeBalance: currentCumulative,
+      monthKey,
+      isToday: Boolean(todayKey && dateKey === todayKey),
+    });
+  }
+
+  return ledgerRows;
+}
+
+/**
+ * Groups ledger rows into chronological monthly summaries with Google Notes style titles
+ * (e.g. 'AUGUST 2026', 'JULY MONTH')
+ */
+export function groupLedgerByMonth(
+  rows: DailyLedgerRow[],
+  initialStartingBalance: number = 0
+): MonthExpenseSummary[] {
+  const monthMap: Record<string, DailyLedgerRow[]> = {};
+
+  rows.forEach((row) => {
+    if (!monthMap[row.monthKey]) {
+      monthMap[row.monthKey] = [];
+    }
+    monthMap[row.monthKey].push(row);
+  });
+
+  const sortedMonthKeys = Object.keys(monthMap).sort().reverse(); // newest month first
+  let runningStart = initialStartingBalance;
+
+  const summaries: MonthExpenseSummary[] = [];
+
+  // Sort ascending first to get accurate starting & ending balance per month
+  const ascMonthKeys = Object.keys(monthMap).sort();
+  const monthStartingBalances: Record<string, number> = {};
+
+  ascMonthKeys.forEach((mKey) => {
+    monthStartingBalances[mKey] = runningStart;
+    const mRows = monthMap[mKey];
+    const mSavings = mRows.reduce((sum, r) => sum + r.savingsAmount, 0);
+    const mExpenses = mRows.reduce((sum, r) => sum + r.totalExpenses, 0);
+    runningStart = runningStart + mSavings - mExpenses;
+  });
+
+  sortedMonthKeys.forEach((mKey) => {
+    const mRows = monthMap[mKey];
+    const [yearStr, monthStr] = mKey.split('-');
+    const year = Number(yearStr);
+    const monthIdx = Number(monthStr) - 1;
+
+    const monthFullName = MONTH_NAMES_FULL[monthIdx] || 'MONTH';
+    const monthShortName = MONTH_NAMES_SHORT[monthIdx] || 'Mon';
+
+    const monthTitle = `${monthFullName} ${year}`;
+    const monthShortTitle = `${monthShortName} ${year}`;
+
+    const totalSavings = mRows.reduce((sum, r) => sum + r.savingsAmount, 0);
+    const totalExpenses = mRows.reduce((sum, r) => sum + r.totalExpenses, 0);
+    const netSavings = totalSavings - totalExpenses;
+    const startBal = monthStartingBalances[mKey] ?? 0;
+    const endingBalance = startBal + netSavings;
+
+    summaries.push({
+      monthKey: mKey,
+      monthTitle,
+      monthShortTitle,
+      totalSavings,
+      totalExpenses,
+      netSavings,
+      startingBalance: startBal,
+      endingBalance,
+      rows: mRows,
+    });
+  });
+
+  return summaries;
+}
+
+/**
+ * Generates initial boilerplate days for a given month (e.g. 01 to 31) with default daily savings
+ */
+export function generateMonthTemplateEntries(
+  year: number,
+  month: number, // 0-indexed: 0 = Jan, 7 = Aug
+  defaultDailySavings: number = 25
+): Record<string, DailyMoneyEntry> {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const entries: Record<string, DailyMoneyEntry> = {};
+  const monthStr = String(month + 1).padStart(2, '0');
+
+  const nowIso = new Date().toISOString();
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayStr = String(d).padStart(2, '0');
+    const dateKey = `${year}-${monthStr}-${dayStr}`;
+    const displayDate = `${dayStr}/${monthStr}`;
+
+    entries[dateKey] = {
+      id: dateKey,
+      dateKey,
+      displayDate,
+      savingsAmount: defaultDailySavings,
+      expenses: [],
+      totalExpenses: 0,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+  }
+
+  return entries;
+}

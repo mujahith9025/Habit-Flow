@@ -24,7 +24,7 @@ import {
   Query,
 } from 'firebase/firestore';
 import { app } from './config';
-import { Habit, HabitEntry, UserProfile } from '../../types';
+import { Habit, HabitEntry, UserProfile, DailyMoneyEntry, ExpenseTrackerSettings } from '../../types';
 
 // Initialize Firestore with Multi-Tab IndexedDB Persistence for offline support
 let dbInstance: Firestore;
@@ -68,6 +68,25 @@ export const getEntryDocRef = (
   dateKey: string
 ): DocumentReference<HabitEntry> => {
   return doc(db, 'users', uid, 'habits', habitId, 'entries', dateKey) as DocumentReference<HabitEntry>;
+};
+
+export const getExpenseEntriesCollectionRef = (
+  uid: string
+): CollectionReference<DailyMoneyEntry> => {
+  return collection(db, 'users', uid, 'expense_entries') as CollectionReference<DailyMoneyEntry>;
+};
+
+export const getExpenseEntryDocRef = (
+  uid: string,
+  dateKey: string
+): DocumentReference<DailyMoneyEntry> => {
+  return doc(db, 'users', uid, 'expense_entries', dateKey) as DocumentReference<DailyMoneyEntry>;
+};
+
+export const getExpenseSettingsDocRef = (
+  uid: string
+): DocumentReference<ExpenseTrackerSettings> => {
+  return doc(db, 'users', uid, 'expense_settings', 'config') as DocumentReference<ExpenseTrackerSettings>;
 };
 
 export {

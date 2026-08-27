@@ -4,3 +4,4 @@ export * from './firestore';
 export * from './storage';
 export * from './userSync';
 export * from './habitService';
+export * from './expenseService';
