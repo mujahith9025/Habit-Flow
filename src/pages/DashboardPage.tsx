@@ -10,16 +10,19 @@ import { MonthlyTabContent } from '../components/dashboard/MonthlyTabContent';
 import { FloatingActionButton } from '../components/dashboard/FloatingActionButton';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
+import { useAuth } from '../hooks/useAuth';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useDailyHabitsData } from '../hooks/useDailyHabitsData';
 import { useHabits } from '../hooks/useHabits';
 import { DashboardViewTab, Habit, HabitFrequency, isHabitActiveInMonth } from '../types';
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
+
   // Month/Year navigation state
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [activeTab, setActiveTab] = useState<DashboardViewTab>('daily');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Add / Edit Habit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,12 +52,13 @@ export const DashboardPage: React.FC = () => {
   });
   const categories = Object.keys(categoryCounts).sort();
 
-  // Effective category defaults to the first available category
-  const effectiveCategory = categories.length > 0
-    ? (!selectedCategory || selectedCategory === 'all' || !categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
-        ? categories[0]
-        : selectedCategory)
-    : 'General';
+  // Effective category: 'all' allows seeing everything, or specific category
+  const effectiveCategory =
+    !selectedCategory || selectedCategory === 'all'
+      ? 'all'
+      : categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
+      ? selectedCategory
+      : 'all';
 
   // Live real-time dashboard summary metrics & daily habit data for Today's Focus Card
   const metrics = useDashboardMetrics(selectedMonthKey, effectiveCategory);
@@ -133,6 +137,8 @@ export const DashboardPage: React.FC = () => {
     return <DashboardSkeleton />;
   }
 
+  const userDisplayName = user?.name || user?.email?.split('@')[0] || '';
+
   return (
     <div className="w-full max-w-[1040px] mx-auto space-y-6 pb-12">
       {/* 1. Month / Year Navigation Subheader */}
@@ -148,7 +154,11 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-lg w-full">
         {/* Summary Card (5 columns on desktop) */}
         <div className="lg:col-span-5 w-full">
-          <SummaryCard metrics={metrics} className="h-full min-h-[220px]" />
+          <SummaryCard
+            metrics={metrics}
+            userName={userDisplayName}
+            className="h-full min-h-[220px]"
+          />
         </div>
 
         {/* Dynamic Today's Focus Card (7 columns on desktop) */}
@@ -171,7 +181,7 @@ export const DashboardPage: React.FC = () => {
       {/* 3. Category / Tracker Board Selector Tabs */}
       <CategoryFilterTabs
         habits={habits}
-        selectedCategory={effectiveCategory}
+        selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         onAddNewCategory={handleOpenAddModal}
       />

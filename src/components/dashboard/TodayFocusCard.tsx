@@ -19,6 +19,14 @@ interface TodayFocusCardProps {
   className?: string;
 }
 
+const MOOD_OPTIONS = [
+  { mood: 'energized', emoji: '⚡', label: 'Energized' },
+  { mood: 'calm', emoji: '🧘', label: 'Calm' },
+  { mood: 'focused', emoji: '🎯', label: 'Focused' },
+  { mood: 'proud', emoji: '💪', label: 'Proud' },
+  { mood: 'tired', emoji: '😴', label: 'Tired' },
+];
+
 const MOOD_EMOJIS: Record<string, string> = {
   energized: '⚡',
   calm: '🧘',
@@ -46,6 +54,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [showUndoBanner, setShowUndoBanner] = useState(false);
   const [lastBatchCompletedIds, setLastBatchCompletedIds] = useState<string[]>([]);
+  const [inlineMoodHabitId, setInlineMoodHabitId] = useState<string | null>(null);
 
   const activeHabits = habits.filter((h) => !h.archived);
 
@@ -64,16 +73,27 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
   const handleToggle = async (habitId: string) => {
     const isCurrentlyDone = isCompleted(habitId, todayDateKey);
-    
+
     // Tactile haptic feedback
     triggerHaptic(isCurrentlyDone ? 'medium' : 'light');
 
     // Check if completing this habit hits 100%
-    if (!isCurrentlyDone && completedCount + 1 === totalCount) {
-      setTimeout(() => {
-        triggerMilestoneCelebration();
-        triggerHaptic('success');
-      }, 150);
+    if (!isCurrentlyDone) {
+      if (completedCount + 1 === totalCount) {
+        setTimeout(() => {
+          triggerMilestoneCelebration();
+          triggerHaptic('success');
+        }, 150);
+      }
+      // Show quick inline mood selector for a few seconds if no mood recorded yet
+      const entry = getHabitEntry ? getHabitEntry(habitId, todayDateKey) : undefined;
+      if (!entry?.mood) {
+        setInlineMoodHabitId(habitId);
+      }
+    } else {
+      if (inlineMoodHabitId === habitId) {
+        setInlineMoodHabitId(null);
+      }
     }
 
     await onToggleEntry(habitId, todayDateKey);
@@ -134,6 +154,15 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     }
   };
 
+  const handleQuickMoodSelect = async (habitId: string, mood: string) => {
+    triggerHaptic('light');
+    const existing = getHabitEntry ? getHabitEntry(habitId, todayDateKey) : undefined;
+    if (onSaveNote) {
+      await onSaveNote(habitId, todayDateKey, existing?.note || '', mood, existing?.tags);
+    }
+    setInlineMoodHabitId(null);
+  };
+
   const handleSaveNote = async (
     habitId: string,
     dateKey: string,
@@ -150,10 +179,10 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
   return (
     <div
-      className={`bg-surface-container-lowest dark:bg-surface-container shadow-soft border border-outline-variant/15 rounded-xl p-md sm:p-lg flex flex-col justify-between relative overflow-hidden min-h-[220px] ${className}`}
+      className={`bg-surface-container-lowest dark:bg-surface-container shadow-soft border border-outline-variant/15 rounded-2xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden min-h-[220px] transition-all duration-300 ${className}`}
     >
       {/* Decorative background accent */}
-      <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-primary-container/20 dark:bg-primary-container/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
 
       {/* Card Header with Quick Finish All Button */}
       <div>
@@ -165,7 +194,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             >
               bolt
             </span>
-            <span className="font-stat-label text-xs font-bold text-primary dark:text-primary-fixed-dim uppercase tracking-wider">
+            <span className="font-stat-label text-xs font-black text-primary dark:text-primary-fixed-dim uppercase tracking-wider">
               Today's Focus
             </span>
           </div>
@@ -178,26 +207,26 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                 onClick={handleQuickFinishAll}
                 disabled={isBatchProcessing}
                 title={`Mark all ${remainingCount} remaining habits as done for today`}
-                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-primary to-primary-container hover:from-primary-focus hover:to-primary text-on-primary text-[11px] font-bold font-stat-label shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+                className="group inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-primary to-primary-container hover:from-primary-focus hover:to-primary text-on-primary text-[11px] font-black font-stat-label shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[15px] group-hover:animate-bounce">
                   task_alt
                 </span>
-                <span>Finish All ({remainingCount} left)</span>
+                <span>⚡ Finish All ({remainingCount} left)</span>
               </button>
             )}
 
             {/* Progress Pill */}
             {totalCount > 0 && (
               <span
-                className={`text-[11px] font-stat-label font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
+                className={`text-[11px] font-stat-label font-black px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
                   allDone
                     ? 'bg-secondary-container text-on-secondary-container'
                     : 'bg-surface-container-high dark:bg-surface-container-highest text-on-surface'
                 }`}
               >
                 {allDone && <span className="material-symbols-outlined text-[14px]">done_all</span>}
-                {completedCount} of {totalCount} Done ({percentDone}%)
+                {completedCount}/{totalCount} Done ({percentDone}%)
               </span>
             )}
           </div>
@@ -205,14 +234,14 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
         {/* Temporary Undo Banner */}
         {showUndoBanner && (
-          <div className="mb-2 px-3 py-1.5 rounded-xl bg-secondary-container/90 text-on-secondary-container text-xs font-medium flex items-center justify-between shadow-sm animate-fadeIn">
+          <div className="mb-2 px-3 py-1.5 rounded-xl bg-secondary-container/90 text-on-secondary-container text-xs font-semibold flex items-center justify-between shadow-sm animate-fadeIn">
             <span className="flex items-center gap-1.5">
               <span>🎉 All habits checked off for today!</span>
             </span>
             <button
               type="button"
               onClick={handleUndoQuickFinishAll}
-              className="px-2 py-0.5 rounded-lg bg-surface-container-lowest dark:bg-surface-container text-primary font-bold hover:underline text-[11px] shadow-xs active:scale-90 transition-all"
+              className="px-2.5 py-0.5 rounded-lg bg-surface-container-lowest dark:bg-surface-container text-primary font-bold hover:underline text-[11px] shadow-xs active:scale-90 transition-all cursor-pointer"
             >
               Undo
             </button>
@@ -227,8 +256,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             </p>
             {onAddNewHabit && (
               <button
+                type="button"
                 onClick={onAddNewHabit}
-                className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">add</span>
                 <span>Add your first habit</span>
@@ -236,7 +266,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-2 max-h-[175px] overflow-y-auto scrollbar-thin pr-1">
+          <div className="space-y-2 max-h-[185px] overflow-y-auto scrollbar-thin pr-1">
             {activeHabits.map((habit) => {
               const done = isCompleted(habit.id, todayDateKey);
               const metrics = habitMetricsMap[habit.id];
@@ -244,6 +274,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               const isShieldActive = metrics?.isShieldActive;
               const entry = getHabitEntry ? getHabitEntry(habit.id, todayDateKey) : undefined;
               const hasNote = Boolean(entry?.note || entry?.mood || (entry?.tags && entry.tags.length > 0));
+              const isShowingInlineMood = inlineMoodHabitId === habit.id && !entry?.mood;
 
               return (
                 <div
@@ -251,7 +282,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                   onClick={() => handleToggle(habit.id)}
                   className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer active:scale-[0.99] select-none ${
                     done
-                      ? 'bg-secondary-container/20 dark:bg-secondary-container/10 border-secondary/30'
+                      ? 'bg-secondary-container/15 dark:bg-secondary-container/10 border-secondary/30'
                       : 'bg-surface-container-low dark:bg-surface-container-high/30 border-outline-variant/20 hover:border-primary/40'
                   }`}
                 >
@@ -298,8 +329,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                           e.stopPropagation();
                           setActiveNoteHabit(habit);
                         }}
-                        title={hasNote ? `Reflection logged: "${entry?.note || ''}"` : "Add 1-tap note & reflection"}
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 ${
+                        title={hasNote ? `Reflection: "${entry?.note || ''}"` : "Add 1-tap reflection note"}
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
                           hasNote
                             ? 'bg-primary/15 text-primary dark:text-primary-fixed ring-1 ring-primary/30 font-bold'
                             : 'text-on-surface-variant/60 hover:text-primary hover:bg-surface-container-high'
@@ -338,20 +369,49 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                     </div>
                   </div>
 
+                  {/* Inline 1-Tap Quick Mood Selector (Appears upon completion) */}
+                  {isShowingInlineMood && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-2 pt-1.5 border-t border-outline-variant/15 flex items-center justify-between gap-1 animate-fadeIn"
+                    >
+                      <span className="text-[10.5px] font-stat-label text-on-surface-variant font-medium">
+                        How did it feel?
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {MOOD_OPTIONS.map((m) => (
+                          <button
+                            key={m.mood}
+                            type="button"
+                            onClick={() => handleQuickMoodSelect(habit.id, m.mood)}
+                            title={m.label}
+                            className="px-1.5 py-0.5 rounded-lg bg-surface-container-high hover:bg-primary/20 text-xs transition-all active:scale-90 cursor-pointer"
+                          >
+                            <span>{m.emoji}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Attached Note Preview Snippet (if present) */}
-                  {hasNote && (
+                  {hasNote && !isShowingInlineMood && (
                     <div className="mt-1.5 pl-9 flex items-center gap-1.5 flex-wrap text-[11px] font-body-text text-on-surface-variant/80">
                       {entry?.mood && (
-                        <span className="font-semibold text-primary dark:text-primary-fixed-dim inline-flex items-center gap-0.5">
+                        <span className="font-bold text-primary dark:text-primary-fixed-dim inline-flex items-center gap-0.5">
                           <span>{MOOD_EMOJIS[entry.mood]}</span>
                           <span className="capitalize">{entry.mood}</span>
                         </span>
                       )}
-                      {entry?.tags && entry.tags.map((t) => (
-                        <span key={t} className="text-[10px] bg-surface-container-high px-1.5 py-0.2 rounded text-on-surface-variant">
-                          {t}
-                        </span>
-                      ))}
+                      {entry?.tags &&
+                        entry.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="text-[10px] bg-surface-container-high px-1.5 py-0.2 rounded text-on-surface-variant font-medium"
+                          >
+                            {t}
+                          </span>
+                        ))}
                       {entry?.note && (
                         <span className="truncate italic text-[10.5px]">
                           "{entry.note}"
@@ -369,7 +429,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       {/* Card Footer: Status Banner */}
       <div className="mt-3 pt-2.5 border-t border-outline-variant/15 flex items-center justify-between text-xs">
         {allDone ? (
-          <div className="flex items-center gap-1.5 text-secondary dark:text-secondary-fixed font-semibold">
+          <div className="flex items-center gap-1.5 text-secondary dark:text-secondary-fixed font-bold">
             <span className="material-symbols-outlined text-[16px]">verified</span>
             <span>All done for today! Calm momentum in motion.</span>
           </div>
@@ -380,7 +440,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
-        <span className="font-stat-label text-[10px] text-on-surface-variant uppercase">
+        <span className="font-stat-label text-[10px] text-on-surface-variant uppercase font-bold">
           {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
         </span>
       </div>

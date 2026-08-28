@@ -39,6 +39,8 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
   });
 
   const categories = Object.keys(categoryCounts).sort();
+  const totalActiveCount = activeHabits.length;
+  const isAllSelected = selectedCategory === 'all' || !selectedCategory;
 
   const getIcon = (cat: string) => {
     const key = cat.toLowerCase();
@@ -46,20 +48,27 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
   };
 
   return (
-    <div className="w-full bg-surface-container-lowest dark:bg-surface-container p-2.5 sm:p-3.5 rounded-2xl border border-outline-variant/15 shadow-soft">
-      <div className="flex items-center justify-between gap-2 mb-2 px-1">
+    <div className="w-full bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 rounded-2xl border border-outline-variant/15 shadow-soft">
+      <div className="flex items-center justify-between gap-2 mb-2.5 px-1">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span
+            className="material-symbols-outlined text-primary text-[20px]"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
             dashboard_customize
           </span>
           <h3 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
             Tracker Boards
           </h3>
+          <span className="text-[11px] font-stat-label text-on-surface-variant font-medium hidden xs:inline">
+            • Filter by category
+          </span>
         </div>
 
         <button
+          type="button"
           onClick={onAddNewCategory}
-          className="text-xs font-semibold text-primary hover:text-primary-fixed-dim hover:underline flex items-center gap-1 active:scale-95 transition-all"
+          className="text-xs font-semibold text-primary hover:text-primary-fixed-dim hover:underline flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           <span>Add Habit</span>
@@ -67,16 +76,40 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {/* Dynamic Category Tabs Only */}
+        {/* 1. All Habits Master Tab */}
+        <button
+          type="button"
+          onClick={() => onSelectCategory('all')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer ${
+            isAllSelected
+              ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+              : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+          }`}
+        >
+          <span>🌟</span>
+          <span>All Habits</span>
+          <span
+            className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+              isAllSelected
+                ? 'bg-white/20 text-white'
+                : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
+            }`}
+          >
+            {totalActiveCount}
+          </span>
+        </button>
+
+        {/* 2. Individual Category Boards */}
         {categories.map((cat) => {
-          const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
+          const isSelected = !isAllSelected && selectedCategory.toLowerCase() === cat.toLowerCase();
           const count = categoryCounts[cat];
 
           return (
             <button
               key={cat}
+              type="button"
               onClick={() => onSelectCategory(cat)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer ${
                 isSelected
                   ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
                   : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
@@ -85,7 +118,7 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
               <span>{getIcon(cat)}</span>
               <span>{cat}</span>
               <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                   isSelected
                     ? 'bg-white/20 text-white'
                     : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
@@ -97,11 +130,12 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
           );
         })}
 
-        {/* Create New Category Quick Button */}
+        {/* 3. Create New Category Quick Button */}
         <button
+          type="button"
           onClick={onAddNewCategory}
           title="Create a new Tracker Board"
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-primary hover:border-primary/40 border border-dashed border-outline-variant/40 transition-all shrink-0 active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-primary hover:border-primary/40 border border-dashed border-outline-variant/40 transition-all shrink-0 active:scale-95 cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">add_circle</span>
           <span>New Board</span>
