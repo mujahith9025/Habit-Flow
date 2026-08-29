@@ -18,7 +18,6 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
     longestStreak,
     allTimeRatePercent,
     daysSinceCreation,
-    totalNotesCount,
     bestMonth,
     dayOfWeekStats,
     monthlyHistory,
@@ -130,23 +129,23 @@ export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps>
           </div>
         </div>
 
-        {/* 4. Total Reflections Logged */}
+        {/* 4. Total Days Tracked */}
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/15 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-              Reflections Logged
+              Days Tracked
             </span>
-            <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[17px]">edit_note</span>
+            <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <span className="material-symbols-outlined text-[17px]">calendar_month</span>
             </div>
           </div>
           <div>
             <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
-              {totalNotesCount}
-              <span className="text-xs font-normal text-on-surface-variant ml-1">notes</span>
+              {totalTrackedDays || daysSinceCreation || 1}
+              <span className="text-xs font-normal text-on-surface-variant ml-1">days</span>
             </div>
             <p className="text-[10px] text-on-surface-variant mt-0.5">
-              Moods & daily reflections
+              Active tracking history
             </p>
           </div>
         </div>

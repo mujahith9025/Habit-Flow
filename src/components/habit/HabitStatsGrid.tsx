@@ -21,7 +21,6 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
     monthCompletedDays,
     daysInMonth,
     allTimeRatePercent,
-    totalNotesCount,
     daysSinceCreation,
   } = metrics;
 
@@ -175,28 +174,28 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
       </div>
 
-      {/* 6. Reflections Logged */}
+      {/* 6. Total Days Tracked */}
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
-            Reflections
+            Days Tracked
           </span>
-          <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
             <span
               className="material-symbols-outlined text-[16px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
-              edit_note
+              calendar_month
             </span>
           </div>
         </div>
         <div className="mt-2.5">
           <div className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
-            {totalNotesCount ?? 0}
-            <span className="text-xs font-normal text-on-surface-variant ml-1">notes</span>
+            {trackedDaysTotal}
+            <span className="text-xs font-normal text-on-surface-variant ml-1">days</span>
           </div>
           <p className="font-body-text text-[10px] text-on-surface-variant mt-0.5">
-            Logged insights
+            Since habit creation
           </p>
         </div>
       </div>

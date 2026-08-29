@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Habit, HabitEntry } from '../../types';
+import { Habit } from '../../types';
 import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { DailyGridCell } from './DailyGridCell';
 import { Button } from '../ui/Button';
@@ -21,7 +21,6 @@ interface DailyHabitsGridProps {
   habitMetricsMap: Record<string, HabitGridMetrics>;
   daysInMonth: DayColumnHeader[];
   isCompleted: (habitId: string, dateKey: string) => boolean;
-  getHabitEntry?: (habitId: string, dateKey: string) => HabitEntry | undefined;
   onToggleEntry: (habitId: string, dateKey: string) => void;
   onBatchCompleteToday?: (habitIds: string[]) => Promise<void>;
   onEditHabit?: (habit: Habit) => void;
@@ -34,7 +33,6 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
   habitMetricsMap,
   daysInMonth,
   isCompleted,
-  getHabitEntry,
   onToggleEntry,
   onBatchCompleteToday,
   onEditHabit,
@@ -230,8 +228,6 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                     {/* Day Cells (1..31) */}
                     {daysInMonth.map((day) => {
                       const completed = isCompleted(habit.id, day.dateKey);
-                      const entry = getHabitEntry ? getHabitEntry(habit.id, day.dateKey) : undefined;
-                      const hasNote = Boolean(entry?.note || entry?.mood || (entry?.tags && entry.tags.length > 0));
 
                       return (
                         <DailyGridCell
@@ -240,7 +236,6 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
                           dateKey={day.dateKey}
                           isCompleted={completed}
                           isToday={day.isToday}
-                          hasNote={hasNote}
                           onToggle={() => onToggleEntry(habit.id, day.dateKey)}
                         />
                       );

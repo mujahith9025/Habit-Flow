@@ -6,7 +6,6 @@ interface DailyGridCellProps {
   dateKey: string;
   isCompleted: boolean;
   isToday: boolean;
-  hasNote?: boolean;
   habitColor?: string;
   onToggle: () => void;
 }
@@ -15,7 +14,6 @@ export const DailyGridCell: React.FC<DailyGridCellProps> = ({
   dateKey,
   isCompleted,
   isToday,
-  hasNote,
   onToggle,
 }) => {
   const handleToggle = () => {
@@ -41,7 +39,7 @@ export const DailyGridCell: React.FC<DailyGridCellProps> = ({
               : `Mark as completed (${isToday ? 'Today' : dateKey})`
           }
           aria-label={isCompleted ? 'Completed' : 'Pending'}
-          className={`w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 ${
+          className={`w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer ${
             isCompleted
               ? 'bg-primary text-on-primary shadow-soft ring-1 ring-black/10 hover:brightness-110'
               : isToday
@@ -62,13 +60,6 @@ export const DailyGridCell: React.FC<DailyGridCellProps> = ({
             <span className="w-1.5 h-1.5 rounded-full bg-outline-variant/30 group-hover:bg-primary/40" />
           )}
         </button>
-
-        {hasNote && (
-          <span
-            title="Note attached"
-            className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-1 ring-background shadow-xs pointer-events-none"
-          />
-        )}
       </div>
     </td>
   );
