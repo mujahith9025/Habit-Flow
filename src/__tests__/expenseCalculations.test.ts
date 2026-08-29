@@ -7,8 +7,10 @@ import {
   groupLedgerByMonth,
   generateMonthTemplateEntries,
   generateMissingDaysUpToToday,
+  inferExpenseCategory,
+  aggregateExpensesByCategory,
 } from '../lib/expenseCalculations';
-import { DailyMoneyEntry } from '../types/expense';
+import { DailyMoneyEntry, DailyLedgerRow } from '../types/expense';
 
 describe('Money Savings & Expense Calculations Engine', () => {
   it('formats date key to DD/MM format correctly', () => {
@@ -38,14 +40,44 @@ describe('Money Savings & Expense Calculations Engine', () => {
     );
   });
 
+  it('infers expense categories accurately from descriptions or explicit category IDs', () => {
+    expect(inferExpenseCategory('Canteen Food').id).toBe('food');
+    expect(inferExpenseCategory('Cloth Alter & Other').id).toBe('shopping');
+    expect(inferExpenseCategory('Mobile Recharge Bill').id).toBe('bills');
+    expect(inferExpenseCategory('Petrol for bike').id).toBe('travel');
+    expect(inferExpenseCategory('Job Interview').id).toBe('education');
+    expect(inferExpenseCategory('Sadaqah Amount').id).toBe('charity');
+    expect(inferExpenseCategory('Doctor appointment').id).toBe('health');
+    expect(inferExpenseCategory('Random', 'food').id).toBe('food');
+  });
+
+  it('aggregates expenses by category with percentages and counts', () => {
+    const mockRows: DailyLedgerRow[] = [
+      {
+        id: '1',
+        dateKey: '2026-08-01',
+        displayDate: '01/08',
+        savingsAmount: 50,
+        cumulativeBalance: 50,
+        expenses: [
+          { id: 'e1', amount: 100, description: 'Canteen', category: 'food' },
+          { id: 'e2', amount: 100, description: 'Cloth Alter', category: 'shopping' },
+        ],
+        totalExpenses: 200,
+        isToday: false,
+        monthKey: '2026-08',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ];
+
+    const breakdown = aggregateExpensesByCategory(mockRows);
+    expect(breakdown.length).toBe(2);
+    expect(breakdown[0].totalAmount).toBe(100);
+    expect(breakdown[0].percentage).toBe(50);
+  });
+
   it('calculates exact running cumulative balance and ledger rows', () => {
-    // Starting with 75 carryover:
-    // 01/08: 75 + 25 = 100
-    // 02/08: 100 + 25 = 125
-    // ...
-    // 08/08: 250 + 25 = 275
-    // 09/08: 275 + 25 - 100 = 200 (or if 100 deducted: cumulative 200)
-    // 10/08: 200 + 25 = 225
     const mockEntries: Record<string, DailyMoneyEntry> = {
       '2026-08-01': {
         id: '2026-08-01',

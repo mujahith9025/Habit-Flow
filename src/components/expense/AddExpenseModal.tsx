@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DailyMoneyEntry, ExpenseItem } from '../../types/expense';
-import { formatDayMonth } from '../../lib/expenseCalculations';
+import {
+  formatDayMonth,
+  EXPENSE_CATEGORIES,
+  inferExpenseCategory,
+} from '../../lib/expenseCalculations';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -18,15 +22,15 @@ interface AddExpenseModalProps {
   onDeleteDay?: (dateKey: string) => Promise<void>;
 }
 
-const COMMON_EXPENSE_TAGS = [
-  { label: '👔 Cloth Alter & Other', text: 'Cloth Alter & Other' },
-  { label: '💼 Interview', text: 'Interview' },
-  { label: '🍽️ Canteen', text: 'Canteen' },
-  { label: '📜 Income Certificate', text: 'income Certificate' },
-  { label: '🤲 Sadaqah Amount', text: 'Sadaqah Amount' },
-  { label: '🛒 Groceries', text: 'Groceries' },
-  { label: '🚗 Travel / Petrol', text: 'Travel' },
-  { label: '⚡ Utility Bills', text: 'Utility' },
+const COMMON_EXPENSE_PRESETS = [
+  { label: '👔 Cloth Alter & Other', text: 'Cloth Alter & Other', category: 'shopping', defaultAmount: 100 },
+  { label: '💼 Interview', text: 'Interview', category: 'education', defaultAmount: 100 },
+  { label: '🍽️ Canteen', text: 'Canteen', category: 'food', defaultAmount: 100 },
+  { label: '📜 Income Certificate', text: 'income Certificate', category: 'bills', defaultAmount: 100 },
+  { label: '🤲 Sadaqah Amount', text: 'Sadaqah Amount', category: 'charity', defaultAmount: 100 },
+  { label: '🛒 Groceries', text: 'Groceries', category: 'food', defaultAmount: 150 },
+  { label: '🚗 Petrol / Travel', text: 'Petrol & Travel', category: 'travel', defaultAmount: 100 },
+  { label: '⚡ Recharge / Bill', text: 'Mobile Recharge', category: 'bills', defaultAmount: 199 },
 ];
 
 export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
@@ -43,7 +47,9 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
 
   const [dateKey, setDateKey] = useState<string>(initialDateKey || todayStr);
   const [savingsAmount, setSavingsAmount] = useState<number>(defaultDailySavings);
-  const [expenses, setExpenses] = useState<Array<{ id: string; amount: number; description: string }>>([]);
+  const [expenses, setExpenses] = useState<
+    Array<{ id: string; amount: number; description: string; category?: string }>
+  >([]);
   const [notes, setNotes] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -60,6 +66,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 id: e.id,
                 amount: e.amount,
                 description: e.description,
+                category: e.category || inferExpenseCategory(e.description).id,
               }))
             : []
         );
@@ -74,25 +81,41 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleAddExpenseItem = (initialDesc: string = '') => {
+  const handleAddExpenseItem = (
+    initialDesc: string = '',
+    initialCat: string = 'other',
+    initialAmt: number = 100
+  ) => {
+    const matchedCategory = initialDesc ? inferExpenseCategory(initialDesc, initialCat).id : initialCat;
     setExpenses((prev) => [
       ...prev,
       {
-        id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        amount: 100,
+        id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        amount: initialAmt,
         description: initialDesc,
+        category: matchedCategory,
       },
     ]);
   };
 
   const handleUpdateExpenseItem = (
     id: string,
-    field: 'amount' | 'description',
+    field: 'amount' | 'description' | 'category',
     value: string | number
   ) => {
     setExpenses((prev) =>
       prev.map((item) => {
         if (item.id === id) {
+          if (field === 'description') {
+            const newDesc = String(value);
+            // If category was 'other', infer category automatically from description
+            const inferred = inferExpenseCategory(newDesc, item.category === 'other' ? undefined : item.category);
+            return {
+              ...item,
+              description: newDesc,
+              category: item.category && item.category !== 'other' ? item.category : inferred.id,
+            };
+          }
           return {
             ...item,
             [field]: field === 'amount' ? Math.max(0, Number(value) || 0) : String(value),
@@ -117,10 +140,11 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
         .filter((item) => item.amount > 0 || item.description.trim().length > 0)
         .map((item) => ({
           id: item.id.startsWith('temp_')
-            ? `exp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+            ? `exp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
             : item.id,
           amount: Number(item.amount) || 0,
           description: item.description.trim() || 'Expense',
+          category: item.category || inferExpenseCategory(item.description).id,
         }));
 
       await onSave(dateKey, Number(savingsAmount) || 0, cleanedExpenses, notes.trim());
@@ -157,16 +181,16 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between bg-surface-container-low/40 dark:bg-surface-container-high/20">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]">edit_note</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
+              <span className="material-symbols-outlined text-[22px]">edit_calendar</span>
             </div>
             <div>
               <h3 className="font-app-title text-base font-bold text-on-surface">
-                {existingEntry ? `Edit Entry • ${formatDayMonth(dateKey)}` : 'Log Daily Savings & Expense'}
+                {existingEntry ? `Edit Entry • ${formatDayMonth(dateKey)}` : 'Log Daily Savings & Expenses'}
               </h3>
               <p className="text-[11px] text-on-surface-variant font-body-text">
-                Money Savings Ledger & Itemized Deductions
+                Record daily deposit and categorized deductions
               </p>
             </div>
           </div>
@@ -174,7 +198,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
@@ -187,7 +211,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             {/* Date Picker */}
             <div>
               <label className="block text-xs font-bold text-on-surface mb-1.5 uppercase font-stat-label">
-                Date (DATE)
+                Entry Date
               </label>
               <input
                 type="date"
@@ -204,7 +228,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             {/* Daily Savings Amount */}
             <div>
               <label className="block text-xs font-bold text-on-surface mb-1.5 uppercase font-stat-label">
-                Daily Savings (SAVINGS)
+                Daily Savings Deposit
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-2.5 text-sm font-bold text-primary dark:text-primary-fixed-dim">
@@ -227,7 +251,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                     key={amt}
                     type="button"
                     onClick={() => setSavingsAmount(amt)}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors ${
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors cursor-pointer ${
                       savingsAmount === amt
                         ? 'bg-primary text-on-primary border-primary'
                         : 'bg-surface-container-high text-on-surface-variant border-outline-variant/20 hover:border-primary'
@@ -240,15 +264,15 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             </div>
           </div>
 
-          {/* Row 2: Itemized Expenses (EXPENSES) */}
+          {/* Row 2: Categorized Expenses Section */}
           <div className="space-y-3 pt-2 border-t border-outline-variant/15">
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-xs font-bold text-on-surface uppercase font-stat-label block">
-                  Deducted Expenses (EXPENSES)
+                  Deducted Expenses
                 </label>
                 <span className="text-[11px] text-on-surface-variant font-body-text">
-                  Any money spent will be deducted from your cumulative balance
+                  Choose a category and amount to deduct from balance
                 </span>
               </div>
 
@@ -259,83 +283,103 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
               )}
             </div>
 
-            {/* Quick Tag Pills */}
+            {/* Quick Preset Chips */}
             <div className="flex flex-wrap gap-1.5">
-              {COMMON_EXPENSE_TAGS.map((tag) => (
+              {COMMON_EXPENSE_PRESETS.map((preset) => (
                 <button
-                  key={tag.text}
+                  key={preset.text}
                   type="button"
-                  onClick={() => handleAddExpenseItem(tag.text)}
+                  onClick={() => handleAddExpenseItem(preset.text, preset.category, preset.defaultAmount)}
                   className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-container-high hover:bg-primary/15 hover:text-primary hover:border-primary/40 text-on-surface-variant border border-outline-variant/20 transition-colors cursor-pointer active:scale-95"
                 >
-                  + {tag.label}
+                  + {preset.label}
                 </button>
               ))}
             </div>
 
             {/* Expense Items List */}
             {expenses.length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-outline-variant/30 text-center space-y-2 bg-surface-container-low/30">
-                <span className="text-xs text-on-surface-variant block">No expenses on this date</span>
+              <div className="p-4 rounded-2xl border border-dashed border-outline-variant/30 text-center space-y-2 bg-surface-container-low/30">
+                <span className="text-xs text-on-surface-variant block">No expenses logged on this date</span>
                 <button
                   type="button"
                   onClick={() => handleAddExpenseItem()}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-surface-container-high hover:bg-primary/15 text-primary transition-colors inline-flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-surface-container-high hover:bg-primary/15 text-primary transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[15px]">add</span>
+                  <span className="material-symbols-outlined text-[16px]">add</span>
                   <span>Add Expense Item</span>
                 </button>
               </div>
             ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin pr-1">
+              <div className="space-y-2.5 max-h-56 overflow-y-auto scrollbar-thin pr-1">
                 {expenses.map((item) => (
                   <div
                     key={item.id}
-                    className="p-2.5 rounded-xl border border-outline-variant/25 bg-surface-container-low dark:bg-surface-container-high/30 flex items-center gap-2"
+                    className="p-3 rounded-2xl border border-outline-variant/25 bg-surface-container-low dark:bg-surface-container-high/30 space-y-2"
                   >
-                    {/* Amount */}
-                    <div className="w-28 relative shrink-0">
-                      <span className="absolute left-2.5 top-2 text-xs font-bold text-error">
-                        {currencySymbol}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      {/* Amount */}
+                      <div className="w-28 relative shrink-0">
+                        <span className="absolute left-2.5 top-2 text-xs font-bold text-error">
+                          {currencySymbol}
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          required
+                          value={item.amount}
+                          onChange={(e) => handleUpdateExpenseItem(item.id, 'amount', e.target.value)}
+                          placeholder="100"
+                          className="w-full pl-6 pr-2 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container text-xs font-bold text-error border border-outline-variant/20 focus:outline-none focus:ring-1 focus:ring-error"
+                        />
+                      </div>
+
+                      {/* Description */}
                       <input
-                        type="number"
-                        min="1"
-                        step="1"
+                        type="text"
                         required
-                        value={item.amount}
-                        onChange={(e) => handleUpdateExpenseItem(item.id, 'amount', e.target.value)}
-                        placeholder="100"
-                        className="w-full pl-6 pr-2 py-1.5 rounded-lg bg-surface-container-lowest dark:bg-surface-container text-xs font-bold text-error border border-outline-variant/20 focus:outline-none"
+                        value={item.description}
+                        onChange={(e) => handleUpdateExpenseItem(item.id, 'description', e.target.value)}
+                        placeholder="Expense title (e.g. Canteen, Cloth Alter)"
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container text-xs text-on-surface border border-outline-variant/20 focus:outline-none focus:ring-1 focus:ring-primary"
                       />
+
+                      {/* Delete Item */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExpenseItem(item.id)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
+                        title="Remove item"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
                     </div>
 
-                    {/* Description (e.g. Cloth Alter & Other) */}
-                    <input
-                      type="text"
-                      required
-                      value={item.description}
-                      onChange={(e) => handleUpdateExpenseItem(item.id, 'description', e.target.value)}
-                      placeholder="Reason (e.g. Cloth Alter & Other, Canteen)"
-                      className="flex-1 px-3 py-1.5 rounded-lg bg-surface-container-lowest dark:bg-surface-container text-xs text-on-surface border border-outline-variant/20 focus:outline-none"
-                    />
-
-                    {/* Delete Item */}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveExpenseItem(item.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors"
-                      title="Remove item"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
+                    {/* Category Selector Dropdown */}
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase font-stat-label shrink-0">
+                        Category:
+                      </span>
+                      <select
+                        value={item.category || 'other'}
+                        onChange={(e) => handleUpdateExpenseItem(item.id, 'category', e.target.value)}
+                        className="flex-1 px-2.5 py-1 rounded-lg bg-surface-container-lowest dark:bg-surface-container text-xs text-on-surface font-semibold border border-outline-variant/20 focus:outline-none"
+                      >
+                        {EXPENSE_CATEGORIES.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 ))}
 
                 <button
                   type="button"
                   onClick={() => handleAddExpenseItem()}
-                  className="w-full py-2 rounded-xl border border-dashed border-outline-variant/30 hover:border-primary text-xs font-bold text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1"
+                  className="w-full py-2.5 rounded-2xl border border-dashed border-outline-variant/30 hover:border-primary text-xs font-bold text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">add</span>
                   <span>Add Another Expense</span>
@@ -351,7 +395,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 type="button"
                 onClick={handleDelete}
                 disabled={isSaving}
-                className="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-error hover:bg-error-container/20 transition-colors flex items-center gap-1.5 active:scale-95"
+                className="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-error hover:bg-error-container/20 transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">delete</span>
                 <span>Delete</span>
@@ -365,7 +409,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={isSaving}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container-high transition-colors"
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
               >
                 Cancel
               </button>

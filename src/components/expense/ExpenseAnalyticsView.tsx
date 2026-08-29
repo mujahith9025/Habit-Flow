@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
-import { formatMoney } from '../../lib/expenseCalculations';
-import { triggerHaptic } from '../../utils/haptics';
+import {
+  formatMoney,
+  aggregateExpensesByCategory,
+} from '../../lib/expenseCalculations';
 
 interface ExpenseAnalyticsViewProps {
   rows: DailyLedgerRow[];
   monthSummaries: MonthExpenseSummary[];
   totalCumulativeSavings: number;
   settings: ExpenseTrackerSettings;
-  onOpenExportModal?: () => void;
 }
-
-const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
   rows,
@@ -20,9 +19,8 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
   settings,
 }) => {
   const sym = settings.currencySymbol || '₹';
-  const [calculatorDailyRate, setCalculatorDailyRate] = useState(settings.defaultDailySavings || 50);
 
-  // 1. Core Analytics Calculations
+  // 1. Financial Totals & Retention
   const totalDaysLogged = rows.length;
   const totalGrossSavings = rows.reduce((acc, r) => acc + r.savingsAmount, 0);
   const totalExpensesDeducted = rows.reduce(
@@ -30,86 +28,29 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
     0
   );
 
-  const avgDailySavings = totalDaysLogged > 0 ? Math.round(totalCumulativeSavings / totalDaysLogged) : 0;
-  const projectedYearlySavings = avgDailySavings * 365;
+  const retentionRate =
+    totalGrossSavings > 0
+      ? Math.max(0, Math.round(((totalGrossSavings - totalExpensesDeducted) / totalGrossSavings) * 100))
+      : 100;
 
-  // Streak Calculation (consecutive recorded days)
-  let activeStreak = 0;
-  for (let i = rows.length - 1; i >= 0; i--) {
-    if (rows[i].savingsAmount > 0) {
-      activeStreak++;
-    } else {
-      break;
-    }
-  }
+  const totalExpenseTransactions = rows.reduce((acc, r) => acc + (r.expenses?.length || 0), 0);
+  const avgExpensePerTransaction =
+    totalExpenseTransactions > 0 ? Math.round(totalExpensesDeducted / totalExpenseTransactions) : 0;
+  const avgDailySavings = totalDaysLogged > 0 ? Math.round(totalGrossSavings / totalDaysLogged) : 0;
 
-  // 2. Day-of-Week Breakdown
-  const dayOfWeekTotals: Record<number, { count: number; total: number }> = {
-    0: { count: 0, total: 0 },
-    1: { count: 0, total: 0 },
-    2: { count: 0, total: 0 },
-    3: { count: 0, total: 0 },
-    4: { count: 0, total: 0 },
-    5: { count: 0, total: 0 },
-    6: { count: 0, total: 0 },
-  };
-
-  rows.forEach((r) => {
-    const d = new Date(r.dateKey);
-    const day = isNaN(d.getDay()) ? 0 : d.getDay();
-    dayOfWeekTotals[day].count++;
-    dayOfWeekTotals[day].total += r.savingsAmount;
-  });
-
-  const dayOfWeekAverages = WEEKDAY_NAMES.map((name, index) => {
-    const data = dayOfWeekTotals[index];
-    const avg = data.count > 0 ? Math.round(data.total / data.count) : 0;
-    return { name, avg, count: data.count };
-  });
-
-  const maxDayAvg = Math.max(...dayOfWeekAverages.map((d) => d.avg), 1);
-  const bestDay = dayOfWeekAverages.reduce((max, d) => (d.avg > max.avg ? d : max), dayOfWeekAverages[0]);
-
-  // 3. Milestones Calculation
-  const milestones = [
-    { id: 'bronze', label: '🥉 Starter Vault', target: 1000 },
-    { id: 'silver', label: '🥈 Silver Cushion', target: 5000 },
-    { id: 'gold', label: '🥇 Gold Fortress', target: 10000 },
-    { id: 'diamond', label: '💎 Diamond Reserve', target: 25000 },
-  ];
-
-  const nextMilestone = milestones.find((m) => totalCumulativeSavings < m.target) || milestones[milestones.length - 1];
-  const remainingToMilestone = Math.max(0, nextMilestone.target - totalCumulativeSavings);
-  const daysToMilestone = avgDailySavings > 0 ? Math.ceil(remainingToMilestone / avgDailySavings) : 0;
-
-  // 4. Cumulative Trend Line Coordinates (SVG)
-  const chartPoints = rows.slice(-30); // Last 30 entries
-  const maxBalance = Math.max(...chartPoints.map((r) => r.cumulativeBalance), 100);
-  const minBalance = Math.min(...chartPoints.map((r) => r.cumulativeBalance), 0);
-  const balanceRange = Math.max(maxBalance - minBalance, 1);
-
-  const svgWidth = 600;
-  const svgHeight = 180;
-  const paddingX = 20;
-  const paddingY = 25;
-
-  const pointsString = chartPoints
-    .map((r, i) => {
-      const x = paddingX + (i / Math.max(chartPoints.length - 1, 1)) * (svgWidth - paddingX * 2);
-      const y = svgHeight - paddingY - ((r.cumulativeBalance - minBalance) / balanceRange) * (svgHeight - paddingY * 2);
-      return `${x},${y}`;
-    })
-    .join(' ');
+  // 2. Category Expense Breakdown
+  const categoryBreakdown = aggregateExpensesByCategory(rows);
+  const topCategory = categoryBreakdown.length > 0 ? categoryBreakdown[0] : null;
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
       {/* 1. Top 4 Financial KPI Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Card 1: Total Cumulative Savings */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3 relative overflow-hidden">
+        {/* Card 1: Total Current Net Savings */}
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-              Total Cumulative
+              Current Net Savings
             </span>
             <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
               <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
@@ -127,406 +68,288 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
           </div>
         </div>
 
-        {/* Card 2: Daily Average Rate */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3">
+        {/* Card 2: Total All-Time Expenses */}
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-              Daily Average Pace
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-[18px]">trending_up</span>
-            </div>
-          </div>
-          <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
-              {formatMoney(avgDailySavings, sym)}
-              <span className="text-xs font-normal text-on-surface-variant ml-1">/ day</span>
-            </div>
-            <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
-              Target: {sym}{settings.defaultDailySavings}/day
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: Active Savings Streak */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-              Savings Streak
+              Total Expenses
             </span>
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                local_fire_department
-              </span>
+              <span className="material-symbols-outlined text-[18px]">shopping_cart_checkout</span>
+            </div>
+          </div>
+          <div>
+            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">
+              {formatMoney(totalExpensesDeducted, sym)}
+            </div>
+            <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
+              {totalExpenseTransactions} deductions recorded
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Total Gross Savings Deposited */}
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
+              Gross Deposited
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+              <span className="material-symbols-outlined text-[18px]">savings</span>
+            </div>
+          </div>
+          <div>
+            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+              +{formatMoney(totalGrossSavings, sym)}
+            </div>
+            <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
+              {sym}{avgDailySavings}/day average pace
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Savings Retention Rate */}
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
+              Retention Rate
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+              <span className="material-symbols-outlined text-[18px]">shield</span>
             </div>
           </div>
           <div>
             <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
-              {activeStreak}
-              <span className="text-xs font-normal text-on-surface-variant ml-1">days</span>
+              {retentionRate}%
             </div>
             <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
-              Consistent financial discipline
-            </p>
-          </div>
-        </div>
-
-        {/* Card 4: Annual Forecast */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 sm:p-5 shadow-soft border border-outline-variant/15 flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
-              1-Year Projected
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-[18px]">auto_graph</span>
-            </div>
-          </div>
-          <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-primary dark:text-primary-fixed-dim">
-              {formatMoney(projectedYearlySavings, sym)}
-            </div>
-            <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
-              Annual wealth accumulation
+              {retentionRate >= 75 ? 'Excellent capital retention' : 'Watch expense deductions'}
             </p>
           </div>
         </div>
       </div>
 
-      {/* 2. Cumulative Growth Curve (Interactive SVG Area Chart) */}
-      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4">
+      {/* 2. Expenses Classification by Category */}
+      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[20px]">show_chart</span>
-              <span>Cumulative Wealth Trajectory</span>
+              <span className="material-symbols-outlined text-primary text-[22px]">category</span>
+              <span>Expenses Classification by Category</span>
             </h3>
             <p className="font-body-text text-xs text-on-surface-variant">
-              Day-by-day continuous growth trajectory of your saved capital
+              Distribution and spending breakdown across all categorized deductions
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold font-stat-label">
-              Peak: {formatMoney(maxBalance, sym)}
-            </span>
-          </div>
-        </div>
-
-        {chartPoints.length > 1 ? (
-          <div className="w-full overflow-x-auto">
-            <svg
-              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-              className="w-full h-44 sm:h-52 overflow-visible select-none"
-            >
-              <defs>
-                <linearGradient id="savingsAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#006398" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#006398" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
-              {/* Grid Lines */}
-              <line x1={paddingX} y1={paddingY} x2={svgWidth - paddingX} y2={paddingY} stroke="currentColor" strokeOpacity="0.08" strokeDasharray="3 3" />
-              <line x1={paddingX} y1={svgHeight / 2} x2={svgWidth - paddingX} y2={svgHeight / 2} stroke="currentColor" strokeOpacity="0.08" strokeDasharray="3 3" />
-              <line x1={paddingX} y1={svgHeight - paddingY} x2={svgWidth - paddingX} y2={svgHeight - paddingY} stroke="currentColor" strokeOpacity="0.15" />
-
-              {/* Filled Area */}
-              <polygon
-                points={`${paddingX},${svgHeight - paddingY} ${pointsString} ${svgWidth - paddingX},${svgHeight - paddingY}`}
-                fill="url(#savingsAreaGradient)"
-              />
-
-              {/* Line Stroke */}
-              <polyline
-                points={pointsString}
-                fill="none"
-                stroke="#006398"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-
-              {/* Data Points */}
-              {chartPoints.map((r, i) => {
-                const x = paddingX + (i / Math.max(chartPoints.length - 1, 1)) * (svgWidth - paddingX * 2);
-                const y = svgHeight - paddingY - ((r.cumulativeBalance - minBalance) / balanceRange) * (svgHeight - paddingY * 2);
-                return (
-                  <circle
-                    key={r.dateKey}
-                    cx={x}
-                    cy={y}
-                    r={i === chartPoints.length - 1 ? "5" : "3"}
-                    className="fill-primary stroke-background stroke-2 transition-all hover:scale-150"
-                  >
-                    <title>{`${r.displayDate}: ${formatMoney(r.cumulativeBalance, sym)}`}</title>
-                  </circle>
-                );
-              })}
-            </svg>
-          </div>
-        ) : (
-          <div className="py-12 text-center text-xs text-on-surface-variant">
-            Log at least 2 daily entries to visualize your growth trajectory curve.
-          </div>
-        )}
-
-        {/* Breakdown Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-outline-variant/10 text-xs">
-          <div>
-            <span className="text-on-surface-variant block text-[11px]">Gross Deposited</span>
-            <span className="font-bold text-on-surface">{formatMoney(totalGrossSavings, sym)}</span>
-          </div>
-          <div>
-            <span className="text-on-surface-variant block text-[11px]">Total Deductions</span>
-            <span className="font-bold text-amber-600 dark:text-amber-400">-{formatMoney(totalExpensesDeducted, sym)}</span>
-          </div>
-          <div>
-            <span className="text-on-surface-variant block text-[11px]">Net Retained</span>
-            <span className="font-bold text-secondary">{formatMoney(totalCumulativeSavings, sym)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Month-by-Month Comparison & Day-of-Week Pattern */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left 7 Cols: Month-by-Month Bar Comparison */}
-        <div className="lg:col-span-7 bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
-                Month-by-Month Savings
-              </h3>
-              <p className="font-body-text text-xs text-on-surface-variant">
-                Monthly ending cumulative balances
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            {monthSummaries.length > 0 ? (
-              monthSummaries.map((m) => {
-                const maxMonthBal = Math.max(...monthSummaries.map((ms) => ms.endingBalance), 1);
-                const percent = Math.round((m.endingBalance / maxMonthBal) * 100);
-
-                return (
-                  <div key={m.monthKey} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-stat-label">
-                      <span className="font-bold text-on-surface">{m.monthTitle}</span>
-                      <span className="font-extrabold text-primary dark:text-primary-fixed-dim">
-                        {formatMoney(m.endingBalance, sym)}
-                      </span>
-                    </div>
-
-                    {/* Bar */}
-                    <div className="h-3.5 w-full bg-surface-container-high rounded-full overflow-hidden p-0.5">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary to-primary-container transition-all duration-500"
-                        style={{ width: `${Math.max(percent, 8)}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-xs text-on-surface-variant py-4 text-center">No monthly history recorded yet.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Right 5 Cols: Day-of-Week Pattern */}
-        <div className="lg:col-span-5 bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
-                Weekly Pattern
-              </h3>
-              <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold font-stat-label">
-                Peak: {bestDay.name}s
-              </span>
-            </div>
-            <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
-              Average savings logged per weekday
-            </p>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1.5 items-end h-28 pt-2">
-            {dayOfWeekAverages.map((d) => {
-              const heightPercent = Math.round((d.avg / maxDayAvg) * 100);
-              const isPeak = d.name === bestDay.name && d.avg > 0;
-
-              return (
-                <div key={d.name} className="flex flex-col items-center gap-1.5 h-full justify-end">
-                  <div className="w-full bg-surface-container-high rounded-t-lg overflow-hidden flex flex-col justify-end h-20">
-                    <div
-                      className={`w-full rounded-t-lg transition-all duration-300 ${
-                        isPeak
-                          ? 'bg-gradient-to-t from-primary to-primary-focus shadow-xs'
-                          : 'bg-primary/40'
-                      }`}
-                      style={{ height: `${Math.max(heightPercent, 10)}%` }}
-                    />
-                  </div>
-                  <span className={`text-[10px] font-stat-label font-bold ${isPeak ? 'text-primary' : 'text-on-surface-variant'}`}>
-                    {d.name}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="text-[11px] font-body-text text-on-surface-variant text-center pt-1 border-t border-outline-variant/10">
-            {bestDay.avg > 0
-              ? `You save the most consistently on ${bestDay.name}s (${formatMoney(bestDay.avg, sym)} avg).`
-              : 'Keep logging to unlock weekly financial patterns.'}
-          </p>
-        </div>
-      </div>
-
-      {/* 4. Gamified Savings Milestones & Next Target Countdown */}
-      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-amber-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                military_tech
-              </span>
-              <span>Savings Milestone Badges</span>
-            </h3>
-            <p className="font-body-text text-xs text-on-surface-variant">
-              Accumulate savings to unlock financial milestone tiers
-            </p>
-          </div>
-
-          {remainingToMilestone > 0 && (
-            <span className="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold font-stat-label">
-              🎯 Only {formatMoney(remainingToMilestone, sym)} to {nextMilestone.label}
+          {topCategory && (
+            <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-bold font-stat-label self-start sm:self-auto">
+              Top Category: {topCategory.category.label} ({topCategory.percentage}%)
             </span>
           )}
         </div>
 
-        {/* Milestones Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {milestones.map((m) => {
-            const isUnlocked = totalCumulativeSavings >= m.target;
-            const progressPercent = Math.min(100, Math.round((totalCumulativeSavings / m.target) * 100));
-
-            return (
+        {categoryBreakdown.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {categoryBreakdown.map((item) => (
               <div
-                key={m.id}
-                className={`p-4 rounded-2xl border transition-all ${
-                  isUnlocked
-                    ? 'bg-secondary-container/20 border-secondary/30 shadow-xs'
-                    : 'bg-surface-container-low/40 dark:bg-surface-container-high/20 border-outline-variant/15'
-                }`}
+                key={item.category.id}
+                className="p-4 rounded-2xl border border-outline-variant/15 bg-surface-container-low/40 dark:bg-surface-container-high/20 space-y-2.5"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-on-surface">{m.label}</span>
-                  {isUnlocked ? (
-                    <span className="material-symbols-outlined text-secondary text-[18px]">verified</span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-on-surface-variant font-stat-label">{progressPercent}%</span>
-                  )}
-                </div>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface"
+                      style={{ backgroundColor: item.category.bgLight, color: item.category.color }}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">{item.category.icon}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs sm:text-sm text-on-surface block">
+                        {item.category.label}
+                      </span>
+                      <span className="text-[11px] text-on-surface-variant font-body-text">
+                        {item.count} {item.count === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="font-app-title text-base font-extrabold text-on-surface mt-1">
-                  {formatMoney(m.target, sym)}
+                  <div className="text-right">
+                    <span className="font-extrabold text-sm font-mono text-amber-600 dark:text-amber-400 block">
+                      {formatMoney(item.totalAmount, sym)}
+                    </span>
+                    <span className="text-[10px] font-bold font-stat-label text-on-surface-variant">
+                      {item.percentage}% of expenses
+                    </span>
+                  </div>
                 </div>
 
                 {/* Progress bar */}
-                <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden mt-2">
+                <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      isUnlocked ? 'bg-secondary' : 'bg-primary'
-                    }`}
-                    style={{ width: `${progressPercent}%` }}
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.max(item.percentage, 6)}%`,
+                      backgroundColor: item.category.color,
+                    }}
                   />
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {daysToMilestone > 0 && (
-          <p className="text-xs text-on-surface-variant text-center pt-2">
-            💡 At your current average pace of <strong>{formatMoney(avgDailySavings, sym)}/day</strong>, you will reach{' '}
-            <strong>{nextMilestone.label}</strong> in approximately <strong>{daysToMilestone} days</strong>.
-          </p>
+            ))}
+          </div>
+        ) : (
+          <div className="py-10 text-center text-xs text-on-surface-variant space-y-1">
+            <span className="material-symbols-outlined text-3xl text-on-surface-variant/40 block">
+              receipt_long
+            </span>
+            <p>No expense deductions recorded yet.</p>
+          </div>
         )}
       </div>
 
-      {/* 5. "What-If" Compounding Projection Calculator */}
-      <div className="bg-gradient-to-br from-primary/5 via-surface-container-low to-surface-container-lowest dark:from-primary/10 dark:via-surface-container dark:to-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-primary/20 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs">
-            <span className="material-symbols-outlined text-[22px]">calculate</span>
-          </div>
-          <div>
-            <h3 className="font-section-header text-base font-bold text-on-surface">
-              Daily Savings Wealth Calculator
-            </h3>
-            <p className="font-body-text text-xs text-on-surface-variant">
-              See how small daily increments compound over time
-            </p>
-          </div>
+      {/* 3. Month-by-Month Comparative Report & Analytics */}
+      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 space-y-5">
+        <div>
+          <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[22px]">bar_chart</span>
+            <span>Month-by-Month Report & Analytics</span>
+          </h3>
+          <p className="font-body-text text-xs text-on-surface-variant">
+            Comparative financial performance comparing Gross Deposits vs Deductions vs Net Ending Balance
+          </p>
         </div>
 
-        {/* Interactive Slider */}
-        <div className="space-y-2 pt-2">
-          <div className="flex items-center justify-between text-xs font-stat-label">
-            <span className="text-on-surface-variant font-medium">Daily Savings Amount:</span>
-            <span className="text-base font-extrabold text-primary">
-              {sym}{calculatorDailyRate} / day
-            </span>
-          </div>
+        {monthSummaries.length > 0 ? (
+          <div className="space-y-6">
+            {/* Visual Bars for Each Month */}
+            <div className="space-y-4">
+              {monthSummaries.map((m) => {
+                const maxMonthVal = Math.max(m.totalSavings, m.totalExpenses, m.endingBalance, 100);
+                const savingsPct = Math.round((m.totalSavings / maxMonthVal) * 100);
+                const expensesPct = Math.round((m.totalExpenses / maxMonthVal) * 100);
 
-          <input
-            type="range"
-            min={10}
-            max={500}
-            step={10}
-            value={calculatorDailyRate}
-            onChange={(e) => {
-              triggerHaptic('selection');
-              setCalculatorDailyRate(Number(e.target.value));
-            }}
-            className="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary"
-          />
+                return (
+                  <div
+                    key={m.monthKey}
+                    className="p-4 rounded-2xl border border-outline-variant/15 bg-surface-container-low/30 dark:bg-surface-container-high/15 space-y-3"
+                  >
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-on-surface">{m.monthTitle}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-stat-label font-semibold">
+                          {m.rows.length} Days Recorded
+                        </span>
+                      </div>
+                      <div className="font-mono font-extrabold text-primary dark:text-primary-fixed-dim">
+                        Ending: {formatMoney(m.endingBalance, sym)}
+                      </div>
+                    </div>
 
-          <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-mono">
-            <span>{sym}10</span>
-            <span>{sym}250</span>
-            <span>{sym}500/day</span>
+                    {/* Comparative Bars */}
+                    <div className="space-y-1.5 font-mono text-[11px]">
+                      {/* Savings Deposited Bar */}
+                      <div className="flex items-center gap-2">
+                        <span className="w-20 text-on-surface-variant text-[10px] font-sans">Deposited:</span>
+                        <div className="flex-1 h-3 bg-surface-container-high rounded-full overflow-hidden p-0.5">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${Math.max(savingsPct, 8)}%` }}
+                          />
+                        </div>
+                        <span className="w-16 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                          +{formatMoney(m.totalSavings, sym)}
+                        </span>
+                      </div>
+
+                      {/* Expenses Deducted Bar */}
+                      <div className="flex items-center gap-2">
+                        <span className="w-20 text-on-surface-variant text-[10px] font-sans">Expenses:</span>
+                        <div className="flex-1 h-3 bg-surface-container-high rounded-full overflow-hidden p-0.5">
+                          <div
+                            className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                            style={{ width: `${Math.max(expensesPct, m.totalExpenses > 0 ? 8 : 0)}%` }}
+                          />
+                        </div>
+                        <span className="w-16 text-right font-bold text-amber-600 dark:text-amber-400">
+                          -{formatMoney(m.totalExpenses, sym)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Structured Table Overview */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-outline-variant/20 text-on-surface-variant font-stat-label uppercase text-[10px]">
+                    <th className="py-2 px-3">Month</th>
+                    <th className="py-2 px-3">Starting</th>
+                    <th className="py-2 px-3">Deposited</th>
+                    <th className="py-2 px-3">Expenses</th>
+                    <th className="py-2 px-3">Net Change</th>
+                    <th className="py-2 px-3 text-right">Ending Balance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10 font-mono">
+                  {monthSummaries.map((m) => (
+                    <tr key={m.monthKey} className="hover:bg-surface-container-high/20 transition-colors">
+                      <td className="py-2.5 px-3 font-sans font-bold text-on-surface">{m.monthShortTitle}</td>
+                      <td className="py-2.5 px-3 text-on-surface-variant">{formatMoney(m.startingBalance, sym)}</td>
+                      <td className="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">+{formatMoney(m.totalSavings, sym)}</td>
+                      <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400 font-semibold">-{formatMoney(m.totalExpenses, sym)}</td>
+                      <td className="py-2.5 px-3 font-bold text-on-surface">+{formatMoney(m.netSavings, sym)}</td>
+                      <td className="py-2.5 px-3 text-right font-extrabold text-primary dark:text-primary-fixed-dim">
+                        {formatMoney(m.endingBalance, sym)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+        ) : (
+          <p className="text-xs text-on-surface-variant py-4 text-center">No monthly history recorded yet.</p>
+        )}
+      </div>
+
+      {/* 4. Meaningful Financial Insights & Observations */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Insight 1: Capital Retention */}
+        <div className="p-4.5 rounded-3xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/15 space-y-2 shadow-soft">
+          <div className="flex items-center gap-2 text-primary font-bold text-xs font-section-header">
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+            <span>Capital Preservation</span>
+          </div>
+          <p className="text-xs font-body-text text-on-surface">
+            You have successfully preserved <strong>{retentionRate}%</strong> of all saved capital ({formatMoney(totalCumulativeSavings, sym)} retained out of {formatMoney(totalGrossSavings, sym)} deposited).
+          </p>
         </div>
 
-        {/* Projected Horizon Cards */}
-        <div className="grid grid-cols-3 gap-3 pt-2">
-          <div className="p-3 rounded-xl bg-surface-container-lowest dark:bg-surface-container-high border border-outline-variant/15 text-center">
-            <span className="text-[10px] uppercase font-bold text-on-surface-variant font-stat-label block">
-              1 Month (30d)
-            </span>
-            <span className="font-app-title text-base sm:text-lg font-extrabold text-on-surface mt-0.5 block">
-              {formatMoney(calculatorDailyRate * 30, sym)}
-            </span>
+        {/* Insight 2: Spend Category Concentration */}
+        <div className="p-4.5 rounded-3xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/15 space-y-2 shadow-soft">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs font-section-header">
+            <span className="material-symbols-outlined text-[18px]">pie_chart</span>
+            <span>Spending Concentration</span>
           </div>
+          <p className="text-xs font-body-text text-on-surface">
+            {topCategory
+              ? `Your highest expense outflow is in ${topCategory.category.label}, representing ${topCategory.percentage}% (${formatMoney(topCategory.totalAmount, sym)}) of all deductions with an average of ${formatMoney(avgExpensePerTransaction, sym)} per transaction.`
+              : 'Zero expense deductions logged so far. 100% of your deposits remain intact.'}
+          </p>
+        </div>
 
-          <div className="p-3 rounded-xl bg-surface-container-lowest dark:bg-surface-container-high border border-outline-variant/15 text-center">
-            <span className="text-[10px] uppercase font-bold text-on-surface-variant font-stat-label block">
-              6 Months (180d)
-            </span>
-            <span className="font-app-title text-base sm:text-lg font-extrabold text-on-surface mt-0.5 block">
-              {formatMoney(calculatorDailyRate * 180, sym)}
-            </span>
+        {/* Insight 3: Daily Discipline */}
+        <div className="p-4.5 rounded-3xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/15 space-y-2 shadow-soft">
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs font-section-header">
+            <span className="material-symbols-outlined text-[18px]">trending_up</span>
+            <span>Savings Velocity</span>
           </div>
-
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/25 text-center">
-            <span className="text-[10px] uppercase font-bold text-primary font-stat-label block">
-              1 Year (365d)
-            </span>
-            <span className="font-app-title text-base sm:text-lg font-black text-primary dark:text-primary-fixed-dim mt-0.5 block">
-              {formatMoney(calculatorDailyRate * 365, sym)}
-            </span>
-          </div>
+          <p className="text-xs font-body-text text-on-surface">
+            Maintaining a daily rate of <strong>{sym}{settings.defaultDailySavings}</strong> per day results in <strong>{formatMoney(settings.defaultDailySavings * 30, sym)}</strong> in reliable monthly capital growth.
+          </p>
         </div>
       </div>
     </div>
