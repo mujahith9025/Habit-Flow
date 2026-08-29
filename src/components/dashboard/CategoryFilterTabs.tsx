@@ -39,8 +39,6 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
   });
 
   const categories = Object.keys(categoryCounts).sort();
-  const totalActiveCount = activeHabits.length;
-  const isAllSelected = selectedCategory === 'all' || !selectedCategory;
 
   const getIcon = (cat: string) => {
     const key = cat.toLowerCase();
@@ -61,7 +59,7 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
             Tracker Boards
           </h3>
           <span className="text-[11px] font-stat-label text-on-surface-variant font-medium hidden xs:inline">
-            • Filter by category
+            • Specific Category
           </span>
         </div>
 
@@ -76,32 +74,9 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {/* 1. All Habits Master Tab */}
-        <button
-          type="button"
-          onClick={() => onSelectCategory('all')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer ${
-            isAllSelected
-              ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-              : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-          }`}
-        >
-          <span>🌟</span>
-          <span>All Habits</span>
-          <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-              isAllSelected
-                ? 'bg-white/20 text-white'
-                : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
-            }`}
-          >
-            {totalActiveCount}
-          </span>
-        </button>
-
-        {/* 2. Individual Category Boards */}
+        {/* Specific Category Boards Only */}
         {categories.map((cat) => {
-          const isSelected = !isAllSelected && selectedCategory.toLowerCase() === cat.toLowerCase();
+          const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
           const count = categoryCounts[cat];
 
           return (
@@ -130,7 +105,7 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
           );
         })}
 
-        {/* 3. Create New Category Quick Button */}
+        {/* Create New Category Quick Button */}
         <button
           type="button"
           onClick={onAddNewCategory}

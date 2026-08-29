@@ -22,7 +22,7 @@ export const DashboardPage: React.FC = () => {
   // Month/Year navigation state
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [activeTab, setActiveTab] = useState<DashboardViewTab>('daily');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   // Add / Edit Habit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,13 +52,13 @@ export const DashboardPage: React.FC = () => {
   });
   const categories = Object.keys(categoryCounts).sort();
 
-  // Effective category: 'all' allows seeing everything, or specific category
+  // Effective category strictly selects the specific category (defaults to first available board)
   const effectiveCategory =
-    !selectedCategory || selectedCategory === 'all'
-      ? 'all'
-      : categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
-      ? selectedCategory
-      : 'all';
+    categories.length > 0
+      ? selectedCategory && categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
+        ? selectedCategory
+        : categories[0]
+      : 'General';
 
   // Live real-time dashboard summary metrics & daily habit data for Today's Focus Card
   const metrics = useDashboardMetrics(selectedMonthKey, effectiveCategory);
@@ -167,6 +167,7 @@ export const DashboardPage: React.FC = () => {
             habits={dailyHabits}
             habitMetricsMap={habitMetricsMap}
             isCompleted={isCompleted}
+            categoryName={effectiveCategory}
             getHabitEntry={getHabitEntry}
             onToggleEntry={toggleHabitEntry}
             onBatchCompleteToday={batchCompleteTodayHabits}
@@ -181,7 +182,7 @@ export const DashboardPage: React.FC = () => {
       {/* 3. Category / Tracker Board Selector Tabs */}
       <CategoryFilterTabs
         habits={habits}
-        selectedCategory={selectedCategory}
+        selectedCategory={effectiveCategory}
         onSelectCategory={setSelectedCategory}
         onAddNewCategory={handleOpenAddModal}
       />

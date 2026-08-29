@@ -10,6 +10,7 @@ interface TodayFocusCardProps {
   habits: Habit[];
   habitMetricsMap: Record<string, HabitGridMetrics>;
   isCompleted: (habitId: string, dateKey: string) => boolean;
+  categoryName?: string;
   getHabitEntry?: (habitId: string, dateKey: string) => HabitEntry | undefined;
   onToggleEntry: (habitId: string, dateKey: string) => Promise<void>;
   onBatchCompleteToday?: (habitIds: string[]) => Promise<void>;
@@ -39,6 +40,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   habits,
   habitMetricsMap,
   isCompleted,
+  categoryName,
   getHabitEntry,
   onToggleEntry,
   onBatchCompleteToday,
@@ -195,7 +197,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               bolt
             </span>
             <span className="font-stat-label text-xs font-black text-primary dark:text-primary-fixed-dim uppercase tracking-wider">
-              Today's Focus
+              Today's Focus {categoryName ? `• ${categoryName}` : ''}
             </span>
           </div>
 
@@ -206,7 +208,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                 type="button"
                 onClick={handleQuickFinishAll}
                 disabled={isBatchProcessing}
-                title={`Mark all ${remainingCount} remaining habits as done for today`}
+                title={`Mark all ${remainingCount} remaining habits in ${categoryName || 'this board'} as done for today`}
                 className="group inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-primary to-primary-container hover:from-primary-focus hover:to-primary text-on-primary text-[11px] font-black font-stat-label shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[15px] group-hover:animate-bounce">
@@ -236,7 +238,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         {showUndoBanner && (
           <div className="mb-2 px-3 py-1.5 rounded-xl bg-secondary-container/90 text-on-secondary-container text-xs font-semibold flex items-center justify-between shadow-sm animate-fadeIn">
             <span className="flex items-center gap-1.5">
-              <span>🎉 All habits checked off for today!</span>
+              <span>🎉 All {categoryName ? `${categoryName} ` : ''}habits checked off for today!</span>
             </span>
             <button
               type="button"
@@ -252,7 +254,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         {totalCount === 0 ? (
           <div className="py-6 text-center space-y-2">
             <p className="font-body-text text-xs text-on-surface-variant">
-              No habits in this tracker board yet.
+              No habits in {categoryName ? `"${categoryName}"` : 'this board'} yet.
             </p>
             {onAddNewHabit && (
               <button
