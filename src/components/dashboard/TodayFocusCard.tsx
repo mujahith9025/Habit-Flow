@@ -4,7 +4,6 @@ import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { formatDateKey } from '../../hooks/useDashboardMetrics';
 import { triggerHaptic } from '../../utils/haptics';
 import { triggerMilestoneCelebration } from '../../utils/confetti';
-import { DailyHabitNoteModal } from './DailyHabitNoteModal';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -20,43 +19,23 @@ interface TodayFocusCardProps {
   className?: string;
 }
 
-const MOOD_OPTIONS = [
-  { mood: 'energized', emoji: '⚡', label: 'Energized' },
-  { mood: 'calm', emoji: '🧘', label: 'Calm' },
-  { mood: 'focused', emoji: '🎯', label: 'Focused' },
-  { mood: 'proud', emoji: '💪', label: 'Proud' },
-  { mood: 'tired', emoji: '😴', label: 'Tired' },
-];
-
-const MOOD_EMOJIS: Record<string, string> = {
-  energized: '⚡',
-  calm: '🧘',
-  focused: '🎯',
-  proud: '💪',
-  tired: '😴',
-};
-
 export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   habits,
   habitMetricsMap,
   isCompleted,
   categoryName,
-  getHabitEntry,
   onToggleEntry,
   onBatchCompleteToday,
   onBatchResetToday,
-  onSaveNote,
   onAddNewHabit,
   className = '',
 }) => {
   const today = new Date();
   const todayDateKey = formatDateKey(today);
 
-  const [activeNoteHabit, setActiveNoteHabit] = useState<Habit | null>(null);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [showUndoBanner, setShowUndoBanner] = useState(false);
   const [lastBatchCompletedIds, setLastBatchCompletedIds] = useState<string[]>([]);
-  const [inlineMoodHabitId, setInlineMoodHabitId] = useState<string | null>(null);
 
   const activeHabits = habits.filter((h) => !h.archived);
 
@@ -80,22 +59,11 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     triggerHaptic(isCurrentlyDone ? 'medium' : 'light');
 
     // Check if completing this habit hits 100%
-    if (!isCurrentlyDone) {
-      if (completedCount + 1 === totalCount) {
-        setTimeout(() => {
-          triggerMilestoneCelebration();
-          triggerHaptic('success');
-        }, 150);
-      }
-      // Show quick inline mood selector for a few seconds if no mood recorded yet
-      const entry = getHabitEntry ? getHabitEntry(habitId, todayDateKey) : undefined;
-      if (!entry?.mood) {
-        setInlineMoodHabitId(habitId);
-      }
-    } else {
-      if (inlineMoodHabitId === habitId) {
-        setInlineMoodHabitId(null);
-      }
+    if (!isCurrentlyDone && completedCount + 1 === totalCount) {
+      setTimeout(() => {
+        triggerMilestoneCelebration();
+        triggerHaptic('success');
+      }, 150);
     }
 
     await onToggleEntry(habitId, todayDateKey);
@@ -155,29 +123,6 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       setIsBatchProcessing(false);
     }
   };
-
-  const handleQuickMoodSelect = async (habitId: string, mood: string) => {
-    triggerHaptic('light');
-    const existing = getHabitEntry ? getHabitEntry(habitId, todayDateKey) : undefined;
-    if (onSaveNote) {
-      await onSaveNote(habitId, todayDateKey, existing?.note || '', mood, existing?.tags);
-    }
-    setInlineMoodHabitId(null);
-  };
-
-  const handleSaveNote = async (
-    habitId: string,
-    dateKey: string,
-    note: string,
-    mood?: string,
-    tags?: string[]
-  ) => {
-    if (onSaveNote) {
-      await onSaveNote(habitId, dateKey, note, mood, tags);
-    }
-  };
-
-  const activeEntry = activeNoteHabit && getHabitEntry ? getHabitEntry(activeNoteHabit.id, todayDateKey) : undefined;
 
   return (
     <div
@@ -274,9 +219,6 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               const metrics = habitMetricsMap[habit.id];
               const streak = metrics?.streakCount ?? 0;
               const isShieldActive = metrics?.isShieldActive;
-              const entry = getHabitEntry ? getHabitEntry(habit.id, todayDateKey) : undefined;
-              const hasNote = Boolean(entry?.note || entry?.mood || (entry?.tags && entry.tags.length > 0));
-              const isShowingInlineMood = inlineMoodHabitId === habit.id && !entry?.mood;
 
               return (
                 <div
@@ -322,32 +264,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                       </div>
                     </div>
 
-                    {/* Right Action Icons: 1-Tap Note Button + Streak Flame */}
+                    {/* Right Action Icons: Streak Flame */}
                     <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                      {/* 1-Tap Note & Reflection Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveNoteHabit(habit);
-                        }}
-                        title={hasNote ? `Reflection: "${entry?.note || ''}"` : "Add 1-tap reflection note"}
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-                          hasNote
-                            ? 'bg-primary/15 text-primary dark:text-primary-fixed ring-1 ring-primary/30 font-bold'
-                            : 'text-on-surface-variant/60 hover:text-primary hover:bg-surface-container-high'
-                        }`}
-                      >
-                        {entry?.mood ? (
-                          <span className="text-[14px] leading-none">{MOOD_EMOJIS[entry.mood] || '📝'}</span>
-                        ) : (
-                          <span className="material-symbols-outlined text-[16px]">
-                            {hasNote ? 'edit_note' : 'note_add'}
-                          </span>
-                        )}
-                      </button>
-
-                      {/* Streak Flame & Shield badge */}
                       <div className="flex items-center gap-1">
                         <span
                           className="material-symbols-outlined text-[15px] text-tertiary"
@@ -370,57 +288,6 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                       </div>
                     </div>
                   </div>
-
-                  {/* Inline 1-Tap Quick Mood Selector (Appears upon completion) */}
-                  {isShowingInlineMood && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-2 pt-1.5 border-t border-outline-variant/15 flex items-center justify-between gap-1 animate-fadeIn"
-                    >
-                      <span className="text-[10.5px] font-stat-label text-on-surface-variant font-medium">
-                        How did it feel?
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {MOOD_OPTIONS.map((m) => (
-                          <button
-                            key={m.mood}
-                            type="button"
-                            onClick={() => handleQuickMoodSelect(habit.id, m.mood)}
-                            title={m.label}
-                            className="px-1.5 py-0.5 rounded-lg bg-surface-container-high hover:bg-primary/20 text-xs transition-all active:scale-90 cursor-pointer"
-                          >
-                            <span>{m.emoji}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Attached Note Preview Snippet (if present) */}
-                  {hasNote && !isShowingInlineMood && (
-                    <div className="mt-1.5 pl-9 flex items-center gap-1.5 flex-wrap text-[11px] font-body-text text-on-surface-variant/80">
-                      {entry?.mood && (
-                        <span className="font-bold text-primary dark:text-primary-fixed-dim inline-flex items-center gap-0.5">
-                          <span>{MOOD_EMOJIS[entry.mood]}</span>
-                          <span className="capitalize">{entry.mood}</span>
-                        </span>
-                      )}
-                      {entry?.tags &&
-                        entry.tags.map((t) => (
-                          <span
-                            key={t}
-                            className="text-[10px] bg-surface-container-high px-1.5 py-0.2 rounded text-on-surface-variant font-medium"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      {entry?.note && (
-                        <span className="truncate italic text-[10.5px]">
-                          "{entry.note}"
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -438,7 +305,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         ) : (
           <div className="flex items-center gap-2 text-on-surface-variant text-[11px]">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span>Tap any habit to check-in • 📝 Add reflection</span>
+            <span>Tap any habit to check-in</span>
           </div>
         )}
 
@@ -446,20 +313,6 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
         </span>
       </div>
-
-      {/* 1-Tap Daily Habit Note Modal */}
-      {activeNoteHabit && (
-        <DailyHabitNoteModal
-          isOpen={Boolean(activeNoteHabit)}
-          habit={activeNoteHabit}
-          dateKey={todayDateKey}
-          initialNote={activeEntry?.note}
-          initialMood={activeEntry?.mood}
-          initialTags={activeEntry?.tags}
-          onClose={() => setActiveNoteHabit(null)}
-          onSave={handleSaveNote}
-        />
-      )}
     </div>
   );
 };
