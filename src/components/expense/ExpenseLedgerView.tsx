@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
 import { formatMoney, formatExpensesSummary } from '../../lib/expenseCalculations';
 
-interface GoogleNotesLedgerViewProps {
+interface ExpenseLedgerViewProps {
   rows: DailyLedgerRow[];
   monthSummaries: MonthExpenseSummary[];
   selectedMonthKey: string;
@@ -15,7 +15,7 @@ interface GoogleNotesLedgerViewProps {
   onOpenDeleteAllModal?: () => void;
 }
 
-export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
+export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
   rows,
   monthSummaries,
   selectedMonthKey,
@@ -33,7 +33,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
 
-  // Copy note as formatted plain text (Google Notes style export)
+  // Copy ledger text as formatted plain text
   const handleCopyNoteText = () => {
     let text = `${settings.title || 'MONEY SAVINGS'}\n\n`;
     text += `DATE       SAVINGS    CUMULATIVE   EXPENSES\n`;
@@ -51,7 +51,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
 
   return (
     <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden flex flex-col min-h-[580px] transition-colors">
-      {/* Top Action Header Bar (Styled cleanly in Project UI) */}
+      {/* Top Action Header Bar */}
       <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-outline-variant/15 bg-surface-container-low/50 dark:bg-surface-container-high/20">
         {/* Left: Section Subheader */}
         <div className="flex items-center gap-2.5">
@@ -65,7 +65,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
               {settings.title || 'MONEY SAVINGS'}
             </h2>
             <span className="text-[11px] font-body-text text-on-surface-variant">
-              Google Notes Ledger Format • {rows.length} Dates Logged
+              Daily Savings Ledger • {rows.length} Dates Logged
             </span>
           </div>
         </div>
@@ -76,7 +76,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
           <button
             type="button"
             onClick={() => setIsPinned(!isPinned)}
-            title={isPinned ? 'Note Pinned' : 'Pin Note'}
+            title={isPinned ? 'Ledger Pinned' : 'Pin Ledger'}
             className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
               isPinned
                 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30'
@@ -91,12 +91,12 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
             </span>
           </button>
 
-          {/* Copy Note Text */}
+          {/* Copy Ledger Text */}
           <button
             type="button"
             onClick={handleCopyNoteText}
-            title="Copy formatted note text"
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/15 transition-all"
+            title="Copy formatted ledger text"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/15 transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">content_copy</span>
           </button>
@@ -117,7 +117,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
               type="button"
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
               title="More actions"
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/15 transition-all"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/15 transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">more_vert</span>
             </button>
@@ -131,7 +131,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                     onAutoFillMonth(d.getFullYear(), d.getMonth(), d.getDate());
                     setShowOptionsMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px] text-primary">auto_fix_high</span>
                   <span>Auto-Fill Current Month</span>
@@ -143,10 +143,10 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                     onSeedSampleData();
                     setShowOptionsMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px] text-amber-500">history_edu</span>
-                  <span>Load Screenshot Sample Data</span>
+                  <span>Load Sample Ledger Data</span>
                 </button>
 
                 <div className="border-t border-outline-variant/20 my-1" />
@@ -157,7 +157,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                     onOpenSettingsModal();
                     setShowOptionsMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high text-left transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">tune</span>
                   <span>Tracker Settings</span>
@@ -188,7 +188,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
       {/* Copy Notification Toast */}
       {copiedNotification && (
         <div className="mx-6 mt-3 px-4 py-2 rounded-xl bg-secondary-container/90 text-on-secondary-container text-xs font-semibold flex items-center justify-between shadow-sm animate-fadeIn">
-          <span>📋 Formatted note text copied to clipboard!</span>
+          <span>📋 Formatted ledger text copied to clipboard!</span>
         </div>
       )}
 
@@ -197,7 +197,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
         <button
           type="button"
           onClick={() => onSelectMonthKey('all')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
             selectedMonthKey === 'all'
               ? 'bg-primary text-on-primary shadow-sm scale-105'
               : 'bg-surface-container-high dark:bg-surface-container-highest/60 text-on-surface-variant hover:text-on-surface'
@@ -211,7 +211,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
             key={m.monthKey}
             type="button"
             onClick={() => onSelectMonthKey(m.monthKey)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
               selectedMonthKey === m.monthKey
                 ? 'bg-primary text-on-primary shadow-sm scale-105'
                 : 'bg-surface-container-high dark:bg-surface-container-highest/60 text-on-surface-variant hover:text-on-surface'
@@ -225,7 +225,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
 
       {/* Ledger Body */}
       <div className="p-5 sm:p-6 flex-1 space-y-3">
-        {/* Note Title */}
+        {/* Title */}
         <div className="flex items-center justify-between pt-1">
           <h1 className="font-app-title text-xl sm:text-2xl font-black tracking-wider text-on-surface uppercase select-none">
             {settings.title || 'MONEY SAVINGS'}
@@ -273,7 +273,7 @@ export const GoogleNotesLedgerView: React.FC<GoogleNotesLedgerViewProps> = ({
                 className="px-4 py-2 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/20 font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px] text-amber-500">history_edu</span>
-                <span>Load Google Notes Reference</span>
+                <span>Load Sample Records</span>
               </button>
             </div>
           </div>

@@ -24,7 +24,7 @@ describe('Money Savings & Expense Calculations Engine', () => {
     expect(formatMoney(-50, '₹')).toBe('-₹50');
   });
 
-  it('formats Google Notes expense summary string matching reference', () => {
+  it('formats expense summary string matching ledger format', () => {
     const singleExpense = [{ amount: 100, description: 'Cloth Alter & Other' }];
     expect(formatExpensesSummary(singleExpense, '₹')).toBe('( ₹ 100 - Cloth Alter & Other )');
 
@@ -38,7 +38,7 @@ describe('Money Savings & Expense Calculations Engine', () => {
     );
   });
 
-  it('calculates exact running cumulative balance matching Google Notes screenshot', () => {
+  it('calculates exact running cumulative balance and ledger rows', () => {
     // Starting with 75 carryover:
     // 01/08: 75 + 25 = 100
     // 02/08: 100 + 25 = 125

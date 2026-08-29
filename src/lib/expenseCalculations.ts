@@ -32,7 +32,7 @@ export function formatMoney(amount: number, symbol: string = '₹'): string {
 }
 
 /**
- * Format expenses note string exactly as in Google Notes reference
+ * Format expenses note string for daily ledger display
  * e.g., "( ₹ 100 - Cloth Alter & Other )" or "( ₹ 100 - Canteen , ₹ 100 - income Certificate , ₹ 100 - Sadaqah Amount )"
  */
 export function formatExpensesSummary(

@@ -185,10 +185,10 @@ export async function updateExpenseTrackerSettings(
 }
 
 /**
- * Seeds sample reference data matching the Google Notes screenshot
- * (e.g. August 01/08 to 26/08 with ₹25/day and expenses on 09/08, 12/08, 17/08)
+ * Seeds sample reference money savings data
+ * (e.g. August 01/08 to 26/08 with ₹25/day and sample expenses on 09/08, 12/08, 17/08)
  */
-export async function seedGoogleNotesSampleData(uid: string): Promise<void> {
+export async function seedSampleExpenseData(uid: string): Promise<void> {
   const nowIso = new Date().toISOString();
   const sampleEntries: Record<string, DailyMoneyEntry> = {};
 
@@ -259,3 +259,5 @@ export async function seedGoogleNotesSampleData(uid: string): Promise<void> {
 
   await batchSaveDailyMoneyEntries(uid, sampleEntries);
 }
+
+export const seedGoogleNotesSampleData = seedSampleExpenseData;

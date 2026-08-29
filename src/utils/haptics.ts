@@ -1,6 +1,6 @@
 // Tactile mobile haptic vibration utility
 
-export type HapticType = 'light' | 'medium' | 'success' | 'milestone' | 'warning';
+export type HapticType = 'light' | 'medium' | 'success' | 'milestone' | 'warning' | 'selection';
 
 /**
  * Triggers safe haptic vibration on mobile devices
@@ -12,8 +12,9 @@ export function triggerHaptic(type: HapticType = 'light') {
 
   try {
     switch (type) {
+      case 'selection':
       case 'light':
-        // Crisp 12ms pulse for normal habit check-in
+        // Crisp 12ms pulse for normal habit check-in or tab selection
         navigator.vibrate(12);
         break;
       case 'medium':

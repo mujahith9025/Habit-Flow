@@ -23,7 +23,7 @@ import {
   deleteDailyMoneyEntry as deleteDailyMoneyEntryService,
   deleteAllExpenseEntries as deleteAllExpenseEntriesService,
   updateExpenseTrackerSettings as updateExpenseTrackerSettingsService,
-  seedGoogleNotesSampleData as seedGoogleNotesSampleDataService,
+  seedSampleExpenseData as seedSampleExpenseDataService,
 } from '../lib/firebase/expenseService';
 import { formatDateKey } from './useDashboardMetrics';
 
@@ -303,7 +303,7 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
 
   const seedSampleData = useCallback(async () => {
     if (!user?.uid) return;
-    await seedGoogleNotesSampleDataService(user.uid);
+    await seedSampleExpenseDataService(user.uid);
   }, [user?.uid]);
 
   return {

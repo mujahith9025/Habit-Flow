@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useExpenseTracker } from '../hooks/useExpenseTracker';
 import { ExpenseHeaderStats } from '../components/expense/ExpenseHeaderStats';
-import { GoogleNotesLedgerView } from '../components/expense/GoogleNotesLedgerView';
+import { ExpenseLedgerView } from '../components/expense/ExpenseLedgerView';
+import { ExpenseAnalyticsView } from '../components/expense/ExpenseAnalyticsView';
 import { AddExpenseModal } from '../components/expense/AddExpenseModal';
 import { ExpenseSettingsModal } from '../components/expense/ExpenseSettingsModal';
 import { DeleteAllWarningModal } from '../components/expense/DeleteAllWarningModal';
@@ -28,6 +29,7 @@ export const ExpenseTrackerPage: React.FC = () => {
     seedSampleData,
   } = useExpenseTracker();
 
+  const [activeView, setActiveView] = useState<'ledger' | 'analytics'>('ledger');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | undefined>();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -71,7 +73,7 @@ export const ExpenseTrackerPage: React.FC = () => {
   const handleSeedSampleData = async () => {
     if (
       window.confirm(
-        'Load the exact August & July sample savings records from the Google Notes reference image?'
+        'Load the sample daily savings ledger records?'
       )
     ) {
       await seedSampleData();
@@ -93,7 +95,7 @@ export const ExpenseTrackerPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1040px] mx-auto space-y-6 pb-16 animate-fadeIn">
-      {/* 1. Header Total Amount Indication Hero Section (Only shows Total Cumulative Savings) */}
+      {/* 1. Header Total Amount Indication Hero Section */}
       <ExpenseHeaderStats
         totalCurrentBalance={totalCurrentBalance}
         activeSummary={activeSummary}
@@ -102,21 +104,72 @@ export const ExpenseTrackerPage: React.FC = () => {
         onAutoFillCurrentMonth={handleAutoFillCurrentMonth}
       />
 
-      {/* 2. Google Notes "MONEY SAVINGS" Ledger Table (Native Project UI) */}
-      <GoogleNotesLedgerView
-        rows={activeRows}
-        monthSummaries={monthSummaries}
-        selectedMonthKey={selectedMonthKey}
-        onSelectMonthKey={setSelectedMonthKey}
-        settings={settings}
-        onOpenAddModal={handleOpenAddModal}
-        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
-        onSeedSampleData={handleSeedSampleData}
-        onAutoFillMonth={(y, m, upToDay) => autoFillMonth(y, m, settings.defaultDailySavings, upToDay)}
-        onOpenDeleteAllModal={() => setIsDeleteAllModalOpen(true)}
-      />
+      {/* 2. 2-View Segmented Control: [ 📝 Daily Ledger | 📊 Analytics & Insights ] */}
+      <div className="flex items-center justify-between gap-3 bg-surface-container-lowest dark:bg-surface-container p-1.5 rounded-2xl border border-outline-variant/15 shadow-xs">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('selection');
+              setActiveView('ledger');
+            }}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-stat-label text-xs font-bold transition-all cursor-pointer ${
+              activeView === 'ledger'
+                ? 'bg-primary text-on-primary shadow-soft scale-[1.01]'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+            <span>Daily Ledger</span>
+          </button>
 
-      {/* 3. Add / Edit Daily Savings & Expense Modal */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('selection');
+              setActiveView('analytics');
+            }}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-stat-label text-xs font-bold transition-all cursor-pointer ${
+              activeView === 'analytics'
+                ? 'bg-primary text-on-primary shadow-soft scale-[1.01]'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">insights</span>
+            <span>Analytics & Insights</span>
+          </button>
+        </div>
+
+        {/* Quick Date Counter */}
+        <span className="hidden sm:inline-block text-xs font-bold text-on-surface-variant px-3 font-stat-label">
+          {activeRows.length} Days Recorded
+        </span>
+      </div>
+
+      {/* 3. View Content (Ledger vs Analytics) */}
+      {activeView === 'ledger' ? (
+        <ExpenseLedgerView
+          rows={activeRows}
+          monthSummaries={monthSummaries}
+          selectedMonthKey={selectedMonthKey}
+          onSelectMonthKey={setSelectedMonthKey}
+          settings={settings}
+          onOpenAddModal={handleOpenAddModal}
+          onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+          onSeedSampleData={handleSeedSampleData}
+          onAutoFillMonth={(y, m, upToDay) => autoFillMonth(y, m, settings.defaultDailySavings, upToDay)}
+          onOpenDeleteAllModal={() => setIsDeleteAllModalOpen(true)}
+        />
+      ) : (
+        <ExpenseAnalyticsView
+          rows={activeRows}
+          monthSummaries={monthSummaries}
+          totalCumulativeSavings={totalCurrentBalance}
+          settings={settings}
+        />
+      )}
+
+      {/* 4. Add / Edit Daily Savings & Expense Modal */}
       <AddExpenseModal
         isOpen={isAddModalOpen}
         dateKey={selectedDateForModal}
@@ -131,7 +184,7 @@ export const ExpenseTrackerPage: React.FC = () => {
         onDeleteDay={deleteDayEntry}
       />
 
-      {/* 4. Settings & Customization Modal */}
+      {/* 5. Settings & Customization Modal */}
       <ExpenseSettingsModal
         isOpen={isSettingsModalOpen}
         settings={settings}
@@ -140,7 +193,7 @@ export const ExpenseTrackerPage: React.FC = () => {
         onOpenDeleteAllModal={() => setIsDeleteAllModalOpen(true)}
       />
 
-      {/* 5. Delete All Entries Warning Modal */}
+      {/* 6. Delete All Entries Warning Modal */}
       <DeleteAllWarningModal
         isOpen={isDeleteAllModalOpen}
         entryCount={Object.keys(entriesMap).length}
