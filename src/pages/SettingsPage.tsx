@@ -10,6 +10,7 @@ import { triggerHaptic } from '../utils/haptics';
 import { getNotificationSettings } from '../lib/notificationService';
 import { NotificationSettings } from '../types/notification';
 import { NotificationDetailsModal } from '../components/settings/NotificationDetailsModal';
+import { ExportDataModal } from '../components/settings/ExportDataModal';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
@@ -23,8 +24,8 @@ export const SettingsPage: React.FC = () => {
     getNotificationSettings()
   );
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setNotifSettings(getNotificationSettings());
@@ -46,35 +47,6 @@ export const SettingsPage: React.FC = () => {
     setTimeout(() => {
       setIsSyncing(false);
     }, 800);
-  };
-
-  const handleExportData = () => {
-    const exportPayload = {
-      exportedAt: new Date().toISOString(),
-      user: {
-        uid: profile?.uid,
-        name: profile?.name,
-        email: profile?.email,
-        authProvider: profile?.authProvider,
-      },
-      habits,
-    };
-
-    const dataStr =
-      'data:text/json;charset=utf-8,' +
-      encodeURIComponent(JSON.stringify(exportPayload, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute(
-      'download',
-      `habitflow_export_${profile?.uid || 'user'}.json`
-    );
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-
-    setExportMessage('Data exported successfully!');
-    setTimeout(() => setExportMessage(null), 3000);
   };
 
   const isPushActive =
@@ -236,17 +208,14 @@ export const SettingsPage: React.FC = () => {
           Account & Data
         </h3>
 
-        {exportMessage && (
-          <div className="p-3.5 rounded-2xl bg-secondary-fixed/30 text-secondary text-xs font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">check_circle</span>
-            <span>{exportMessage}</span>
-          </div>
-        )}
-
         <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/10">
+          {/* Export Data Button */}
           <button
             type="button"
-            onClick={handleExportData}
+            onClick={() => {
+              triggerHaptic('light');
+              setIsExportModalOpen(true);
+            }}
             className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-surface-container-low transition-colors text-left group cursor-pointer"
           >
             <div className="flex items-center gap-3.5">
@@ -254,11 +223,16 @@ export const SettingsPage: React.FC = () => {
                 <span className="material-symbols-outlined text-[22px]">download</span>
               </div>
               <div>
-                <span className="font-habit-name text-sm font-semibold text-on-surface block">
-                  Export Habit Data
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-habit-name text-sm font-bold text-on-surface block">
+                    Export Habit Data
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full bg-primary/10 text-primary text-[10px] font-bold font-stat-label">
+                    PDF / Excel / JSON
+                  </span>
+                </div>
                 <span className="font-body-text text-xs text-on-surface-variant">
-                  Download all your habits and check-in history as JSON
+                  Download reports & spreadsheets as PDF, Excel, or JSON
                 </span>
               </div>
             </div>
@@ -309,6 +283,14 @@ export const SettingsPage: React.FC = () => {
         onClose={() => setIsNotifModalOpen(false)}
         settings={notifSettings}
         onUpdateSettings={(updated) => setNotifSettings(updated)}
+      />
+
+      {/* 6. Export Data Format Choice Modal (PDF / Excel / JSON) */}
+      <ExportDataModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        profile={profile}
+        habits={habits}
       />
     </div>
   );
