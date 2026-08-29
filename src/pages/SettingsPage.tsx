@@ -4,6 +4,7 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { useHabits } from '../hooks/useHabits';
+import { useExpenseTracker } from '../hooks/useExpenseTracker';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Badge } from '../components/ui/Badge';
 import { triggerHaptic } from '../utils/haptics';
@@ -17,6 +18,12 @@ export const SettingsPage: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
   const { signOut } = useAuth();
   const { habits } = useHabits();
+  const {
+    allLedgerRows,
+    monthSummaries,
+    totalCurrentBalance,
+    settings: expenseSettings,
+  } = useExpenseTracker();
   const { isInstalled } = usePWAInstall();
   const navigate = useNavigate();
 
@@ -291,6 +298,10 @@ export const SettingsPage: React.FC = () => {
         onClose={() => setIsExportModalOpen(false)}
         profile={profile}
         habits={habits}
+        expenseRows={allLedgerRows}
+        monthSummaries={monthSummaries}
+        totalCumulativeSavings={totalCurrentBalance}
+        expenseSettings={expenseSettings}
       />
     </div>
   );

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../../types/auth';
 import { Habit } from '../../types/habit';
-import { exportToPDF, exportToExcel, exportToJSON } from '../../utils/exportUtils';
+import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
+import { exportToPDF, exportToExcel, exportToJSON, HabitMetricDetail } from '../../utils/exportUtils';
 import { triggerHaptic } from '../../utils/haptics';
 
 interface ExportDataModalProps {
@@ -9,7 +10,11 @@ interface ExportDataModalProps {
   onClose: () => void;
   profile?: UserProfile | null;
   habits: Habit[];
-  habitMetricsMap?: Record<string, { streakCount: number; longestStreak?: number; totalCompletions?: number }>;
+  habitMetricsMap?: Record<string, HabitMetricDetail>;
+  expenseRows?: DailyLedgerRow[];
+  monthSummaries?: MonthExpenseSummary[];
+  totalCumulativeSavings?: number;
+  expenseSettings?: ExpenseTrackerSettings;
 }
 
 export const ExportDataModal: React.FC<ExportDataModalProps> = ({
@@ -18,15 +23,29 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
   profile,
   habits,
   habitMetricsMap,
+  expenseRows,
+  monthSummaries,
+  totalCumulativeSavings,
+  expenseSettings,
 }) => {
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
+  const exportPayload = {
+    profile,
+    habits,
+    habitMetricsMap,
+    expenseRows,
+    monthSummaries,
+    totalCumulativeSavings,
+    expenseSettings,
+  };
+
   const handleExportPDF = () => {
     triggerHaptic('success');
-    exportToPDF({ profile, habits, habitMetricsMap });
-    setDownloadSuccessMessage('✅ PDF Report downloaded successfully!');
+    exportToPDF(exportPayload);
+    setDownloadSuccessMessage('✅ Advanced Executive PDF Report downloaded successfully!');
     setTimeout(() => {
       setDownloadSuccessMessage(null);
       onClose();
@@ -35,8 +54,8 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
 
   const handleExportExcel = () => {
     triggerHaptic('success');
-    exportToExcel({ profile, habits, habitMetricsMap });
-    setDownloadSuccessMessage('✅ Excel / CSV spreadsheet downloaded successfully!');
+    exportToExcel(exportPayload);
+    setDownloadSuccessMessage('✅ Comprehensive Multi-Section Excel Spreadsheet downloaded!');
     setTimeout(() => {
       setDownloadSuccessMessage(null);
       onClose();
@@ -45,8 +64,8 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
 
   const handleExportJSON = () => {
     triggerHaptic('success');
-    exportToJSON({ profile, habits, habitMetricsMap });
-    setDownloadSuccessMessage('✅ JSON backup downloaded successfully!');
+    exportToJSON(exportPayload);
+    setDownloadSuccessMessage('✅ Complete Data & Financial Backup JSON downloaded!');
     setTimeout(() => {
       setDownloadSuccessMessage(null);
       onClose();
@@ -70,10 +89,10 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
             </div>
             <div>
               <h3 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-                Export Habit Data
+                Executive Data Export
               </h3>
               <p className="font-body-text text-xs text-on-surface-variant">
-                Select your preferred export format ({habits.length} habits tracked)
+                Select your format ({habits.length} habits & {(expenseRows || []).length} financial records)
               </p>
             </div>
           </div>
@@ -111,14 +130,14 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  PDF Document (.pdf)
+                  Executive PDF Report (.pdf)
                 </h4>
                 <span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-700 dark:text-red-300 text-[10px] font-bold font-stat-label">
-                  Print & Share
+                  Executive Report
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Formatted progress report with category boards, streak scores, and completion stats.
+                Multi-section styled document with KPI cards, category breakdown, habit deep dive, and monthly financial ledger tables.
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
@@ -137,14 +156,14 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  Excel Spreadsheet (.csv)
+                  Master Spreadsheet (.csv)
                 </h4>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold font-stat-label">
-                  Spreadsheets
+                  Excel & Sheets
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Microsoft Excel & Google Sheets compatible CSV with column headers and full habit parameters.
+                Structured multi-table spreadsheet with metadata, category metrics, full habit matrix (12 columns), and financial ledger logs.
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
@@ -163,14 +182,14 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  JSON Raw Backup (.json)
+                  Full System Backup (.json)
                 </h4>
                 <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px] font-bold font-stat-label">
-                  Developer
+                  Complete Backup
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Raw structured JSON archive for full data portability and backup restore.
+                Complete raw JSON archive including habit histories, category configs, and daily financial savings ledger data.
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
