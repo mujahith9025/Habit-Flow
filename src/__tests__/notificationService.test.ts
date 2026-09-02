@@ -52,6 +52,10 @@ describe('Notification Service Engine', () => {
 
     const testDateAt759AM = new Date('2026-08-29T07:59:00');
     expect(isTimeToTrigger('08:00', testDateAt759AM)).toBe(false);
+
+    // Midnight crossover test (target 23:59, current 00:01)
+    const midnightTime = new Date('2026-08-30T00:01:00');
+    expect(isTimeToTrigger('23:59', midnightTime)).toBe(true);
   });
 
   it('persists and retrieves notification settings with default values', () => {

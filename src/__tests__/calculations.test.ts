@@ -389,4 +389,35 @@ describe('HabitFlow Calculations Unit Test Suite', () => {
       expect(result.peakDay?.percentage).toBe(100);
     });
   });
+
+  describe('Edge-case & NaN safety safeguards', () => {
+    it('handles NaN, undefined, and non-numeric inputs in calculateMonthProgressPercent', () => {
+      expect(calculateMonthProgressPercent(NaN as any, 31)).toBe(0);
+      expect(calculateMonthProgressPercent(undefined as any, 31)).toBe(0);
+      expect(calculateMonthProgressPercent(-5, 31)).toBe(0);
+      expect(calculateMonthProgressPercent(10, 0)).toBe(0);
+    });
+
+    it('handles NaN, undefined, and non-numeric inputs in calculateWeeklyProgressPercent', () => {
+      expect(calculateWeeklyProgressPercent(NaN as any, 4)).toBe(0);
+      expect(calculateWeeklyProgressPercent(undefined as any, 4)).toBe(0);
+      expect(calculateWeeklyProgressPercent(-2, 4)).toBe(0);
+      expect(calculateWeeklyProgressPercent(2, 0)).toBe(50); // defaults goalCount to 4
+    });
+
+    it('correctly shifts months on 31st day dates without skipping months', () => {
+      // Starting on August 31st:
+      const aug31 = new Date(2026, 7, 31);
+      // Safe navigation construct:
+      const sep = new Date(aug31.getFullYear(), aug31.getMonth() + 1, 1);
+      expect(sep.getMonth()).toBe(8); // September (month index 8)
+      expect(sep.getDate()).toBe(1);
+
+      // Starting on March 31st moving backwards to February:
+      const mar31 = new Date(2026, 2, 31);
+      const feb = new Date(mar31.getFullYear(), mar31.getMonth() - 1, 1);
+      expect(feb.getMonth()).toBe(1); // February (month index 1)
+      expect(feb.getDate()).toBe(1);
+    });
+  });
 });

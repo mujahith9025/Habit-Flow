@@ -34,9 +34,11 @@ export const AppRoutes: React.FC = () => {
           <Route path="/habit" element={<HabitDetailPage />} />
           <Route path="/habits" element={<HabitDetailPage />} />
           <Route path="/habit/:id" element={<HabitDetailPage />} />
+          <Route path="/expense" element={<ExpenseTrackerPage />} />
           <Route path="/expenses" element={<ExpenseTrackerPage />} />
           <Route path="/savings" element={<ExpenseTrackerPage />} />
           <Route path="/money" element={<ExpenseTrackerPage />} />
+          <Route path="/setting" element={<SettingsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/install" element={<InstallAppPage />} />
           <Route path="/debug" element={<DataLayerDebugPage />} />

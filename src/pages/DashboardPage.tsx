@@ -75,9 +75,7 @@ export const DashboardPage: React.FC = () => {
 
   const handleMonthChange = (offset: number) => {
     setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setMonth(next.getMonth() + offset);
-      return next;
+      return new Date(prev.getFullYear(), prev.getMonth() + offset, 1);
     });
   };
 

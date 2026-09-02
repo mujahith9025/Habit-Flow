@@ -19,11 +19,15 @@ describe('Money Savings & Expense Calculations Engine', () => {
     expect(formatDayMonth('2026-07-26')).toBe('26/07');
   });
 
-  it('formats money with currency symbols correctly', () => {
+  it('formats money with currency symbols correctly and handles NaN/null safely', () => {
     expect(formatMoney(25, '₹')).toBe('₹25');
     expect(formatMoney(100, '₹')).toBe('₹100');
     expect(formatMoney(2450, '₹')).toBe('₹2,450');
     expect(formatMoney(-50, '₹')).toBe('-₹50');
+    expect(formatMoney(0, '₹')).toBe('₹0');
+    expect(formatMoney(NaN as any, '₹')).toBe('₹0');
+    expect(formatMoney(null as any, '₹')).toBe('₹0');
+    expect(formatMoney(undefined as any, '₹')).toBe('₹0');
   });
 
   it('formats expense summary string matching ledger format', () => {

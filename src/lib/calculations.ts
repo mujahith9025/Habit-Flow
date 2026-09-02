@@ -254,9 +254,10 @@ export function calculateMonthProgressPercent(
   daysInMonth: number,
   goalCount?: number
 ): number {
+  const safeCompleted = typeof completedCount === 'number' && Number.isFinite(completedCount) ? completedCount : 0;
   const target = goalCount && goalCount > 1 ? goalCount : daysInMonth;
   if (target <= 0) return 0;
-  return Math.min(100, Math.max(0, Math.round((completedCount / target) * 100)));
+  return Math.min(100, Math.max(0, Math.round((safeCompleted / target) * 100)));
 }
 
 /**
@@ -266,8 +267,9 @@ export function calculateWeeklyProgressPercent(
   completedWeeksCount: number,
   goalCount: number = 4
 ): number {
+  const safeCompleted = typeof completedWeeksCount === 'number' && Number.isFinite(completedWeeksCount) ? completedWeeksCount : 0;
   const target = goalCount > 0 ? goalCount : 4;
-  return Math.min(100, Math.max(0, Math.round((completedWeeksCount / target) * 100)));
+  return Math.min(100, Math.max(0, Math.round((safeCompleted / target) * 100)));
 }
 
 /**

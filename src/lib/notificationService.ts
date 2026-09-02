@@ -161,7 +161,7 @@ export async function sendTestNotification(): Promise<boolean> {
 }
 
 /**
- * Checks if current time is within 3 minutes of target HH:MM
+ * Checks if current time is within 3 minutes of target HH:MM (with 24-hour midnight wrap-around)
  */
 export function isTimeToTrigger(targetTimeStr: string, now: Date = new Date()): boolean {
   if (!targetTimeStr) return false;
@@ -171,11 +171,13 @@ export function isTimeToTrigger(targetTimeStr: string, now: Date = new Date()): 
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
 
-  // Trigger if current time is at the exact minute or within the first 3 minutes of the scheduled time
   const currentTotalMins = currentHour * 60 + currentMinute;
   const targetTotalMins = targetHour * 60 + targetMinute;
 
-  return currentTotalMins >= targetTotalMins && currentTotalMins <= targetTotalMins + 3;
+  // Calculate elapsed minutes since target time, wrapping around midnight (1440 mins in a day)
+  const diff = (currentTotalMins - targetTotalMins + 1440) % 1440;
+
+  return diff >= 0 && diff <= 3;
 }
 
 /**

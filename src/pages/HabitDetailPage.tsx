@@ -148,25 +148,19 @@ export const HabitDetailPage: React.FC = () => {
 
   const handleMonthChange = (offset: number) => {
     setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setMonth(next.getMonth() + offset);
-      return next;
+      return new Date(prev.getFullYear(), prev.getMonth() + offset, 1);
     });
   };
 
   const handleSelectMonthIndex = (monthIdx: number) => {
     setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setMonth(monthIdx);
-      return next;
+      return new Date(prev.getFullYear(), monthIdx, 1);
     });
   };
 
   const handleSelectYear = (offset: number) => {
     setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setFullYear(next.getFullYear() + offset);
-      return next;
+      return new Date(prev.getFullYear() + offset, prev.getMonth(), 1);
     });
   };
 
