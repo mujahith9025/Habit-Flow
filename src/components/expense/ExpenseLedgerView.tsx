@@ -2,6 +2,7 @@ import React from 'react';
 import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
 import { formatMoney, inferExpenseCategory } from '../../lib/expenseCalculations';
 import { useExpensePrivacy } from '../../context/ExpensePrivacyContext';
+import { ExpenseMonthNavigator } from './ExpenseMonthNavigator';
 
 interface ExpenseLedgerViewProps {
   rows: DailyLedgerRow[];
@@ -41,12 +42,12 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 sm:px-6 py-4 border-b border-outline-variant/15 bg-surface-container-low/50 dark:bg-surface-container-high/20 gap-3">
         {/* Left: Section Subheader */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
-            <span className="material-symbols-outlined text-[22px]">calendar_today</span>
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+            <span className="material-symbols-outlined text-[20px]">account_balance</span>
           </div>
           <div>
-            <h2 className="font-section-header text-sm sm:text-base font-bold text-on-surface tracking-wide">
-              {settings.title || 'Daily Savings Ledger'}
+            <h2 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
+              Daily Savings Ledger & Expenses
             </h2>
             <p className="text-[11px] font-body-text text-on-surface-variant">
               Daily {sym}{settings.defaultDailySavings} Target • {rows.length} Dates Logged
@@ -92,41 +93,13 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Month Selector Tabs */}
-      <div className="px-5 sm:px-6 pt-3.5 pb-2 flex items-center gap-2 overflow-x-auto scrollbar-none border-b border-outline-variant/10">
-        <button
-          type="button"
-          onClick={() => onSelectMonthKey('all')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-            selectedMonthKey === 'all'
-              ? 'bg-primary text-on-primary shadow-xs scale-105'
-              : 'bg-surface-container-high dark:bg-surface-container-highest/60 text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          All Months Ledger
-        </button>
-
-        {monthSummaries.map((m, idx) => (
-          <button
-            key={m.monthKey}
-            type="button"
-            onClick={() => onSelectMonthKey(m.monthKey)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              selectedMonthKey === m.monthKey
-                ? 'bg-primary text-on-primary shadow-xs scale-105'
-                : 'bg-surface-container-high dark:bg-surface-container-highest/60 text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span>{m.monthShortTitle}</span>
-            {idx === 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-primary/20 text-primary dark:text-primary-fixed-dim text-[9px] font-extrabold uppercase">
-                Current
-              </span>
-            )}
-            <span className="text-[10px] opacity-80 font-mono">({formatMoney(m.endingBalance, sym, isDiscreetMode)})</span>
-          </button>
-        ))}
-      </div>
+      {/* 2. Interactive Month-Year Navigator with Arrow Steppers & 12-Month Popover */}
+      <ExpenseMonthNavigator
+        selectedMonthKey={selectedMonthKey}
+        onSelectMonthKey={onSelectMonthKey}
+        monthSummaries={monthSummaries}
+        onAutoFillMonth={onAutoFillMonth}
+      />
 
       {/* Active Month Mini-Stats Summary Strip (if filtered) */}
       {activeMonthSummary && (
