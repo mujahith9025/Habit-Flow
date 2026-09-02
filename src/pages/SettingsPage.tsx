@@ -12,11 +12,12 @@ import { getNotificationSettings } from '../lib/notificationService';
 import { NotificationSettings } from '../types/notification';
 import { NotificationDetailsModal } from '../components/settings/NotificationDetailsModal';
 import { ExportDataModal } from '../components/settings/ExportDataModal';
+import { DeleteAccountModal } from '../components/settings/DeleteAccountModal';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
   const { isDark, toggleTheme } = useTheme();
-  const { signOut } = useAuth();
+  const { user, firebaseUser, signOut } = useAuth();
   const { habits } = useHabits();
   const {
     allLedgerRows,
@@ -32,6 +33,7 @@ export const SettingsPage: React.FC = () => {
   );
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
@@ -269,15 +271,47 @@ export const SettingsPage: React.FC = () => {
               chevron_right
             </span>
           </Link>
+
+          {/* GDPR / CCPA Right to Erasure Account Deletion */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('warning');
+              setIsDeleteAccountModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-error-container/10 transition-colors text-left group cursor-pointer"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-error/10 text-error flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[22px]">delete_forever</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-habit-name text-sm font-bold text-error block">
+                    Erase All Data & Delete Account
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full bg-error/15 text-error text-[10px] font-bold font-stat-label uppercase">
+                    GDPR Erasure
+                  </span>
+                </div>
+                <span className="font-body-text text-xs text-on-surface-variant">
+                  Permanently destroy all habits, history, financial ledger, and account
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-error/60 group-hover:text-error transition-colors">
+              chevron_right
+            </span>
+          </button>
         </div>
       </section>
 
-      {/* 4. Destructive Action: Sign Out */}
+      {/* 4. Action: Sign Out */}
       <section className="pt-2">
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full bg-error-container/40 hover:bg-error-container text-on-error-container font-stat-label text-sm font-bold py-4 rounded-full flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.98] cursor-pointer"
+          className="w-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-stat-label text-sm font-bold py-3.5 rounded-full flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.98] border border-outline-variant/20 cursor-pointer"
         >
           <span className="material-symbols-outlined text-[20px]">logout</span>
           <span>Sign Out</span>
@@ -302,6 +336,17 @@ export const SettingsPage: React.FC = () => {
         monthSummaries={monthSummaries}
         totalCumulativeSavings={totalCurrentBalance}
         expenseSettings={expenseSettings}
+      />
+
+      {/* 7. GDPR / CCPA Right to Erasure Account Deletion Modal */}
+      <DeleteAccountModal
+        isOpen={isDeleteAccountModalOpen}
+        onClose={() => setIsDeleteAccountModalOpen(false)}
+        firebaseUser={firebaseUser}
+        userId={user?.uid}
+        onSuccess={() => {
+          navigate('/login');
+        }}
       />
     </div>
   );
