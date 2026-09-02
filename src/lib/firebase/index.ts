@@ -5,3 +5,4 @@ export * from './storage';
 export * from './userSync';
 export * from './habitService';
 export * from './expenseService';
+export * from './appCheck';
