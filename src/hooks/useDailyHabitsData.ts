@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   onSnapshot,
-  query,
-  where,
   getEntriesCollectionRef,
   toggleEntry as toggleEntryService,
   saveHabitNote as saveHabitNoteService,
@@ -118,10 +116,9 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
 
     dailyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
-      const q = query(colRef, where('monthKey', '==', monthKey));
 
       const unsub = onSnapshot(
-        q,
+        colRef,
         (snap) => {
           const habitMap: HabitEntryMap = {};
           snap.forEach((docSnap) => {
@@ -146,7 +143,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };
-  }, [user?.uid, habitIdsKey, monthKey]);
+  }, [user?.uid, habitIdsKey]);
 
   // Compute metrics per habit
   const habitMetricsMap: Record<string, HabitGridMetrics> = {};

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { onSnapshot, query, where, getEntriesCollectionRef } from '../lib/firebase';
+import { onSnapshot, getEntriesCollectionRef } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import { DashboardMetrics, HabitEntryMap, isHabitActiveInMonth } from '../types';
@@ -52,10 +52,9 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
 
     dailyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
-      const q = query(colRef, where('monthKey', '==', activeMonthKey));
 
       const unsub = onSnapshot(
-        q,
+        colRef,
         (snap) => {
           const habitEntries: HabitEntryMap = {};
           snap.forEach((docSnap) => {
@@ -80,7 +79,7 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };
-  }, [user?.uid, habitIdsKey, activeMonthKey]);
+  }, [user?.uid, habitIdsKey]);
 
   // Compute completed count today
   const totalDailyHabits = dailyHabits.length;

@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   onSnapshot,
-  query,
-  where,
   getEntriesCollectionRef,
   toggleEntry as toggleEntryService,
 } from '../lib/firebase';
@@ -59,10 +57,9 @@ export function useMonthlyHabitsData(selectedDate: Date, selectedCategory: strin
 
     monthlyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
-      const q = query(colRef, where('monthKey', '==', monthKey));
 
       const unsub = onSnapshot(
-        q,
+        colRef,
         (snap) => {
           const habitMap: HabitEntryMap = {};
           snap.forEach((docSnap) => {
@@ -87,7 +84,7 @@ export function useMonthlyHabitsData(selectedDate: Date, selectedCategory: strin
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };
-  }, [user?.uid, monthlyHabits.map((h) => h.id).join(','), monthKey]);
+  }, [user?.uid, monthlyHabits.map((h) => h.id).join(',')]);
 
   // Compute metrics per habit
   const habitMetricsMap: Record<string, MonthlyHabitMetrics> = {};
