@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { ExpensePrivacyProvider } from './context/ExpensePrivacyContext';
 import { AppRoutes } from './routes/AppRoutes';
 import { useNotificationScheduler } from './hooks/useNotificationScheduler';
 
@@ -17,7 +18,9 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <AppContent />
+          <ExpensePrivacyProvider>
+            <AppContent />
+          </ExpensePrivacyProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

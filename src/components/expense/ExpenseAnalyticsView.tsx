@@ -4,6 +4,7 @@ import {
   formatMoney,
   aggregateExpensesByCategory,
 } from '../../lib/expenseCalculations';
+import { useExpensePrivacy } from '../../context/ExpensePrivacyContext';
 
 interface ExpenseAnalyticsViewProps {
   rows: DailyLedgerRow[];
@@ -19,6 +20,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
   settings,
 }) => {
   const sym = settings.currencySymbol || '₹';
+  const { isDiscreetMode } = useExpensePrivacy();
 
   // 1. Financial Totals & Retention
   const totalDaysLogged = rows.length;
@@ -58,7 +60,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
           </div>
           <div>
             <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-primary dark:text-primary-fixed-dim">
-              {formatMoney(totalCumulativeSavings, sym)}
+              {formatMoney(totalCumulativeSavings, sym, isDiscreetMode)}
             </div>
             <div className="flex items-center gap-1.5 mt-1">
               <span className="px-2 py-0.2 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold font-stat-label">
@@ -80,7 +82,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
           </div>
           <div>
             <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">
-              {formatMoney(totalExpensesDeducted, sym)}
+              {formatMoney(totalExpensesDeducted, sym, isDiscreetMode)}
             </div>
             <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
               {totalExpenseTransactions} deductions recorded
@@ -100,10 +102,10 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
           </div>
           <div>
             <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              +{formatMoney(totalGrossSavings, sym)}
+              +{formatMoney(totalGrossSavings, sym, isDiscreetMode)}
             </div>
             <p className="text-[11px] font-body-text text-on-surface-variant mt-1">
-              {sym}{avgDailySavings}/day average pace
+              {sym}{isDiscreetMode ? '••' : avgDailySavings}/day average pace
             </p>
           </div>
         </div>
@@ -176,7 +178,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
 
                   <div className="text-right">
                     <span className="font-extrabold text-sm font-mono text-amber-600 dark:text-amber-400 block">
-                      {formatMoney(item.totalAmount, sym)}
+                      {formatMoney(item.totalAmount, sym, isDiscreetMode)}
                     </span>
                     <span className="text-[10px] font-bold font-stat-label text-on-surface-variant">
                       {item.percentage}% of expenses
@@ -241,7 +243,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
                         </span>
                       </div>
                       <div className="font-mono font-extrabold text-primary dark:text-primary-fixed-dim">
-                        Ending: {formatMoney(m.endingBalance, sym)}
+                        Ending: {formatMoney(m.endingBalance, sym, isDiscreetMode)}
                       </div>
                     </div>
 
@@ -257,7 +259,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
                           />
                         </div>
                         <span className="w-16 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                          +{formatMoney(m.totalSavings, sym)}
+                          +{formatMoney(m.totalSavings, sym, isDiscreetMode)}
                         </span>
                       </div>
 
@@ -271,7 +273,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
                           />
                         </div>
                         <span className="w-16 text-right font-bold text-amber-600 dark:text-amber-400">
-                          -{formatMoney(m.totalExpenses, sym)}
+                          -{formatMoney(m.totalExpenses, sym, isDiscreetMode)}
                         </span>
                       </div>
                     </div>
@@ -297,12 +299,12 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
                   {monthSummaries.map((m) => (
                     <tr key={m.monthKey} className="hover:bg-surface-container-high/20 transition-colors">
                       <td className="py-2.5 px-3 font-sans font-bold text-on-surface">{m.monthShortTitle}</td>
-                      <td className="py-2.5 px-3 text-on-surface-variant">{formatMoney(m.startingBalance, sym)}</td>
-                      <td className="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">+{formatMoney(m.totalSavings, sym)}</td>
-                      <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400 font-semibold">-{formatMoney(m.totalExpenses, sym)}</td>
-                      <td className="py-2.5 px-3 font-bold text-on-surface">+{formatMoney(m.netSavings, sym)}</td>
+                      <td className="py-2.5 px-3 text-on-surface-variant">{formatMoney(m.startingBalance, sym, isDiscreetMode)}</td>
+                      <td className="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">+{formatMoney(m.totalSavings, sym, isDiscreetMode)}</td>
+                      <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400 font-semibold">-{formatMoney(m.totalExpenses, sym, isDiscreetMode)}</td>
+                      <td className="py-2.5 px-3 font-bold text-on-surface">+{formatMoney(m.netSavings, sym, isDiscreetMode)}</td>
                       <td className="py-2.5 px-3 text-right font-extrabold text-primary dark:text-primary-fixed-dim">
-                        {formatMoney(m.endingBalance, sym)}
+                        {formatMoney(m.endingBalance, sym, isDiscreetMode)}
                       </td>
                     </tr>
                   ))}
@@ -324,7 +326,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
             <span>Capital Preservation</span>
           </div>
           <p className="text-xs font-body-text text-on-surface">
-            You have successfully preserved <strong>{retentionRate}%</strong> of all saved capital ({formatMoney(totalCumulativeSavings, sym)} retained out of {formatMoney(totalGrossSavings, sym)} deposited).
+            You have successfully preserved <strong>{retentionRate}%</strong> of all saved capital ({formatMoney(totalCumulativeSavings, sym, isDiscreetMode)} retained out of {formatMoney(totalGrossSavings, sym, isDiscreetMode)} deposited).
           </p>
         </div>
 
@@ -336,7 +338,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
           </div>
           <p className="text-xs font-body-text text-on-surface">
             {topCategory
-              ? `Your highest expense outflow is in ${topCategory.category.label}, representing ${topCategory.percentage}% (${formatMoney(topCategory.totalAmount, sym)}) of all deductions with an average of ${formatMoney(avgExpensePerTransaction, sym)} per transaction.`
+              ? `Your highest expense outflow is in ${topCategory.category.label}, representing ${topCategory.percentage}% (${formatMoney(topCategory.totalAmount, sym, isDiscreetMode)}) of all deductions with an average of ${formatMoney(avgExpensePerTransaction, sym, isDiscreetMode)} per transaction.`
               : 'Zero expense deductions logged so far. 100% of your deposits remain intact.'}
           </p>
         </div>
@@ -348,7 +350,7 @@ export const ExpenseAnalyticsView: React.FC<ExpenseAnalyticsViewProps> = ({
             <span>Savings Velocity</span>
           </div>
           <p className="text-xs font-body-text text-on-surface">
-            Maintaining a daily rate of <strong>{sym}{settings.defaultDailySavings}</strong> per day results in <strong>{formatMoney(settings.defaultDailySavings * 30, sym)}</strong> in reliable monthly capital growth.
+            Maintaining a daily rate of <strong>{sym}{isDiscreetMode ? '••' : settings.defaultDailySavings}</strong> per day results in <strong>{formatMoney(settings.defaultDailySavings * 30, sym, isDiscreetMode)}</strong> in reliable monthly capital growth.
           </p>
         </div>
       </div>

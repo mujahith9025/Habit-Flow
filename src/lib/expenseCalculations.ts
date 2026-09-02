@@ -180,7 +180,16 @@ export function formatDayMonth(dateKey: string): string {
 /**
  * Format an amount with currency symbol (e.g. 25 -> '₹25', 1250 -> '₹1,250')
  */
-export function formatMoney(amount: number | null | undefined, symbol: string = '₹'): string {
+export function formatMoney(
+  amount: number | null | undefined,
+  symbol: string = '₹',
+  isDiscreet: boolean = false
+): string {
+  if (isDiscreet) {
+    const num = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
+    const sign = num < 0 ? '-' : '';
+    return `${sign}${symbol}••••`;
+  }
   const num = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
   const formattedNumber = Math.abs(num).toLocaleString('en-IN');
   const sign = num < 0 ? '-' : '';

@@ -28,6 +28,11 @@ describe('Money Savings & Expense Calculations Engine', () => {
     expect(formatMoney(NaN as any, '₹')).toBe('₹0');
     expect(formatMoney(null as any, '₹')).toBe('₹0');
     expect(formatMoney(undefined as any, '₹')).toBe('₹0');
+
+    // Discreet Mode Masking
+    expect(formatMoney(2450, '₹', true)).toBe('₹••••');
+    expect(formatMoney(-150, '₹', true)).toBe('-₹••••');
+    expect(formatMoney(0, '₹', true)).toBe('₹••••');
   });
 
   it('formats expense summary string matching ledger format', () => {

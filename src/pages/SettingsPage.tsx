@@ -13,11 +13,13 @@ import { NotificationSettings } from '../types/notification';
 import { NotificationDetailsModal } from '../components/settings/NotificationDetailsModal';
 import { ExportDataModal } from '../components/settings/ExportDataModal';
 import { DeleteAccountModal } from '../components/settings/DeleteAccountModal';
+import { useExpensePrivacy } from '../context/ExpensePrivacyContext';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
   const { isDark, toggleTheme } = useTheme();
   const { user, firebaseUser, signOut } = useAuth();
+  const { isDiscreetMode, toggleDiscreetMode } = useExpensePrivacy();
   const { habits } = useHabits();
   const {
     allLedgerRows,
@@ -206,6 +208,48 @@ export const SettingsPage: React.FC = () => {
               className="px-4 py-2 rounded-xl text-xs font-semibold font-stat-label bg-surface-container-low dark:bg-surface-container-high hover:bg-surface-container text-primary border border-outline-variant/20 transition-all active:scale-95 cursor-pointer"
             >
               {isDark ? 'Switch to Light ☀️' : 'Switch to Dark 🌙'}
+            </button>
+          </div>
+
+          {/* Expense Privacy / Discreet Balance Mode Toggle Row */}
+          <div className="flex items-center justify-between p-4 sm:p-5">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[24px]">
+                  {isDiscreetMode ? 'visibility_off' : 'visibility'}
+                </span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-habit-name text-sm sm:text-base font-bold text-on-surface">
+                    Expense Privacy (Discreet Mode)
+                  </h4>
+                  <span
+                    className={`px-2 py-0.2 rounded-full text-[10px] font-bold font-stat-label ${
+                      isDiscreetMode
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                        : 'bg-surface-container-high text-on-surface-variant'
+                    }`}
+                  >
+                    {isDiscreetMode ? 'Masked 🔒' : 'Visible 👁️'}
+                  </span>
+                </div>
+                <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                  Mask sensitive money figures and ledger balances in public places
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleDiscreetMode}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold font-stat-label border transition-all active:scale-95 cursor-pointer ${
+                isDiscreetMode
+                  ? 'bg-amber-500 text-white border-transparent shadow-xs'
+                  : 'bg-surface-container-low dark:bg-surface-container-high hover:bg-surface-container text-on-surface border-outline-variant/20'
+              }`}
+            >
+              {isDiscreetMode ? 'Enabled 🔒' : 'Disabled 👁️'}
             </button>
           </div>
         </div>

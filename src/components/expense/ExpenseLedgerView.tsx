@@ -1,6 +1,7 @@
 import React from 'react';
 import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
 import { formatMoney, inferExpenseCategory } from '../../lib/expenseCalculations';
+import { useExpensePrivacy } from '../../context/ExpensePrivacyContext';
 
 interface ExpenseLedgerViewProps {
   rows: DailyLedgerRow[];
@@ -28,6 +29,7 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
   onOpenDeleteAllModal,
 }) => {
   const sym = settings.currencySymbol || '₹';
+  const { isDiscreetMode } = useExpensePrivacy();
 
   // Active month summary if filtered
   const activeMonthSummary =
@@ -121,7 +123,7 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
                 Current
               </span>
             )}
-            <span className="text-[10px] opacity-80 font-mono">({formatMoney(m.endingBalance, sym)})</span>
+            <span className="text-[10px] opacity-80 font-mono">({formatMoney(m.endingBalance, sym, isDiscreetMode)})</span>
           </button>
         ))}
       </div>
@@ -132,16 +134,16 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
           <div className="flex items-center gap-4">
             <div>
               <span className="text-[10px] text-on-surface-variant uppercase font-stat-label block">Deposited</span>
-              <span className="font-bold text-on-surface">+{formatMoney(activeMonthSummary.totalSavings, sym)}</span>
+              <span className="font-bold text-on-surface">+{formatMoney(activeMonthSummary.totalSavings, sym, isDiscreetMode)}</span>
             </div>
             <div>
               <span className="text-[10px] text-on-surface-variant uppercase font-stat-label block">Spent</span>
-              <span className="font-bold text-amber-600 dark:text-amber-400">-{formatMoney(activeMonthSummary.totalExpenses, sym)}</span>
+              <span className="font-bold text-amber-600 dark:text-amber-400">-{formatMoney(activeMonthSummary.totalExpenses, sym, isDiscreetMode)}</span>
             </div>
           </div>
           <div className="text-right">
             <span className="text-[10px] text-on-surface-variant uppercase font-stat-label block">Ending Net</span>
-            <span className="font-extrabold text-primary dark:text-primary-fixed-dim">{formatMoney(activeMonthSummary.endingBalance, sym)}</span>
+            <span className="font-extrabold text-primary dark:text-primary-fixed-dim">{formatMoney(activeMonthSummary.endingBalance, sym, isDiscreetMode)}</span>
           </div>
         </div>
       )}
@@ -212,7 +214,7 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
                       </div>
                       {monthSummary && (
                         <span className="text-[11px] font-mono text-on-surface-variant">
-                          Ending: <strong className="text-primary dark:text-primary-fixed-dim">{formatMoney(monthSummary.endingBalance, sym)}</strong>
+                          Ending: <strong className="text-primary dark:text-primary-fixed-dim">{formatMoney(monthSummary.endingBalance, sym, isDiscreetMode)}</strong>
                         </span>
                       )}
                     </div>
@@ -241,12 +243,12 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
                     <div className="col-span-4 sm:col-span-4 flex items-center gap-2 pl-1 font-mono">
                       {/* Daily Deposit Badge */}
                       <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold text-xs">
-                        +{formatMoney(row.savingsAmount, sym)}
+                        +{formatMoney(row.savingsAmount, sym, isDiscreetMode)}
                       </span>
 
                       {/* Running Net Balance */}
                       <span className="font-extrabold text-primary dark:text-primary-fixed-dim text-xs sm:text-sm">
-                        {formatMoney(row.cumulativeBalance, sym)}
+                        {formatMoney(row.cumulativeBalance, sym, isDiscreetMode)}
                         <span className="text-[10px] font-normal text-on-surface-variant ml-1 font-sans">Net</span>
                       </span>
                     </div>
@@ -263,7 +265,7 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 max-w-[200px] truncate"
                               >
                                 <span className="material-symbols-outlined text-[13px]">{cat.icon}</span>
-                                <span className="font-bold">-{formatMoney(exp.amount, sym)}</span>
+                                <span className="font-bold">-{formatMoney(exp.amount, sym, isDiscreetMode)}</span>
                                 <span className="truncate opacity-90">{exp.description}</span>
                               </span>
                             );

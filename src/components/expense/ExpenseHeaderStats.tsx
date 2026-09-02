@@ -1,6 +1,6 @@
-import React from 'react';
 import { MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
 import { formatMoney } from '../../lib/expenseCalculations';
+import { useExpensePrivacy } from '../../context/ExpensePrivacyContext';
 
 interface ExpenseHeaderStatsProps {
   totalCurrentBalance: number;
@@ -18,6 +18,7 @@ export const ExpenseHeaderStats: React.FC<ExpenseHeaderStatsProps> = ({
   onAutoFillCurrentMonth,
 }) => {
   const sym = settings.currencySymbol || '₹';
+  const { isDiscreetMode, toggleDiscreetMode } = useExpensePrivacy();
 
   // If viewing a specific month, show that month's ending balance; otherwise all-time cumulative
   const displayBalance = activeSummary ? activeSummary.endingBalance : totalCurrentBalance;
@@ -45,11 +46,26 @@ export const ExpenseHeaderStats: React.FC<ExpenseHeaderStatsProps> = ({
             <span className="px-2 py-0.2 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold">
               Live Balance
             </span>
+
+            {/* Discreet Mode Privacy Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleDiscreetMode}
+              title={isDiscreetMode ? 'Discreet Mode: Balance is masked (Click to reveal)' : 'Discreet Mode: Click to mask sensitive figures'}
+              className="p-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors ml-1 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {isDiscreetMode ? 'visibility_off' : 'visibility'}
+              </span>
+              <span className="text-[10px] opacity-70 hidden sm:inline">
+                {isDiscreetMode ? 'Hidden' : 'Discreet'}
+              </span>
+            </button>
           </div>
 
           <div className="flex items-baseline gap-2 pt-1">
             <div className="font-app-title text-3xl sm:text-4xl lg:text-5xl font-black text-primary dark:text-primary-fixed-dim tracking-tight">
-              {formatMoney(displayBalance, sym)}
+              {formatMoney(displayBalance, sym, isDiscreetMode)}
             </div>
           </div>
 
