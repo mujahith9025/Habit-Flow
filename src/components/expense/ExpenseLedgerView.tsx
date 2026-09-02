@@ -104,7 +104,7 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
           All Months Ledger
         </button>
 
-        {monthSummaries.map((m) => (
+        {monthSummaries.map((m, idx) => (
           <button
             key={m.monthKey}
             type="button"
@@ -116,6 +116,11 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
             }`}
           >
             <span>{m.monthShortTitle}</span>
+            {idx === 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-primary/20 text-primary dark:text-primary-fixed-dim text-[9px] font-extrabold uppercase">
+                Current
+              </span>
+            )}
             <span className="text-[10px] opacity-80 font-mono">({formatMoney(m.endingBalance, sym)})</span>
           </button>
         ))}
@@ -185,17 +190,31 @@ export const ExpenseLedgerView: React.FC<ExpenseLedgerViewProps> = ({
           <div className="space-y-1.5 pt-1">
             {rows.map((row, index) => {
               const prevRow = index > 0 ? rows[index - 1] : null;
-              const isMonthBreak = prevRow && prevRow.monthKey !== row.monthKey;
-              const monthName = monthSummaries.find((m) => m.monthKey === row.monthKey)?.monthTitle || 'MONTH';
+              const isMonthBreak = index === 0 || (prevRow && prevRow.monthKey !== row.monthKey);
+              const monthSummary = monthSummaries.find((m) => m.monthKey === row.monthKey);
+              const monthName = monthSummary?.monthTitle || 'MONTH';
+              const isFirstMonth = monthSummaries.length > 0 && monthSummaries[0].monthKey === row.monthKey;
 
               return (
                 <React.Fragment key={row.dateKey}>
-                  {/* Month Break Header (if scrolling all months) */}
-                  {isMonthBreak && (
-                    <div className="py-3 text-center">
-                      <span className="px-4 py-1 rounded-full bg-surface-container-high text-on-surface font-extrabold text-xs tracking-wider uppercase border border-outline-variant/20 shadow-xs">
-                        {monthName}
-                      </span>
+                  {/* Month Break Header (when viewing All Months) */}
+                  {selectedMonthKey === 'all' && isMonthBreak && (
+                    <div className="pt-4 pb-2 flex items-center justify-between px-1 border-b border-outline-variant/10 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs sm:text-sm text-on-surface uppercase tracking-wide font-section-header">
+                          {monthName}
+                        </span>
+                        {isFirstMonth && (
+                          <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-extrabold uppercase font-stat-label">
+                            Current Month
+                          </span>
+                        )}
+                      </div>
+                      {monthSummary && (
+                        <span className="text-[11px] font-mono text-on-surface-variant">
+                          Ending: <strong className="text-primary dark:text-primary-fixed-dim">{formatMoney(monthSummary.endingBalance, sym)}</strong>
+                        </span>
+                      )}
                     </div>
                   )}
 

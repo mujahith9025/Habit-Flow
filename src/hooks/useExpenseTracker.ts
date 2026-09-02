@@ -211,10 +211,17 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
   }, [allLedgerRows, settings.startingBalance]);
 
   // 6. Active Filtered Rows based on selectedMonthKey ('all' or 'YYYY-MM')
+  // Shows current month at the top and previous months below
   const { activeRows, activeSummary } = useMemo(() => {
     if (selectedMonthKey === 'all') {
+      const orderedRows: DailyLedgerRow[] = [];
+      monthSummaries.forEach((summary) => {
+        const monthRows = allLedgerRows.filter((r) => r.monthKey === summary.monthKey);
+        orderedRows.push(...monthRows);
+      });
+
       return {
-        activeRows: allLedgerRows,
+        activeRows: orderedRows.length > 0 ? orderedRows : allLedgerRows,
         activeSummary: null,
       };
     }
