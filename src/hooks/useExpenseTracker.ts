@@ -60,10 +60,11 @@ export function useExpenseTracker(initialMonthKey?: string): UseExpenseTrackerRe
   const { user } = useAuth();
   const today = new Date();
   const todayKey = formatDateKey(today);
+  const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
   const [entriesMap, setEntriesMap] = useState<Record<string, DailyMoneyEntry>>({});
   const [settings, setSettings] = useState<ExpenseTrackerSettings>(DEFAULT_EXPENSE_SETTINGS);
-  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(initialMonthKey || 'all');
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(initialMonthKey || currentMonthKey);
   const [loading, setLoading] = useState<boolean>(true);
 
   // 1. Subscribe to Firestore Settings Document

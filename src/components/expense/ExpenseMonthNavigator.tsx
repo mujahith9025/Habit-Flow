@@ -3,7 +3,7 @@ import { MonthExpenseSummary } from '../../types/expense';
 import { triggerHaptic } from '../../utils/haptics';
 
 interface ExpenseMonthNavigatorProps {
-  selectedMonthKey: string; // 'all' or 'YYYY-MM'
+  selectedMonthKey: string; // 'YYYY-MM'
   onSelectMonthKey: (mKey: string) => void;
   monthSummaries: MonthExpenseSummary[];
   onAutoFillMonth?: (year: number, month: number) => void;
@@ -32,9 +32,9 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
   const currentRealMonthIdx = today.getMonth();
   const currentRealMonthKey = `${currentRealYear}-${String(currentRealMonthIdx + 1).padStart(2, '0')}`;
 
-  // Compute viewing year & month from selectedMonthKey (or default to current real date)
+  // Compute viewing year & month from selectedMonthKey
   const [viewingYear, setViewingYear] = useState<number>(() => {
-    if (selectedMonthKey !== 'all') {
+    if (selectedMonthKey && selectedMonthKey !== 'all') {
       const [y] = selectedMonthKey.split('-');
       const parsed = parseInt(y, 10);
       if (!isNaN(parsed)) return parsed;
@@ -43,11 +43,13 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
   });
 
   const selectedMonthIdx =
-    selectedMonthKey !== 'all' ? parseInt(selectedMonthKey.split('-')[1], 10) - 1 : -1;
+    selectedMonthKey && selectedMonthKey !== 'all'
+      ? parseInt(selectedMonthKey.split('-')[1], 10) - 1
+      : currentRealMonthIdx;
 
   // Sync viewingYear when selectedMonthKey changes externally
   useEffect(() => {
-    if (selectedMonthKey !== 'all') {
+    if (selectedMonthKey && selectedMonthKey !== 'all') {
       const [y] = selectedMonthKey.split('-');
       const parsed = parseInt(y, 10);
       if (!isNaN(parsed)) setViewingYear(parsed);
@@ -72,15 +74,8 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
   // Step month by offset (-1 or +1)
   const handleStepMonth = (offset: number) => {
     triggerHaptic('selection');
-    let targetYear = viewingYear;
-    let targetMonthIdx = selectedMonthIdx;
-
-    if (selectedMonthKey === 'all' || targetMonthIdx === -1) {
-      targetMonthIdx = currentRealMonthIdx;
-      targetYear = currentRealYear;
-    }
-
-    const nextDate = new Date(targetYear, targetMonthIdx + offset, 1);
+    const targetMonthIdx = selectedMonthIdx >= 0 ? selectedMonthIdx : currentRealMonthIdx;
+    const nextDate = new Date(viewingYear, targetMonthIdx + offset, 1);
     const nextYear = nextDate.getFullYear();
     const nextMonth = nextDate.getMonth() + 1;
     const nextKey = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
@@ -104,13 +99,6 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
     setIsMonthPickerOpen(false);
   };
 
-  // Select All Months
-  const handleSelectAllMonths = () => {
-    triggerHaptic('selection');
-    onSelectMonthKey('all');
-    setIsMonthPickerOpen(false);
-  };
-
   // Jump to Current Real Month
   const handleJumpToCurrentMonth = () => {
     triggerHaptic('selection');
@@ -119,18 +107,15 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
     setIsMonthPickerOpen(false);
   };
 
-  // Current display label
-  let displayTitle = 'All Months Ledger';
-  if (selectedMonthKey !== 'all' && selectedMonthIdx >= 0 && selectedMonthIdx < 12) {
-    displayTitle = `${MONTH_NAMES_FULL[selectedMonthIdx]} ${viewingYear}`;
-  }
-
+  // Month Title (e.g. "September 2026")
+  const validMonthIdx = selectedMonthIdx >= 0 && selectedMonthIdx < 12 ? selectedMonthIdx : currentRealMonthIdx;
+  const displayTitle = `${MONTH_NAMES_FULL[validMonthIdx]} ${viewingYear}`;
   const isCurrentMonthActive = selectedMonthKey === currentRealMonthKey;
 
   return (
-    <div className="relative px-5 sm:px-6 pt-3.5 pb-2 border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-2.5">
-      {/* Left: Stepper Navigation & 12-Month Popover Trigger */}
-      <div className="flex items-center gap-1.5" ref={popoverRef}>
+    <div className="relative px-5 sm:px-6 pt-3 pb-3 border-b border-outline-variant/10 flex items-center justify-between">
+      {/* Month Navigator Stepper & 12-Month Popover */}
+      <div className="flex items-center gap-2 relative" ref={popoverRef}>
         {/* Previous Month Arrow */}
         <button
           type="button"
@@ -149,15 +134,11 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
             triggerHaptic('light');
             setIsMonthPickerOpen((prev) => !prev);
           }}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-stat-label text-xs font-bold transition-all border active:scale-95 cursor-pointer ${
-            selectedMonthKey === 'all'
-              ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/15'
-              : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface border-outline-variant/20 shadow-xs'
-          }`}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-stat-label text-xs sm:text-sm font-bold transition-all border bg-surface-container-high hover:bg-surface-container-highest text-on-surface border-outline-variant/20 shadow-xs active:scale-95 cursor-pointer"
           title="Click to select any month and year"
         >
           <span
-            className="material-symbols-outlined text-[16px] text-primary"
+            className="material-symbols-outlined text-[17px] text-primary"
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
             calendar_month
@@ -192,7 +173,7 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
 
         {/* 12-Month & Year Dropdown Popover */}
         {isMonthPickerOpen && (
-          <div className="absolute top-12 left-5 z-40 w-72 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-2xl border border-outline-variant/25 p-3.5 space-y-3 animate-scaleUp">
+          <div className="absolute top-11 left-0 z-40 w-72 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-2xl border border-outline-variant/25 p-3.5 space-y-3 animate-scaleUp">
             {/* Year Stepper Header */}
             <div className="flex items-center justify-between px-1 border-b border-outline-variant/15 pb-2">
               <button
@@ -249,20 +230,8 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
               })}
             </div>
 
-            {/* Bottom Controls: All Months & Current Month */}
-            <div className="flex items-center justify-between pt-2 border-t border-outline-variant/15 text-xs">
-              <button
-                type="button"
-                onClick={handleSelectAllMonths}
-                className={`px-3 py-1 rounded-lg font-bold font-stat-label transition-colors cursor-pointer ${
-                  selectedMonthKey === 'all'
-                    ? 'bg-primary text-on-primary'
-                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                }`}
-              >
-                All Months
-              </button>
-
+            {/* Bottom Controls: Quick Current Month Reset */}
+            <div className="flex items-center justify-end pt-2 border-t border-outline-variant/15 text-xs">
               <button
                 type="button"
                 onClick={handleJumpToCurrentMonth}
@@ -273,39 +242,6 @@ export const ExpenseMonthNavigator: React.FC<ExpenseMonthNavigatorProps> = ({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Right: Quick Tab Pills for Fast Switching */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none max-w-full sm:max-w-md pb-0.5">
-        <button
-          type="button"
-          onClick={() => onSelectMonthKey('all')}
-          className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-            selectedMonthKey === 'all'
-              ? 'bg-primary text-on-primary shadow-xs scale-105'
-              : 'bg-surface-container-high dark:bg-surface-container-highest/60 text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          All
-        </button>
-
-        {monthSummaries.map((m, idx) => (
-          <button
-            key={m.monthKey}
-            type="button"
-            onClick={() => onSelectMonthKey(m.monthKey)}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
-              selectedMonthKey === m.monthKey
-                ? 'bg-primary text-on-primary shadow-xs scale-105'
-                : 'bg-surface-container-high dark:bg-surface-container-highest/60 text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <span>{m.monthShortTitle}</span>
-            {idx === 0 && (
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-container shrink-0" />
-            )}
-          </button>
-        ))}
       </div>
     </div>
   );
