@@ -1,4 +1,9 @@
-import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from 'firebase/app-check';
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+  ReCaptchaV3Provider,
+  AppCheck,
+} from 'firebase/app-check';
 import { app } from './config';
 
 declare global {
@@ -9,7 +14,7 @@ declare global {
 let appCheckInstance: AppCheck | null = null;
 
 /**
- * Initializes Firebase App Check (reCAPTCHA v3) to defend against bots, scraping, and unauthorized abuse.
+ * Initializes Firebase App Check (reCAPTCHA Enterprise / v3) to defend against bots, scraping, and unauthorized abuse.
  */
 export function initAppCheck(): AppCheck | null {
   if (typeof window === 'undefined') return null;
@@ -35,14 +40,27 @@ export function initAppCheck(): AppCheck | null {
   }
 
   try {
+    // Attempt reCAPTCHA Enterprise provider first (Google recommended standard)
+    const provider = new ReCaptchaEnterpriseProvider(siteKey);
     appCheckInstance = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
+      provider,
       isTokenAutoRefreshEnabled: true,
     });
-    console.info('🛡️ Firebase App Check initialized successfully.');
+    console.info('🛡️ Firebase App Check (reCAPTCHA Enterprise) initialized successfully.');
     return appCheckInstance;
   } catch (err) {
-    console.warn('Firebase App Check initialization note:', err);
-    return null;
+    try {
+      // Fallback to ReCaptchaV3Provider if enterprise initialization fails
+      const fallbackProvider = new ReCaptchaV3Provider(siteKey);
+      appCheckInstance = initializeAppCheck(app, {
+        provider: fallbackProvider,
+        isTokenAutoRefreshEnabled: true,
+      });
+      console.info('🛡️ Firebase App Check (reCAPTCHA v3) initialized successfully.');
+      return appCheckInstance;
+    } catch (e) {
+      console.warn('Firebase App Check initialization note:', e);
+      return null;
+    }
   }
 }
