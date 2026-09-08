@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import {
   checkAndTriggerScheduledReminders,
   getNotificationSettings,
@@ -10,8 +10,25 @@ import { useDailyHabitsData } from './useDailyHabitsData';
  * Global hook that monitors and triggers scheduled Morning and Evening habit push notifications
  */
 export function useNotificationScheduler(): void {
-  const today = useRef(new Date()).current;
-  const { dailyHabits, isCompleted } = useDailyHabitsData(today, 'all');
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+  const { dailyHabits, isCompleted } = useDailyHabitsData(currentDate, 'all');
+
+  // Check and update date if day has changed (e.g. across midnight)
+  useEffect(() => {
+    const checkDateChange = () => {
+      const now = new Date();
+      if (
+        now.getDate() !== currentDate.getDate() ||
+        now.getMonth() !== currentDate.getMonth() ||
+        now.getFullYear() !== currentDate.getFullYear()
+      ) {
+        setCurrentDate(now);
+      }
+    };
+
+    const interval = setInterval(checkDateChange, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [currentDate]);
 
   useEffect(() => {
     if (!isNotificationSupported()) return;
@@ -37,6 +54,10 @@ export function useNotificationScheduler(): void {
     // 3. Tab visibility / device wake-up check
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
+        const now = new Date();
+        if (now.getDate() !== currentDate.getDate()) {
+          setCurrentDate(now);
+        }
         checkReminders();
       }
     };
@@ -49,5 +70,5 @@ export function useNotificationScheduler(): void {
       window.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', handleVisibility);
     };
-  }, [dailyHabits, isCompleted]);
+  }, [dailyHabits, isCompleted, currentDate]);
 }

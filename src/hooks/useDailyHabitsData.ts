@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   onSnapshot,
   getEntriesCollectionRef,
   toggleEntry as toggleEntryService,
   saveHabitNote as saveHabitNoteService,
+  getWeekOfMonth,
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
@@ -113,6 +114,8 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
 
     setEntriesLoading(true);
     const unsubscribes: Array<() => void> = [];
+    let loadedSnapshotsCount = 0;
+    const totalHabits = dailyHabits.length;
 
     dailyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
@@ -130,16 +133,24 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
             ...prev,
             [habit.id]: habitMap,
           }));
+
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setEntriesLoading(false);
+          }
         },
         (err) => {
           console.warn(`Error listening to habit ${habit.id} entries:`, err);
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setEntriesLoading(false);
+          }
         }
       );
 
       unsubscribes.push(unsub);
     });
 
-    setEntriesLoading(false);
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };
@@ -219,7 +230,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       const existing = prevHabitEntries[dateKey] || {
         date: dateKey,
         completed: false,
-        weekOfMonth: Math.ceil(Number(dateKey.split('-')[2]) / 7),
+        weekOfMonth: getWeekOfMonth(dateKey),
         monthKey: dateKey.substring(0, 7),
         updatedAt: new Date().toISOString(),
       };
@@ -266,7 +277,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
           [dateKey]: {
             date: dateKey,
             completed: nextCompleted,
-            weekOfMonth: Math.ceil(Number(dateKey.split('-')[2]) / 7),
+            weekOfMonth: getWeekOfMonth(dateKey),
             monthKey: dateKey.substring(0, 7),
             updatedAt: new Date().toISOString(),
           },
@@ -310,7 +321,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
           const prevEntry = next[hId]?.[todayDateKey] || {
             date: todayDateKey,
             completed: false,
-            weekOfMonth: Math.ceil(Number(todayDateKey.split('-')[2] || 1) / 7),
+            weekOfMonth: getWeekOfMonth(todayDateKey),
             monthKey: todayDateKey.substring(0, 7),
             updatedAt: new Date().toISOString(),
           };
@@ -355,7 +366,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
           const prevEntry = next[hId]?.[todayDateKey] || {
             date: todayDateKey,
             completed: true,
-            weekOfMonth: Math.ceil(Number(todayDateKey.split('-')[2] || 1) / 7),
+            weekOfMonth: getWeekOfMonth(todayDateKey),
             monthKey: todayDateKey.substring(0, 7),
             updatedAt: new Date().toISOString(),
           };

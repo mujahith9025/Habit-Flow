@@ -1,5 +1,6 @@
 import React from 'react';
 import { Habit } from '../../types';
+import { getCategoryIcon } from '../../lib/calculations';
 
 interface CategoryFilterTabsProps {
   habits: Habit[];
@@ -7,21 +8,6 @@ interface CategoryFilterTabsProps {
   onSelectCategory: (category: string) => void;
   onAddNewCategory: () => void;
 }
-
-const CATEGORY_ICONS: Record<string, string> = {
-  'self challenges': '🎯',
-  'diet & nutrition': '🥗',
-  diet: '🥗',
-  fitness: '🏃',
-  workout: '🏋️',
-  mindfulness: '🧘',
-  meditation: '🧘',
-  'study & work': '📚',
-  study: '📚',
-  work: '💼',
-  general: '🌱',
-  health: '❤️',
-};
 
 export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
   habits,
@@ -39,11 +25,6 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
   });
 
   const categories = Object.keys(categoryCounts).sort();
-
-  const getIcon = (cat: string) => {
-    const key = cat.toLowerCase();
-    return CATEGORY_ICONS[key] || '📋';
-  };
 
   return (
     <div className="w-full bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 rounded-2xl border border-outline-variant/15 shadow-soft">
@@ -90,7 +71,7 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
                   : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
               }`}
             >
-              <span>{getIcon(cat)}</span>
+              <span>{getCategoryIcon(cat)}</span>
               <span>{cat}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${

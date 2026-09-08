@@ -14,21 +14,7 @@ import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { isHabitActiveInMonth } from '../types';
-
-const CATEGORY_ICONS: Record<string, string> = {
-  'self challenges': '🎯',
-  'diet & nutrition': '🥗',
-  diet: '🥗',
-  fitness: '🏃',
-  workout: '🏋️',
-  mindfulness: '🧘',
-  meditation: '🧘',
-  'study & work': '📚',
-  study: '📚',
-  work: '💼',
-  general: '🌱',
-  health: '❤️',
-};
+import { getCategoryIcon } from '../lib/calculations';
 
 const MONTH_NAMES = [
   'January',
@@ -125,11 +111,6 @@ export const HabitDetailPage: React.FC = () => {
     isCompleted: isAggregateCompleted,
     toggleHabitEntry: toggleAggregateEntry,
   } = useDailyHabitsData(selectedDate, currentCategory);
-
-  const getCategoryIcon = (cat: string) => {
-    const key = cat.toLowerCase();
-    return CATEGORY_ICONS[key] || '📋';
-  };
 
   const handleSelectCategory = (cat: string) => {
     setSelectedCategory(cat);

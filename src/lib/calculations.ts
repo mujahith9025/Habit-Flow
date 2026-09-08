@@ -491,4 +491,28 @@ export function calculateHabitDayOfWeekStats(
   };
 }
 
+export const CATEGORY_ICONS: Record<string, string> = {
+  'self challenges': '🎯',
+  'diet & nutrition': '🥗',
+  diet: '🥗',
+  fitness: '🏃',
+  workout: '🏋️',
+  mindfulness: '🧘',
+  meditation: '🧘',
+  'study & work': '📚',
+  study: '📚',
+  work: '💼',
+  general: '🌱',
+  health: '❤️',
+};
+
+/**
+ * Returns emoji icon for a given habit category
+ */
+export function getCategoryIcon(category?: string): string {
+  if (!category) return '📋';
+  const key = category.trim().toLowerCase();
+  return CATEGORY_ICONS[key] || '📋';
+}
+
 

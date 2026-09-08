@@ -24,8 +24,9 @@ export const DataLayerDebugPage: React.FC = () => {
   const [selectedHabitId, setSelectedHabitId] = useState<string>('');
   const activeHabitId = selectedHabitId || (habits.length > 0 ? habits[0].id : '');
 
-  // Current Month Key (e.g., "2026-08")
-  const currentMonthKey = '2026-08';
+  // Dynamic Current Month Key (e.g., "2026-09")
+  const today = new Date();
+  const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const {
     entries,
     loading: entriesLoading,
@@ -40,16 +41,15 @@ export const DataLayerDebugPage: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [toggleStatusMsg, setToggleStatusMsg] = useState<string | null>(null);
 
-  // Days list for August 2026 test strip (e.g., 2026-08-15 through 2026-08-21)
-  const testDates = [
-    '2026-08-15',
-    '2026-08-16',
-    '2026-08-17',
-    '2026-08-18',
-    '2026-08-19', // Today
-    '2026-08-20',
-    '2026-08-21',
-  ];
+  // Dynamic 7-day test strip centered around today
+  const testDates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - 3 + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  });
 
   const handleCreateHabit = async (e: React.FormEvent) => {
     e.preventDefault();
