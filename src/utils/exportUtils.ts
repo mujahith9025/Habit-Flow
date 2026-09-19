@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Habit } from '../types/habit';
 import { UserProfile } from '../types/auth';
 import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../types/expense';
@@ -23,9 +21,15 @@ export interface ExportData {
 }
 
 /**
- * Advanced Executive PDF Document Exporter
+ * Advanced Executive PDF Document Exporter (Dynamically loads jsPDF & autoTable)
  */
-export function exportToPDF(data: ExportData): void {
+export async function exportToPDF(data: ExportData): Promise<void> {
+  const [{ default: jsPDF }, autoTableModule] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+  const autoTable = autoTableModule.default || autoTableModule;
+
   const {
     profile,
     habits,

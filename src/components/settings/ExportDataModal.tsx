@@ -29,6 +29,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
   expenseSettings,
 }) => {
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   if (!isOpen) return null;
 
@@ -42,14 +43,22 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
     expenseSettings,
   };
 
-  const handleExportPDF = () => {
-    triggerHaptic('success');
-    exportToPDF(exportPayload);
-    setDownloadSuccessMessage('✅ Advanced Executive PDF Report downloaded successfully!');
-    setTimeout(() => {
-      setDownloadSuccessMessage(null);
-      onClose();
-    }, 1500);
+  const handleExportPDF = async () => {
+    if (isExportingPDF) return;
+    try {
+      setIsExportingPDF(true);
+      triggerHaptic('success');
+      await exportToPDF(exportPayload);
+      setDownloadSuccessMessage('✅ Advanced Executive PDF Report downloaded successfully!');
+      setTimeout(() => {
+        setDownloadSuccessMessage(null);
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('PDF export error:', err);
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   const handleExportExcel = () => {
@@ -122,18 +131,22 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
           {/* Option 1: PDF Document */}
           <div
             onClick={handleExportPDF}
-            className="p-4.5 rounded-2xl border border-outline-variant/20 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/20 hover:bg-surface-container-low transition-all duration-200 cursor-pointer group active:scale-[0.99] flex items-start gap-3.5"
+            className={`p-4.5 rounded-2xl border border-outline-variant/20 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/20 hover:bg-surface-container-low transition-all duration-200 cursor-pointer group active:scale-[0.99] flex items-start gap-3.5 ${
+              isExportingPDF ? 'opacity-70 pointer-events-none' : ''
+            }`}
           >
             <div className="w-11 h-11 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">picture_as_pdf</span>
+              <span className={`material-symbols-outlined text-[24px] ${isExportingPDF ? 'animate-spin' : ''}`}>
+                {isExportingPDF ? 'progress_activity' : 'picture_as_pdf'}
+              </span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  Executive PDF Report (.pdf)
+                  {isExportingPDF ? 'Generating PDF...' : 'Executive PDF Report (.pdf)'}
                 </h4>
                 <span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-700 dark:text-red-300 text-[10px] font-bold font-stat-label">
-                  Executive Report
+                  {isExportingPDF ? 'Processing' : 'Executive Report'}
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
@@ -141,7 +154,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
-              arrow_forward
+              {isExportingPDF ? 'hourglass_top' : 'arrow_forward'}
             </span>
           </div>
 
