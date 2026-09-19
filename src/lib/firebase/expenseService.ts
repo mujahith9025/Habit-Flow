@@ -3,12 +3,30 @@ import {
   getDoc,
   getDocs,
   deleteDoc,
+  query,
+  orderBy,
+  limit,
+  startAfter,
   getExpenseEntryDocRef,
   getExpenseEntriesCollectionRef,
   getExpenseSettingsDocRef,
+  type QueryDocumentSnapshot,
 } from './firestore';
 import { DailyMoneyEntry, ExpenseItem, ExpenseTrackerSettings } from '../../types/expense';
 import { formatDayMonth } from '../expenseCalculations';
+
+export interface PaginatedExpenseResult {
+  entries: DailyMoneyEntry[];
+  lastVisibleDoc: QueryDocumentSnapshot<DailyMoneyEntry> | null;
+  hasMore: boolean;
+  count: number;
+}
+
+export interface PaginationOptions {
+  pageSize?: number;
+  startAfterDoc?: QueryDocumentSnapshot<DailyMoneyEntry> | null;
+  direction?: 'desc' | 'asc';
+}
 
 export const DEFAULT_EXPENSE_SETTINGS: ExpenseTrackerSettings = {
   currencySymbol: '₹',
@@ -261,3 +279,37 @@ export async function seedSampleExpenseData(uid: string): Promise<void> {
 }
 
 export const seedGoogleNotesSampleData = seedSampleExpenseData;
+
+/**
+ * Fetches a bounded, paginated list of daily money entries using cursor pagination
+ */
+export async function getPaginatedExpenseEntries(
+  uid: string,
+  options: PaginationOptions = {}
+): Promise<PaginatedExpenseResult> {
+  const { pageSize = 20, startAfterDoc = null, direction = 'desc' } = options;
+  const colRef = getExpenseEntriesCollectionRef(uid);
+
+  const constrainedLimit = Math.min(Math.max(pageSize, 1), 100);
+
+  let q = query(colRef, orderBy('dateKey', direction), limit(constrainedLimit + 1));
+
+  if (startAfterDoc) {
+    q = query(colRef, orderBy('dateKey', direction), startAfter(startAfterDoc), limit(constrainedLimit + 1));
+  }
+
+  const snap = await getDocs(q);
+  const docs = snap.docs;
+  const hasMore = docs.length > constrainedLimit;
+  const paginatedDocs = hasMore ? docs.slice(0, constrainedLimit) : docs;
+  const entries = paginatedDocs.map((d) => d.data() as DailyMoneyEntry);
+  const lastVisibleDoc = paginatedDocs.length > 0 ? (paginatedDocs[paginatedDocs.length - 1] as QueryDocumentSnapshot<DailyMoneyEntry>) : null;
+
+  return {
+    entries,
+    lastVisibleDoc,
+    hasMore,
+    count: entries.length,
+  };
+}
+

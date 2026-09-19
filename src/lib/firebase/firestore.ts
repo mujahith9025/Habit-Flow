@@ -13,6 +13,11 @@ import {
   query,
   where,
   orderBy,
+  limit,
+  startAfter,
+  startAt,
+  endAt,
+  endBefore,
   onSnapshot,
   serverTimestamp,
   arrayUnion,
@@ -22,6 +27,8 @@ import {
   DocumentReference,
   DocumentData,
   Query,
+  QueryDocumentSnapshot,
+  DocumentSnapshot,
 } from 'firebase/firestore';
 import { app } from './config';
 import { Habit, HabitEntry, UserProfile, DailyMoneyEntry, ExpenseTrackerSettings } from '../../types';
@@ -100,10 +107,18 @@ export {
   query,
   where,
   orderBy,
+  limit,
+  startAfter,
+  startAt,
+  endAt,
+  endBefore,
   onSnapshot,
   serverTimestamp,
   arrayUnion,
   arrayRemove,
   type DocumentData,
   type Query,
+  type QueryDocumentSnapshot,
+  type DocumentSnapshot,
 };
+

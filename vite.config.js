@@ -137,11 +137,23 @@ export default defineConfig({
                         if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
                             return 'vendor-react';
                         }
-                        if (id.includes('firebase')) {
-                            return 'vendor-firebase';
+                        if (id.includes('firebase/auth') || id.includes('@firebase/auth')) {
+                            return 'vendor-firebase-auth';
+                        }
+                        if (id.includes('firebase/firestore') || id.includes('@firebase/firestore') || id.includes('firebase/storage')) {
+                            return 'vendor-firebase-db';
+                        }
+                        if (id.includes('firebase') || id.includes('@firebase')) {
+                            return 'vendor-firebase-core';
                         }
                         if (id.includes('lucide-react')) {
                             return 'vendor-icons';
+                        }
+                        if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('dompurify')) {
+                            return 'vendor-utils';
+                        }
+                        if (id.includes('canvas-confetti') || id.includes('html2canvas')) {
+                            return 'vendor-canvas';
                         }
                     }
                 },

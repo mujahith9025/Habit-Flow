@@ -2,14 +2,34 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  startAfter,
   doc,
   arrayUnion,
   arrayRemove,
   getHabitDocRef,
   getHabitsCollectionRef,
   getEntryDocRef,
+  getEntriesCollectionRef,
+  type QueryDocumentSnapshot,
 } from './firestore';
 import { Habit, HabitEntry, HabitFrequency } from '../../types';
+
+export interface PaginatedHabitEntriesResult {
+  entries: HabitEntry[];
+  lastVisibleDoc: QueryDocumentSnapshot<HabitEntry> | null;
+  hasMore: boolean;
+  count: number;
+}
+
+export interface HabitPaginationOptions {
+  pageSize?: number;
+  startAfterDoc?: QueryDocumentSnapshot<HabitEntry> | null;
+  direction?: 'desc' | 'asc';
+}
 
 /**
  * Calculates the week of the month (1-5) for a given YYYY-MM-DD date string
@@ -241,3 +261,38 @@ export async function seedSampleHabits(uid: string): Promise<Habit[]> {
   }
   return created;
 }
+
+/**
+ * Fetches a bounded, paginated list of habit entries using cursor pagination
+ */
+export async function getPaginatedHabitEntries(
+  uid: string,
+  habitId: string,
+  options: HabitPaginationOptions = {}
+): Promise<PaginatedHabitEntriesResult> {
+  const { pageSize = 30, startAfterDoc = null, direction = 'desc' } = options;
+  const colRef = getEntriesCollectionRef(uid, habitId);
+
+  const constrainedLimit = Math.min(Math.max(pageSize, 1), 100);
+
+  let q = query(colRef, orderBy('date', direction), limit(constrainedLimit + 1));
+
+  if (startAfterDoc) {
+    q = query(colRef, orderBy('date', direction), startAfter(startAfterDoc), limit(constrainedLimit + 1));
+  }
+
+  const snap = await getDocs(q);
+  const docs = snap.docs;
+  const hasMore = docs.length > constrainedLimit;
+  const paginatedDocs = hasMore ? docs.slice(0, constrainedLimit) : docs;
+  const entries = paginatedDocs.map((d) => d.data() as HabitEntry);
+  const lastVisibleDoc = paginatedDocs.length > 0 ? (paginatedDocs[paginatedDocs.length - 1] as QueryDocumentSnapshot<HabitEntry>) : null;
+
+  return {
+    entries,
+    lastVisibleDoc,
+    hasMore,
+    count: entries.length,
+  };
+}
+
