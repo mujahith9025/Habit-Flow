@@ -19,8 +19,15 @@ export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
   const { isDark, toggleTheme } = useTheme();
   const { user, firebaseUser, signOut } = useAuth();
-  const { isDiscreetMode, toggleDiscreetMode } = useExpensePrivacy();
   const { habits } = useHabits();
+  const {
+    isDiscreetMode,
+    toggleDiscreetMode,
+    autoLockTimeout,
+    setAutoLockTimeout,
+    isAutoLocked,
+    unlock,
+  } = useExpensePrivacy();
   const {
     allLedgerRows,
     monthSummaries,
@@ -212,7 +219,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Expense Privacy / Discreet Balance Mode Toggle Row */}
-          <div className="flex items-center justify-between p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 gap-4">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-[24px]">
@@ -233,6 +240,11 @@ export const SettingsPage: React.FC = () => {
                   >
                     {isDiscreetMode ? 'Masked 🔒' : 'Visible 👁️'}
                   </span>
+                  {isAutoLocked && (
+                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold font-stat-label bg-red-500/15 text-red-600 dark:text-red-400">
+                      Auto-Locked
+                    </span>
+                  )}
                 </div>
                 <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
                   Mask sensitive money figures and ledger balances in public places
@@ -240,17 +252,67 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={toggleDiscreetMode}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold font-stat-label border transition-all active:scale-95 cursor-pointer ${
-                isDiscreetMode
-                  ? 'bg-amber-500 text-white border-transparent shadow-xs'
-                  : 'bg-surface-container-low dark:bg-surface-container-high hover:bg-surface-container text-on-surface border-outline-variant/20'
-              }`}
-            >
-              {isDiscreetMode ? 'Enabled 🔒' : 'Disabled 👁️'}
-            </button>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              {isAutoLocked && (
+                <button
+                  type="button"
+                  onClick={unlock}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold font-stat-label bg-primary text-white shadow-xs active:scale-95 cursor-pointer"
+                >
+                  Unlock 🔓
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={toggleDiscreetMode}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold font-stat-label border transition-all active:scale-95 cursor-pointer ${
+                  isDiscreetMode
+                    ? 'bg-amber-500 text-white border-transparent shadow-xs'
+                    : 'bg-surface-container-low dark:bg-surface-container-high hover:bg-surface-container text-on-surface border-outline-variant/20'
+                }`}
+              >
+                {isDiscreetMode ? 'Enabled 🔒' : 'Disabled 👁️'}
+              </button>
+            </div>
+          </div>
+
+          {/* Privacy Inactivity Auto-Lock Timer Row */}
+          <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-low/30">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[24px]">timer_lock</span>
+              </div>
+              <div>
+                <h4 className="font-habit-name text-sm sm:text-base font-bold text-on-surface">
+                  Privacy Inactivity Auto-Lock
+                </h4>
+                <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                  Automatically blur financial balances after a period of user inactivity
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-auto">
+              {[
+                { label: 'Off', val: 0 as const },
+                { label: '1m', val: 60 as const },
+                { label: '2m', val: 120 as const },
+                { label: '5m', val: 300 as const },
+              ].map(({ label, val }) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setAutoLockTimeout(val)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-stat-label transition-all active:scale-95 cursor-pointer ${
+                    autoLockTimeout === val
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'bg-surface-container-low dark:bg-surface-container-high hover:bg-surface-container text-on-surface-variant border border-outline-variant/20'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>

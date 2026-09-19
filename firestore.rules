@@ -2,17 +2,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Strict User Isolation: Authenticated users can ONLY read and write their own data
+    // Auth Check Helper
+    function isAuthenticated(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // 1. User Profile Document
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAuthenticated(userId);
+      allow write: if isAuthenticated(userId);
       
-      // All user subcollections (habits, entries, expense_entries, expense_settings, etc.)
+      // 2. Habits Collection (Schema Validation)
+      match /habits/{habitId} {
+        allow read: if isAuthenticated(userId);
+        allow create, update: if isAuthenticated(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 120
+          && (!('goalCount' in request.resource.data) || (request.resource.data.goalCount is number && request.resource.data.goalCount >= 1 && request.resource.data.goalCount <= 100))
+          && (!('frequency' in request.resource.data) || (request.resource.data.frequency in ['daily', 'weekly', 'monthly']))
+          && (!('archived' in request.resource.data) || request.resource.data.archived is bool);
+        allow delete: if isAuthenticated(userId);
+        
+        // 3. Habit Entries Subcollection (Schema Validation)
+        match /entries/{dateKey} {
+          allow read: if isAuthenticated(userId);
+          allow create, update: if isAuthenticated(userId)
+            && request.resource.data.date is string
+            && request.resource.data.completed is bool;
+          allow delete: if isAuthenticated(userId);
+        }
+      }
+
+      // 4. Financial / Expense Entries Collection (Schema Validation)
+      match /expense_entries/{dateKey} {
+        allow read: if isAuthenticated(userId);
+        allow create, update: if isAuthenticated(userId)
+          && request.resource.data.dateKey is string
+          && request.resource.data.savingsAmount is number
+          && request.resource.data.savingsAmount >= 0
+          && request.resource.data.totalExpenses is number
+          && request.resource.data.totalExpenses >= 0;
+        allow delete: if isAuthenticated(userId);
+      }
+
+      // 5. Expense Settings Configuration
+      match /expense_settings/{settingId} {
+        allow read: if isAuthenticated(userId);
+        allow create, update: if isAuthenticated(userId)
+          && request.resource.data.startingBalance is number
+          && (!('defaultDailySavings' in request.resource.data) || (request.resource.data.defaultDailySavings is number && request.resource.data.defaultDailySavings >= 0));
+        allow delete: if isAuthenticated(userId);
+      }
+
+      // Catch-all for any other nested subcollections under the authenticated user
       match /{subcollection=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isAuthenticated(userId);
       }
     }
     
-    // Explicitly deny access to any other collections or documents by default
+    // Explicitly deny access to any other collections by default
     match /{document=**} {
       allow read, write: if false;
     }
