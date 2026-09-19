@@ -12,8 +12,10 @@ import { getNotificationSettings } from '../lib/notificationService';
 import { NotificationSettings } from '../types/notification';
 import { NotificationDetailsModal } from '../components/settings/NotificationDetailsModal';
 import { ExportDataModal } from '../components/settings/ExportDataModal';
+import { ImportBackupModal } from '../components/settings/ImportBackupModal';
 import { DeleteAccountModal } from '../components/settings/DeleteAccountModal';
 import { useExpensePrivacy } from '../context/ExpensePrivacyContext';
+import { exportFullAccountBackup } from '../lib/firebase/backupService';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
@@ -42,7 +44,9 @@ export const SettingsPage: React.FC = () => {
   );
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [isExportingFullBackup, setIsExportingFullBackup] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
@@ -67,6 +71,19 @@ export const SettingsPage: React.FC = () => {
     }, 800);
   };
 
+  const handleExportFullBackup = async () => {
+    if (!user?.uid || isExportingFullBackup) return;
+    try {
+      setIsExportingFullBackup(true);
+      triggerHaptic('success');
+      await exportFullAccountBackup(user.uid);
+    } catch (err) {
+      console.error('Failed to export full account backup:', err);
+    } finally {
+      setIsExportingFullBackup(false);
+    }
+  };
+
   const isPushActive =
     notifSettings.enabled && notifSettings.permissionStatus === 'granted';
 
@@ -82,8 +99,8 @@ export const SettingsPage: React.FC = () => {
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </Link>
         <div>
-          <h2 className="font-section-header text-xl sm:text-2xl font-bold text-on-surface">
-            Settings & Preferences
+          <h2 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface tracking-tight">
+            Settings & Account
           </h2>
           <p className="font-body-text text-xs text-on-surface-variant">
             Manage your daily reminders, alerts, appearance, and account
@@ -320,7 +337,7 @@ export const SettingsPage: React.FC = () => {
       {/* 3. Account Management & Data */}
       <section className="space-y-3">
         <h3 className="font-section-header text-base font-bold text-on-surface px-1">
-          Account & Data
+          Account & Data Sovereignty
         </h3>
 
         <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/10">
@@ -340,14 +357,80 @@ export const SettingsPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-habit-name text-sm font-bold text-on-surface block">
-                    Export Habit Data
+                    Export Habit & Financial Data
                   </span>
                   <span className="px-2 py-0.2 rounded-full bg-primary/10 text-primary text-[10px] font-bold font-stat-label">
-                    PDF / Excel / JSON
+                    PDF / Excel / CSV
                   </span>
                 </div>
                 <span className="font-body-text text-xs text-on-surface-variant">
-                  Download reports & spreadsheets as PDF, Excel, or JSON
+                  Download executive reports and spreadsheets
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">
+              chevron_right
+            </span>
+          </button>
+
+          {/* Full Account Backup (JSON Snapshot) */}
+          <button
+            type="button"
+            onClick={handleExportFullBackup}
+            disabled={isExportingFullBackup}
+            className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-surface-container-low transition-colors text-left group cursor-pointer disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-secondary-container/40 text-secondary flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[22px]">
+                  {isExportingFullBackup ? 'sync' : 'backup'}
+                </span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-habit-name text-sm font-bold text-on-surface block">
+                    Download Full Account Backup
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold font-stat-label">
+                    Full JSON Snapshot
+                  </span>
+                </div>
+                <span className="font-body-text text-xs text-on-surface-variant">
+                  {isExportingFullBackup
+                    ? 'Exporting complete database...'
+                    : 'Download complete offline snapshot with habits, check-in history & ledger'}
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">
+              download
+            </span>
+          </button>
+
+          {/* Restore Account Backup */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setIsImportModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-surface-container-low transition-colors text-left group cursor-pointer"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[22px]">cloud_upload</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-habit-name text-sm font-bold text-on-surface block">
+                    Restore from Backup
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full bg-primary/10 text-primary text-[10px] font-bold font-stat-label">
+                    Import JSON
+                  </span>
+                </div>
+                <span className="font-body-text text-xs text-on-surface-variant">
+                  Restore habits, check-ins, and financial history from a backup file
                 </span>
               </div>
             </div>
@@ -432,7 +515,7 @@ export const SettingsPage: React.FC = () => {
         onUpdateSettings={(updated) => setNotifSettings(updated)}
       />
 
-      {/* 6. Export Data Format Choice Modal (PDF / Excel / JSON) */}
+      {/* 6. Export Data Format Choice Modal (PDF / Excel / CSV) */}
       <ExportDataModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -444,7 +527,14 @@ export const SettingsPage: React.FC = () => {
         expenseSettings={expenseSettings}
       />
 
-      {/* 7. GDPR / CCPA Right to Erasure Account Deletion Modal */}
+      {/* 7. Restore Account Backup Modal */}
+      <ImportBackupModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => window.location.reload()}
+      />
+
+      {/* 8. GDPR / CCPA Right to Erasure Account Deletion Modal */}
       <DeleteAccountModal
         isOpen={isDeleteAccountModalOpen}
         onClose={() => setIsDeleteAccountModalOpen(false)}

@@ -5,12 +5,18 @@ import { AuthProvider } from './context/AuthContext';
 import { ExpensePrivacyProvider } from './context/ExpensePrivacyContext';
 import { AppRoutes } from './routes/AppRoutes';
 import { useNotificationScheduler } from './hooks/useNotificationScheduler';
+import { OfflineSyncBanner } from './components/ui/OfflineSyncBanner';
 
 const AppContent: React.FC = () => {
   // Mount background notification scheduler
   useNotificationScheduler();
 
-  return <AppRoutes />;
+  return (
+    <>
+      <AppRoutes />
+      <OfflineSyncBanner />
+    </>
+  );
 };
 
 export const App: React.FC = () => {
