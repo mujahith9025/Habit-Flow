@@ -16,6 +16,7 @@ import { ImportBackupModal } from '../components/settings/ImportBackupModal';
 import { DeleteAccountModal } from '../components/settings/DeleteAccountModal';
 import { useExpensePrivacy } from '../context/ExpensePrivacyContext';
 import { exportFullAccountBackup } from '../lib/firebase/backupService';
+import { CloudSyncStatus } from '../components/ui/CloudSyncStatus';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
@@ -47,7 +48,6 @@ export const SettingsPage: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const [isExportingFullBackup, setIsExportingFullBackup] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     setNotifSettings(getNotificationSettings());
@@ -61,14 +61,6 @@ export const SettingsPage: React.FC = () => {
       console.error('Failed to sign out:', err);
       navigate('/login');
     }
-  };
-
-  const handleManualSync = () => {
-    setIsSyncing(true);
-    triggerHaptic('light');
-    setTimeout(() => {
-      setIsSyncing(false);
-    }, 800);
   };
 
   const handleExportFullBackup = async () => {
@@ -140,23 +132,10 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={handleManualSync}
-          disabled={isSyncing}
-          className="px-4 py-2 rounded-xl text-xs font-semibold font-stat-label bg-surface-container-low dark:bg-surface-container-high hover:bg-surface-container text-on-surface border border-outline-variant/20 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-        >
-          <span
-            className={`material-symbols-outlined text-[16px] text-primary ${
-              isSyncing ? 'animate-spin' : ''
-            }`}
-          >
-            sync
-          </span>
-          <span>{isSyncing ? 'Syncing...' : 'Sync Cloud'}</span>
-        </button>
       </section>
+
+      {/* 2. Cross-Device Real-Time Cloud Sync Card */}
+      <CloudSyncStatus variant="full" />
 
       {/* 2. Preferences & Features */}
       <section className="space-y-3">

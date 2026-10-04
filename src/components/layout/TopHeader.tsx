@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { CloudSyncStatus } from '../ui/CloudSyncStatus';
 
 export const TopHeader: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -25,7 +26,9 @@ export const TopHeader: React.FC = () => {
         </Link>
 
         {/* Right: Actions & User Profile in the Right Corner */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Real-Time Cloud Sync Verification Indicator */}
+          <CloudSyncStatus variant="header" />
           {/* How to Install App / PWA Install Guide Link (Hidden if already installed) */}
           {!isInstalled && (
             <Link
