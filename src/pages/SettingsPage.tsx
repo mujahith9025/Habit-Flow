@@ -17,6 +17,8 @@ import { DeleteAccountModal } from '../components/settings/DeleteAccountModal';
 import { useExpensePrivacy } from '../context/ExpensePrivacyContext';
 import { exportFullAccountBackup } from '../lib/firebase/backupService';
 import { CloudSyncStatus } from '../components/ui/CloudSyncStatus';
+import { DeviceManagerModal } from '../components/settings/DeviceManagerModal';
+import { SecuritySettingsModal } from '../components/settings/SecuritySettingsModal';
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useUserProfile();
@@ -47,6 +49,8 @@ export const SettingsPage: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isExportingFullBackup, setIsExportingFullBackup] = useState(false);
 
   useEffect(() => {
@@ -418,6 +422,70 @@ export const SettingsPage: React.FC = () => {
             </span>
           </button>
 
+          {/* Active Devices & Remote Revocation */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setIsDeviceModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-surface-container-low transition-colors text-left group cursor-pointer"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[22px]">devices</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-habit-name text-sm font-bold text-on-surface block">
+                    Active Devices & Sessions
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full bg-primary/10 text-primary text-[10px] font-bold font-stat-label">
+                    Remote Sign Out
+                  </span>
+                </div>
+                <span className="font-body-text text-xs text-on-surface-variant">
+                  Manage all active phones, tablets, and PCs logged into this account
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">
+              chevron_right
+            </span>
+          </button>
+
+          {/* Zero-Knowledge Encryption & Cloud Security */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setIsSecurityModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-surface-container-low transition-colors text-left group cursor-pointer"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[22px]">enhanced_encryption</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-habit-name text-sm font-bold text-on-surface block">
+                    Zero-Knowledge Encryption & Security
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold font-stat-label">
+                    AES-GCM 256-bit
+                  </span>
+                </div>
+                <span className="font-body-text text-xs text-on-surface-variant">
+                  Client-side note encryption, Firebase App Check, and API restrictions
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">
+              chevron_right
+            </span>
+          </button>
+
           <Link
             to="/debug"
             className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-surface-container-low transition-colors text-left group cursor-pointer"
@@ -513,7 +581,19 @@ export const SettingsPage: React.FC = () => {
         onSuccess={() => window.location.reload()}
       />
 
-      {/* 8. GDPR / CCPA Right to Erasure Account Deletion Modal */}
+      {/* 8. Active Devices & Remote Revocation Modal */}
+      <DeviceManagerModal
+        isOpen={isDeviceModalOpen}
+        onClose={() => setIsDeviceModalOpen(false)}
+      />
+
+      {/* 9. Data Privacy & Zero-Knowledge Security Settings Modal */}
+      <SecuritySettingsModal
+        isOpen={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+      />
+
+      {/* 10. GDPR / CCPA Right to Erasure Account Deletion Modal */}
       <DeleteAccountModal
         isOpen={isDeleteAccountModalOpen}
         onClose={() => setIsDeleteAccountModalOpen(false)}
