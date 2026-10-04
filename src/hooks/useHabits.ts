@@ -39,6 +39,16 @@ export interface UseHabitsResult {
   seedHabits: () => Promise<Habit[]>;
 }
 
+const getCachedHabits = (uid?: string): Habit[] => {
+  if (!uid) return [];
+  try {
+    const raw = localStorage.getItem(`habitflow_cached_habits_${uid}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
 /**
  * Real-time subscription to the user's habits collection
  * users/{uid}/habits (ordered by sortOrder, optionally filtered by frequency)
@@ -48,8 +58,18 @@ export function useHabits(
   includeArchived: boolean = false
 ): UseHabitsResult {
   const { user } = useAuth();
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [habits, setHabits] = useState<Habit[]>(() => {
+    const initialCached = getCachedHabits(user?.uid);
+    let filtered = initialCached;
+    if (!includeArchived) {
+      filtered = filtered.filter((h) => !h.archived);
+    }
+    if (frequencyFilter && frequencyFilter !== 'all') {
+      filtered = filtered.filter((h) => h.frequency === frequencyFilter);
+    }
+    return filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  });
+  const [loading, setLoading] = useState<boolean>(() => habits.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -60,7 +80,11 @@ export function useHabits(
       return;
     }
 
-    setLoading(true);
+    const cached = getCachedHabits(user.uid);
+    if (cached.length === 0) {
+      setLoading(true);
+    }
+
     const habitsCol = getHabitsCollectionRef(user.uid);
     const q = query(habitsCol);
 
@@ -71,6 +95,10 @@ export function useHabits(
         snapshot.forEach((docSnap) => {
           habitList.push(docSnap.data());
         });
+
+        try {
+          localStorage.setItem(`habitflow_cached_habits_${user.uid}`, JSON.stringify(habitList));
+        } catch {}
 
         // Client-side filtering & sorting
         let filtered = habitList;
