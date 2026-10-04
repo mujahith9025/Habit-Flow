@@ -41,37 +41,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const unsubscribe = onAuthStateChanged(
         auth,
-        async (fbUser: User | null) => {
+        (fbUser: User | null) => {
           setFirebaseUser(fbUser);
           if (fbUser) {
-            try {
-              // Retrieve Firestore profile
-              const profile = await getUserProfile(fbUser.uid);
-              if (profile) {
-                setUser(profile);
-              } else {
-                setUser({
-                  uid: fbUser.uid,
-                  name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Habit Flow User',
-                  email: fbUser.email || '',
-                  photoURL: fbUser.photoURL || '',
-                  createdAt: new Date().toISOString(),
-                  lastLoginAt: new Date().toISOString(),
-                  authProvider: 'password',
-                });
-              }
-            } catch (e) {
-              console.warn('Error loading user profile:', e);
-              setUser({
-                uid: fbUser.uid,
-                name: fbUser.displayName || 'Habit Flow User',
-                email: fbUser.email || '',
-                photoURL: fbUser.photoURL || '',
-                createdAt: new Date().toISOString(),
-                lastLoginAt: new Date().toISOString(),
-                authProvider: 'password',
+            // Instant 0ms optimistic profile from local Firebase Auth session
+            const baseProfile: UserProfile = {
+              uid: fbUser.uid,
+              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Habit Flow User',
+              email: fbUser.email || '',
+              photoURL: fbUser.photoURL || '',
+              createdAt: fbUser.metadata.creationTime || new Date().toISOString(),
+              lastLoginAt: fbUser.metadata.lastSignInTime || new Date().toISOString(),
+              authProvider: fbUser.providerData[0]?.providerId.includes('google') ? 'google' : 'password',
+            };
+            setUser((prev) => (prev?.uid === fbUser.uid ? { ...baseProfile, ...prev } : baseProfile));
+            setLoading(false); // Unblock rendering immediately!
+
+            // Asynchronously fetch extended Firestore profile in the background
+            getUserProfile(fbUser.uid)
+              .then((profile) => {
+                if (profile) {
+                  setUser((prev) => ({ ...prev, ...profile }));
+                }
+              })
+              .catch((e) => {
+                console.debug('Background profile sync notice:', e);
               });
-            }
           } else {
             // Check if demo user is active
             const demo = localStorage.getItem(DEMO_STORAGE_KEY);
@@ -84,8 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
               setUser(null);
             }
+            setLoading(false);
           }
-          setLoading(false);
         },
         (err) => {
           console.warn('Firebase Auth State warning:', err);
