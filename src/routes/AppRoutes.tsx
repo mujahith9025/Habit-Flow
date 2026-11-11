@@ -12,7 +12,6 @@ const LoginPage = lazy(() => import('../pages/LoginPage').then((m) => ({ default
 const SignUpPage = lazy(() => import('../pages/SignUpPage').then((m) => ({ default: m.SignUpPage })));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
-const ExpenseTrackerPage = lazy(() => import('../pages/ExpenseTrackerPage').then((m) => ({ default: m.ExpenseTrackerPage })));
 const InstallAppPage = lazy(() => import('../pages/InstallAppPage').then((m) => ({ default: m.InstallAppPage })));
 const DataLayerDebugPage = lazy(() => import('../pages/DataLayerDebugPage').then((m) => ({ default: m.DataLayerDebugPage })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
@@ -38,10 +37,10 @@ export const AppRoutes: React.FC = () => {
             <Route path="/habit" element={<HabitDetailPage />} />
             <Route path="/habits" element={<HabitDetailPage />} />
             <Route path="/habit/:id" element={<HabitDetailPage />} />
-            <Route path="/expense" element={<ExpenseTrackerPage />} />
-            <Route path="/expenses" element={<ExpenseTrackerPage />} />
-            <Route path="/savings" element={<ExpenseTrackerPage />} />
-            <Route path="/money" element={<ExpenseTrackerPage />} />
+            <Route path="/expense" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/expenses" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/savings" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/money" element={<Navigate to="/dashboard" replace />} />
             <Route path="/setting" element={<SettingsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/install" element={<InstallAppPage />} />

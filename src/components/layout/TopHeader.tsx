@@ -53,15 +53,6 @@ export const TopHeader: React.FC = () => {
             </span>
           </button>
 
-          {/* Money Savings & Expense Tracker Header Shortcut */}
-          <Link
-            to="/expenses"
-            title="Money Savings & Expense Tracker"
-            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-primary dark:text-primary-fixed-dim rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[22px]">account_balance_wallet</span>
-          </Link>
-
           {/* User Profile Avatar in the Right Corner linking to /settings */}
           {user ? (
             <Link

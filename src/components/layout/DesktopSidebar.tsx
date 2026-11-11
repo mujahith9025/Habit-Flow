@@ -47,10 +47,16 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   });
   const categories = Object.keys(categoryCounts).sort();
 
-  const navItems = [
+  interface NavItem {
+    to: string;
+    label: string;
+    icon: string;
+    badge?: string;
+  }
+
+  const navItems: NavItem[] = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/habit', label: 'Habit View', icon: 'task_alt' },
-    { to: '/expenses', label: 'Expense Tracker', icon: 'account_balance_wallet', badge: 'Savings' },
     ...(!isInstalled ? [{ to: '/install', label: 'Install App', icon: 'install_mobile' }] : []),
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];
