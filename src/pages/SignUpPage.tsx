@@ -78,7 +78,6 @@ export const SignUpPage: React.FC = () => {
 
   return (
     <AuthLayout
-      iconName="calendar_today"
       title="Create Account"
       subtitle="Join HabitFlow to start your journey."
     >

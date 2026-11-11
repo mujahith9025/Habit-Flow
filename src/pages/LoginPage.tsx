@@ -70,7 +70,6 @@ export const LoginPage: React.FC = () => {
 
   return (
     <AuthLayout
-      iconName="energy_savings_leaf"
       title="HabitFlow"
       subtitle="Build better habits, one day at a time"
     >

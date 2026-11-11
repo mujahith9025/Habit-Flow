@@ -17,6 +17,7 @@ import { exportFullAccountBackup } from '../lib/firebase/backupService';
 import { CloudSyncStatus } from '../components/ui/CloudSyncStatus';
 import { DeviceManagerModal } from '../components/settings/DeviceManagerModal';
 import { SecuritySettingsModal } from '../components/settings/SecuritySettingsModal';
+import { HabitFlowLogo } from '../components/ui/HabitFlowLogo';
 
 export type SettingsGroupKey =
   | 'profile'
@@ -626,8 +627,8 @@ export const SettingsPage: React.FC = () => {
 
             <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 border border-outline-variant/20 shadow-soft space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-outline-variant/15">
-                <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-bold text-lg shadow-sm">
-                  <span className="material-symbols-outlined text-[26px]">energy_savings_leaf</span>
+                <div className="shrink-0">
+                  <HabitFlowLogo size={46} />
                 </div>
                 <div>
                   <h4 className="font-app-title text-base font-bold text-on-surface">HabitFlow v0.1.0</h4>

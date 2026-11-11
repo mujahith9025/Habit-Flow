@@ -4,6 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { CloudSyncStatus } from '../ui/CloudSyncStatus';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 export const TopHeader: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -15,11 +16,7 @@ export const TopHeader: React.FC = () => {
       <div className="flex items-center justify-between px-container-padding py-3 max-w-7xl mx-auto">
         {/* Left: Branding & App Logo */}
         <Link to="/dashboard" className="flex items-center gap-2.5 active:scale-98 transition-transform">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-soft">
-            <span className="material-symbols-outlined text-[20px] sm:text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-              energy_savings_leaf
-            </span>
-          </div>
+          <HabitFlowLogo size={32} />
           <span className="font-app-title text-xl sm:text-2xl font-bold text-primary dark:text-primary-fixed-dim">
             HabitFlow
           </span>

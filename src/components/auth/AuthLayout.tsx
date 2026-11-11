@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../hooks/useTheme';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({
   children,
-  iconName = 'energy_savings_leaf',
+  iconName,
   title,
   subtitle,
 }) => {
@@ -41,11 +42,17 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
       <main className="w-full max-w-md mx-auto my-auto z-10 relative pt-8 pb-4">
         {/* Header / Identity */}
         <header className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface-container-lowest dark:bg-surface-container-lowest text-primary mb-4 shadow-soft border border-outline-variant/30">
-            <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-              {iconName}
-            </span>
-          </div>
+          {iconName && iconName !== 'energy_savings_leaf' ? (
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface-container-lowest dark:bg-surface-container-lowest text-primary mb-4 shadow-soft border border-outline-variant/30">
+              <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                {iconName}
+              </span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center justify-center mb-4">
+              <HabitFlowLogo size={64} />
+            </div>
+          )}
           <h1 className="font-app-title text-2xl sm:text-3xl font-bold text-on-surface mb-1.5">
             {title}
           </h1>

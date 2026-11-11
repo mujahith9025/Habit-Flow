@@ -1,13 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
-    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#64b5f6" />
-      <stop offset="100%" stop-color="#006398" />
+    <linearGradient id="hfBg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E2024" />
+      <stop offset="100%" stop-color="#141517" />
+    </linearGradient>
+    <linearGradient id="hfRibbon" x1="24" y1="90" x2="96" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D5A34" />
+      <stop offset="50%" stop-color="#4E8A56" />
+      <stop offset="100%" stop-color="#88C490" />
+    </linearGradient>
+    <linearGradient id="hfGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F2D594" />
+      <stop offset="100%" stop-color="#D4A373" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="28" fill="url(#primaryGrad)" />
-  <!-- Calming plant / lotus / momentum leaf motif -->
-  <path d="M50 20 C50 40 30 52 30 68 C30 78 38 84 50 84 C62 84 70 78 70 68 C70 52 50 40 50 20 Z" fill="#ffffff" opacity="0.95" />
-  <path d="M50 35 C50 50 38 60 38 72 C38 78 43 82 50 82 C57 82 62 78 62 72 C62 60 50 50 50 35 Z" fill="#64b5f6" opacity="0.3" />
-  <circle cx="50" cy="70" r="4" fill="#286b33" />
+  <!-- Squircle Base with hairline border -->
+  <rect width="120" height="120" rx="32" fill="url(#hfBg)" />
+  <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="31.25" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" />
+  
+  <!-- Continuous Habit Loop into Ascending Checkmark Streak -->
+  <path d="M 32 60 C 32 46 44 36 58 36 C 72 36 80 46 76 60 C 72 74 60 84 48 84 C 36 84 28 74 34 62 L 52 80 C 56 84 62 84 66 80 L 96 42" 
+        stroke="url(#hfRibbon)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Today Focus Streak Dot -->
+  <circle cx="96" cy="42" r="5.5" fill="url(#hfGold)" />
 </svg>

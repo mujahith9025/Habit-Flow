@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { HabitFlowLogo } from '../components/ui/HabitFlowLogo';
 
 export const InstallAppPage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,17 +45,22 @@ export const InstallAppPage: React.FC = () => {
       {/* Hero Banner with Direct Action */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/15 via-surface-container-lowest to-secondary/15 dark:from-primary/20 dark:via-surface-container dark:to-secondary/20 p-6 sm:p-8 border border-outline-variant/20 shadow-soft">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-3 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold font-stat-label">
-              <span className="material-symbols-outlined text-[16px]">verified</span>
-              Progressive Web App (PWA)
+          <div className="flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
+            <div className="shrink-0 drop-shadow-md">
+              <HabitFlowLogo size={60} />
             </div>
-            <h2 className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface leading-tight">
-              Get the Full App Experience
-            </h2>
-            <p className="font-body-text text-xs sm:text-sm text-on-surface-variant max-w-xl">
-              Install HabitFlow directly to your home screen. No app store downloads, zero ads, instant offline tracking, and automatic cloud sync.
-            </p>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold font-stat-label">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                Progressive Web App (PWA)
+              </div>
+              <h2 className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface leading-tight">
+                Get the Full App Experience
+              </h2>
+              <p className="font-body-text text-xs sm:text-sm text-on-surface-variant max-w-xl">
+                Install HabitFlow directly to your home screen. No app store downloads, zero ads, instant offline tracking, and automatic cloud sync.
+              </p>
+            </div>
           </div>
 
           {/* Quick Install Action Card */}

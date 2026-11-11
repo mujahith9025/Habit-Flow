@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useHabits } from '../../hooks/useHabits';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 interface DesktopSidebarProps {
   isCollapsed?: boolean;
@@ -91,13 +92,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             onClick={() => navigate('/dashboard')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-soft shrink-0 group-hover:scale-105 transition-transform">
-              <span
-                className="material-symbols-outlined text-[24px]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                energy_savings_leaf
-              </span>
+            <div className="shrink-0 group-hover:scale-105 transition-transform">
+              <HabitFlowLogo size={40} />
             </div>
             {!isCollapsed && (
               <div className="animate-fadeIn truncate">
