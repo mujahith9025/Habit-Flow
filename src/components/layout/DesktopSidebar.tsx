@@ -143,13 +143,13 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               to={item.to}
               title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
-                `flex items-center rounded-xl font-habit-name text-sm transition-all duration-200 relative group ${
+                `flex items-center rounded-full font-habit-name text-sm transition-all duration-200 relative group ${
                   isCollapsed
                     ? 'w-11 h-11 mx-auto justify-center'
                     : 'gap-3.5 px-4 py-2.5'
                 } ${
                   isActive
-                    ? 'bg-secondary-container text-on-secondary-container font-semibold shadow-sm'
+                    ? 'bg-primary text-on-primary font-semibold shadow-soft'
                     : 'text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high hover:text-on-surface'
                 }`
               }

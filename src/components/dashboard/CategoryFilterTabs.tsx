@@ -27,17 +27,17 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
   const categories = Object.keys(categoryCounts).sort();
 
   return (
-    <div className="w-full bg-surface-container-lowest dark:bg-surface-container p-3 sm:p-4 rounded-2xl border border-outline-variant/15 shadow-soft">
+    <div className="w-full bg-surface-container-lowest dark:bg-surface-container-lowest p-3.5 sm:p-4 rounded-3xl border border-outline-variant/40 shadow-soft">
       <div className="flex items-center justify-between gap-2 mb-2.5 px-1">
         <div className="flex items-center gap-2">
           <span
             className="material-symbols-outlined text-primary text-[20px]"
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
-            dashboard_customize
+            category
           </span>
           <h3 className="font-section-header text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wider">
-            Tracker Boards
+            Current Projects & Boards
           </h3>
           <span className="text-[11px] font-stat-label text-on-surface-variant font-medium hidden xs:inline">
             • Specific Category
@@ -47,7 +47,7 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
         <button
           type="button"
           onClick={onAddNewCategory}
-          className="text-xs font-semibold text-primary hover:text-primary-fixed-dim hover:underline flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+          className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           <span>Add Habit</span>
@@ -65,19 +65,19 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
               key={cat}
               type="button"
               onClick={() => onSelectCategory(cat)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer ${
                 isSelected
                   ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-                  : 'bg-surface-container-low dark:bg-surface-container-high/50 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+                  : 'bg-surface-container-low dark:bg-surface-container-low text-on-surface hover:bg-surface-container border border-outline-variant/30'
               }`}
             >
               <span>{getCategoryIcon(cat)}</span>
               <span>{cat}</span>
               <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                   isSelected
                     ? 'bg-white/20 text-white'
-                    : 'bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface-variant'
+                    : 'bg-surface-container-high dark:bg-surface-container text-on-surface-variant'
                 }`}
               >
                 {count}

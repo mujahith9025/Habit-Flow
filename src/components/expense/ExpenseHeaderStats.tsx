@@ -25,7 +25,7 @@ export const ExpenseHeaderStats: React.FC<ExpenseHeaderStatsProps> = ({
   const subtitleLabel = activeSummary ? `${activeSummary.monthTitle} Cumulative Savings` : 'All-Time Cumulative Savings';
 
   return (
-    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 relative overflow-hidden">
+    <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 shadow-soft border border-outline-variant/30 relative overflow-hidden">
       {/* Decorative ambient gradient backdrop */}
       <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-secondary-container/15 rounded-full blur-3xl pointer-events-none" />

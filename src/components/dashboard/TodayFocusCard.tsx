@@ -126,24 +126,24 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
   return (
     <div
-      className={`bg-surface-container-lowest dark:bg-surface-container shadow-soft border border-outline-variant/15 rounded-2xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden min-h-[220px] transition-all duration-300 ${className}`}
+      className={`bg-surface-container-lowest dark:bg-surface-container-lowest shadow-soft border border-outline-variant/40 rounded-3xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden min-h-[220px] transition-all duration-300 ${className}`}
     >
       {/* Decorative background accent */}
-      <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-secondary/10 rounded-full blur-2xl pointer-events-none" />
 
       {/* Card Header with Quick Finish All Button */}
       <div>
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
           <div className="flex items-center gap-2">
             <span
               className="material-symbols-outlined text-primary text-[20px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
-              bolt
+              check_circle
             </span>
-            <span className="font-stat-label text-xs font-black text-primary dark:text-primary-fixed-dim uppercase tracking-wider">
-              Today's Focus {categoryName ? `• ${categoryName}` : ''}
-            </span>
+            <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
+              Today's Tasks {categoryName ? `• ${categoryName}` : ''}
+            </h3>
           </div>
 
           <div className="flex items-center gap-2">
@@ -154,26 +154,26 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                 onClick={handleQuickFinishAll}
                 disabled={isBatchProcessing}
                 title={`Mark all ${remainingCount} remaining habits in ${categoryName || 'this board'} as done for today`}
-                className="group inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-primary to-primary-container hover:from-primary-focus hover:to-primary text-on-primary text-[11px] font-black font-stat-label shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-on-primary text-[11px] font-semibold font-stat-label shadow-soft hover:scale-102 active:scale-95 transition-all cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[15px] group-hover:animate-bounce">
-                  task_alt
+                <span className="material-symbols-outlined text-[14px]">
+                  done_all
                 </span>
-                <span>⚡ Finish All ({remainingCount} left)</span>
+                <span>Finish All ({remainingCount})</span>
               </button>
             )}
 
             {/* Progress Pill */}
             {totalCount > 0 && (
               <span
-                className={`text-[11px] font-stat-label font-black px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
+                className={`text-[11px] font-stat-label font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
                   allDone
                     ? 'bg-secondary-container text-on-secondary-container'
-                    : 'bg-surface-container-high dark:bg-surface-container-highest text-on-surface'
+                    : 'bg-surface-container-low dark:bg-surface-container-high text-on-surface-variant'
                 }`}
               >
-                {allDone && <span className="material-symbols-outlined text-[14px]">done_all</span>}
-                {completedCount}/{totalCount} Done ({percentDone}%)
+                {allDone && <span className="material-symbols-outlined text-[13px]">verified</span>}
+                {completedCount}/{totalCount} ({percentDone}%)
               </span>
             )}
           </div>
@@ -224,48 +224,53 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                 <div
                   key={habit.id}
                   onClick={() => handleToggle(habit.id)}
-                  className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer active:scale-[0.99] select-none ${
+                  className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer active:scale-[0.99] select-none ${
                     done
-                      ? 'bg-secondary-container/15 dark:bg-secondary-container/10 border-secondary/30'
-                      : 'bg-surface-container-low dark:bg-surface-container-high/30 border-outline-variant/20 hover:border-primary/40'
+                      ? 'bg-surface-container-low/60 dark:bg-surface-container-low/30 border-outline-variant/30'
+                      : 'bg-surface-container-lowest dark:bg-surface-container-low border-outline-variant/40 hover:border-primary/40 shadow-xs'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-3">
                     {/* Left: Checkbox + Habit info */}
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {/* Custom 1-tap Checkbox */}
+                      {/* Circular 1-tap Checkbox matching Reference Tasks */}
                       <button
                         type="button"
                         aria-label={`Mark ${habit.name} ${done ? 'incomplete' : 'complete'}`}
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0 ${
                           done
-                            ? 'bg-secondary text-on-secondary shadow-sm scale-105'
-                            : 'border-2 border-outline-variant/50 hover:border-primary bg-surface-container-lowest dark:bg-surface-container'
+                            ? 'bg-primary text-on-primary shadow-xs scale-105'
+                            : 'border-2 border-outline-variant/70 hover:border-primary bg-transparent'
                         }`}
                       >
                         {done && (
-                          <span className="material-symbols-outlined text-[16px] font-bold animate-scaleUp">
+                          <span className="material-symbols-outlined text-[15px] font-bold animate-scaleUp">
                             check
                           </span>
                         )}
                       </button>
 
-                      {/* Habit Name */}
+                      {/* Habit Name & Subtext */}
                       <div className="min-w-0 flex-1">
                         <span
                           className={`font-habit-name text-xs sm:text-sm font-semibold truncate block transition-colors ${
                             done
-                              ? 'text-on-surface-variant line-through opacity-80'
+                              ? 'text-on-surface-variant line-through opacity-70'
                               : 'text-on-surface'
                           }`}
                         >
                           {habit.name}
                         </span>
+                        <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant mt-0.5">
+                          <span className="capitalize">{habit.category || 'General'}</span>
+                          <span>•</span>
+                          <span className="capitalize">{habit.frequency}</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Right Action Icons: Streak Flame */}
-                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                    {/* Right: Streak Flame & Chevron Arrow */}
+                    <div className="flex items-center gap-2 shrink-0 ml-1">
                       <div className="flex items-center gap-1">
                         <span
                           className="material-symbols-outlined text-[15px] text-tertiary"
@@ -286,6 +291,10 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                           </span>
                         )}
                       </div>
+
+                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40">
+                        chevron_right
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -309,9 +318,14 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
-        <span className="font-stat-label text-[10px] text-on-surface-variant uppercase font-bold">
-          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] font-medium text-on-surface-variant italic font-body-text hidden xs:inline">
+            Better than yesterday ↗
+          </span>
+          <span className="font-stat-label text-[10px] text-on-surface-variant uppercase font-bold">
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+        </div>
       </div>
     </div>
   );

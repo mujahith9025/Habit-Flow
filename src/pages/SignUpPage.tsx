@@ -103,7 +103,7 @@ export const SignUpPage: React.FC = () => {
                 if (errorMsg) setErrorMsg(null);
               }}
               placeholder="Full Name"
-              className="block w-full pl-11 pr-4 py-3 border border-outline-variant/30 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+              className="block w-full pl-11 pr-4 py-3 border border-outline-variant/30 rounded-2xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
             />
           </div>
         </div>
@@ -129,7 +129,7 @@ export const SignUpPage: React.FC = () => {
                 if (errorMsg) setErrorMsg(null);
               }}
               placeholder="email@example.com"
-              className="block w-full pl-11 pr-4 py-3 border border-outline-variant/30 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+              className="block w-full pl-11 pr-4 py-3 border border-outline-variant/30 rounded-2xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
             />
           </div>
         </div>
@@ -155,7 +155,7 @@ export const SignUpPage: React.FC = () => {
                 if (errorMsg) setErrorMsg(null);
               }}
               placeholder="Password (min. 8 chars)"
-              className="block w-full pl-11 pr-11 py-3 border border-outline-variant/30 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+              className="block w-full pl-11 pr-11 py-3 border border-outline-variant/30 rounded-2xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
             />
             <button
               type="button"
@@ -191,7 +191,7 @@ export const SignUpPage: React.FC = () => {
                 if (errorMsg) setErrorMsg(null);
               }}
               placeholder="Confirm password"
-              className={`block w-full pl-11 pr-4 py-3 border rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
+              className={`block w-full pl-11 pr-4 py-3 border rounded-2xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
                 confirmPassword && password !== confirmPassword
                   ? 'border-error ring-1 ring-error bg-error-container/10'
                   : 'border-outline-variant/30'

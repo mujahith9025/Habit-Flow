@@ -312,7 +312,12 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     async (habitIdsToComplete: string[]): Promise<void> => {
       if (!user?.uid || habitIdsToComplete.length === 0) return;
 
-      const previousEntriesSnapshot = { ...entriesRef.current };
+      // Deep-clone the snapshot to prevent shared references during rollback
+      const previousEntriesSnapshot: Record<string, HabitEntryMap> = {};
+      const current = entriesRef.current;
+      for (const hId of Object.keys(current)) {
+        previousEntriesSnapshot[hId] = { ...current[hId] };
+      }
 
       // 1. Optimistic UI update
       setEntriesByHabit((prev) => {
@@ -357,7 +362,12 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     async (habitIdsToReset: string[]): Promise<void> => {
       if (!user?.uid || habitIdsToReset.length === 0) return;
 
-      const previousEntriesSnapshot = { ...entriesRef.current };
+      // Deep-clone the snapshot to prevent shared references during rollback
+      const previousEntriesSnapshot: Record<string, HabitEntryMap> = {};
+      const current = entriesRef.current;
+      for (const hId of Object.keys(current)) {
+        previousEntriesSnapshot[hId] = { ...current[hId] };
+      }
 
       // 1. Optimistic UI update
       setEntriesByHabit((prev) => {

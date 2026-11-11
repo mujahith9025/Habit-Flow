@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
 var currentBuildVersion = Date.now().toString();
 function versionGeneratorPlugin() {
     return {

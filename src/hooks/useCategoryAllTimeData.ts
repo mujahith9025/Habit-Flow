@@ -88,6 +88,8 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
 
     setLoading(true);
     const unsubscribes: Array<() => void> = [];
+    let loadedSnapshotsCount = 0;
+    const totalHabits = habits.length;
 
     habits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
@@ -104,16 +106,24 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
             ...prev,
             [habit.id]: map,
           }));
+
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setLoading(false);
+          }
         },
         (err) => {
           console.warn(`Error loading all-time entries for habit ${habit.id}:`, err);
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setLoading(false);
+          }
         }
       );
 
       unsubscribes.push(unsub);
     });
 
-    setLoading(false);
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };

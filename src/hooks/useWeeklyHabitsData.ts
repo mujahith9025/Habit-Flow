@@ -55,6 +55,8 @@ export function useWeeklyHabitsData(selectedDate: Date, selectedCategory: string
 
     setEntriesLoading(true);
     const unsubscribes: Array<() => void> = [];
+    let loadedSnapshotsCount = 0;
+    const totalHabits = weeklyHabits.length;
 
     weeklyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
@@ -72,16 +74,24 @@ export function useWeeklyHabitsData(selectedDate: Date, selectedCategory: string
             ...prev,
             [habit.id]: habitMap,
           }));
+
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setEntriesLoading(false);
+          }
         },
         (err) => {
           console.warn(`Error listening to weekly habit ${habit.id}:`, err);
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setEntriesLoading(false);
+          }
         }
       );
 
       unsubscribes.push(unsub);
     });
 
-    setEntriesLoading(false);
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };

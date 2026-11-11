@@ -26,6 +26,7 @@ export const DataLayerDebugPage: React.FC = () => {
 
   // Dynamic Current Month Key (e.g., "2026-09")
   const today = new Date();
+  const todayDateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const {
     entries,
@@ -226,8 +227,9 @@ export const DataLayerDebugPage: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
           {testDates.map((dateKey) => {
             const isDone = isEntryCompleted(dateKey);
-            const isToday = dateKey === '2026-08-19';
+            const isToday = dateKey === todayDateKey;
             const dayNum = dateKey.split('-')[2];
+            const monthNum = dateKey.split('-')[1];
 
             return (
               <button
@@ -240,7 +242,7 @@ export const DataLayerDebugPage: React.FC = () => {
                 } ${isToday ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-surface-container' : ''}`}
               >
                 <div className="flex items-center justify-between w-full text-[11px]">
-                  <span className="font-stat-label font-bold text-on-surface">Aug {dayNum}</span>
+                  <span className="font-stat-label font-bold text-on-surface">{monthNum}/{dayNum}</span>
                   {isToday && (
                     <span className="px-1.5 py-0.2 rounded-full bg-primary text-on-primary text-[9px] font-bold">
                       Today

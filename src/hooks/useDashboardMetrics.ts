@@ -3,17 +3,10 @@ import { onSnapshot, getEntriesCollectionRef } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import { DashboardMetrics, HabitEntryMap, isHabitActiveInMonth } from '../types';
-import { calculateGentleOverallStreak } from '../lib/calculations';
+import { calculateGentleOverallStreak, formatDateKey } from '../lib/calculations';
 
-/**
- * Formats a Date object as YYYY-MM-DD
- */
-export function formatDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+// Re-export formatDateKey from the canonical source so existing imports don't break
+export { formatDateKey } from '../lib/calculations';
 
 /**
  * Calculates live dashboard completion metrics and overall consecutive streak, optionally filtered by category
@@ -49,6 +42,8 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
 
     setEntriesLoading(true);
     const unsubscribes: Array<() => void> = [];
+    let loadedSnapshotsCount = 0;
+    const totalHabits = dailyHabits.length;
 
     dailyHabits.forEach((habit) => {
       const colRef = getEntriesCollectionRef(user.uid, habit.id);
@@ -66,16 +61,24 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
             ...prev,
             [habit.id]: habitEntries,
           }));
+
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setEntriesLoading(false);
+          }
         },
         (err) => {
           console.warn(`Error listening to entries for habit ${habit.id}:`, err);
+          loadedSnapshotsCount++;
+          if (loadedSnapshotsCount >= totalHabits) {
+            setEntriesLoading(false);
+          }
         }
       );
 
       unsubscribes.push(unsub);
     });
 
-    setEntriesLoading(false);
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };

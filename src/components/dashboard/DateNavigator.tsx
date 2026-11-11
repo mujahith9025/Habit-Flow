@@ -107,7 +107,7 @@ export const DateNavigator: React.FC<DateNavigatorProps> = ({
   return (
     <div className={`relative ${className}`} ref={popoverRef}>
       <div
-        className="flex items-center justify-between px-md py-1.5 bg-surface-container-lowest dark:bg-surface-container rounded-full shadow-[0px_4px_20px_rgba(0,0,0,0.02)] border border-outline-variant/15 select-none"
+        className="flex items-center justify-between px-3 py-1.5 bg-surface-container-lowest dark:bg-surface-container-lowest rounded-full shadow-soft border border-outline-variant/40 select-none"
       >
         <button
           type="button"
@@ -137,6 +137,9 @@ export const DateNavigator: React.FC<DateNavigatorProps> = ({
           <span>{formattedTitle}</span>
           <span className="material-symbols-outlined text-[16px] text-on-surface-variant">
             {isMonthPickerOpen ? 'expand_less' : 'expand_more'}
+          </span>
+          <span className="text-[11px] font-medium text-on-surface-variant ml-1.5 hidden sm:inline opacity-80">
+            Good day ᵕ̈
           </span>
         </button>
 

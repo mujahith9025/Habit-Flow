@@ -98,18 +98,20 @@ export default {
         'stat-label': ['12px', { lineHeight: '16px', letterSpacing: '0.05em', fontWeight: '700' }],
       },
       borderRadius: {
-        sm: '0.25rem', // 4px
-        DEFAULT: '0.5rem', // 8px
-        md: '0.75rem', // 12px
-        lg: '1rem', // 16px
-        xl: '1.5rem', // 24px
+        sm: '0.375rem', // 6px
+        DEFAULT: '0.625rem', // 10px
+        md: '0.875rem', // 14px
+        lg: '1.125rem', // 18px
+        xl: '1.375rem', // 22px
+        '2xl': '1.5rem', // 24px
+        '3xl': '1.75rem', // 28px
         full: '9999px',
       },
       boxShadow: {
-        soft: '0px 4px 20px rgba(0, 0, 0, 0.05)',
-        'soft-lg': '0px 8px 30px rgba(0, 0, 0, 0.08)',
-        'glow-primary': '0px 4px 20px rgba(0, 99, 152, 0.15)',
-        'glow-secondary': '0px 2px 8px rgba(40, 107, 51, 0.3)',
+        soft: '0px 4px 20px -2px rgba(24, 25, 27, 0.05), 0px 2px 6px -1px rgba(24, 25, 27, 0.02)',
+        'soft-lg': '0px 10px 30px -4px rgba(24, 25, 27, 0.08), 0px 4px 12px -2px rgba(24, 25, 27, 0.03)',
+        'glow-primary': '0px 4px 20px rgba(24, 25, 27, 0.15)',
+        'glow-secondary': '0px 2px 10px rgba(45, 90, 52, 0.25)',
       },
     },
   },

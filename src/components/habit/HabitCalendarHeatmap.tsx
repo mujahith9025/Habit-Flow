@@ -47,7 +47,7 @@ export const HabitCalendarHeatmap: React.FC<HabitCalendarHeatmapProps> = ({
   }
 
   return (
-    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4">
+    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-4 sm:p-6 shadow-soft border border-outline-variant/15 space-y-4">
       {/* Month Navigator Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
         <div>

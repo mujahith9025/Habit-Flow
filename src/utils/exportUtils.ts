@@ -577,7 +577,13 @@ export function exportToExcel(data: ExportData): void {
     downloadAnchor.remove();
   }
   if (typeof URL !== 'undefined' && URL.revokeObjectURL) {
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        // ignore
+      }
+    }, 1500);
   }
 }
 

@@ -135,6 +135,9 @@ export function useHabits(
       frequency?: HabitFrequency;
       goalCount?: number;
       sortOrder?: number;
+      startMonth?: string;
+      endMonth?: string;
+      excludedMonths?: string[];
     }): Promise<Habit> => {
       if (!user?.uid) throw new Error('User must be logged in to create a habit');
       return await createHabitService(user.uid, data);

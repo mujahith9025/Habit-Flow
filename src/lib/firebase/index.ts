@@ -6,3 +6,6 @@ export * from './userSync';
 export * from './habitService';
 export * from './expenseService';
 export * from './appCheck';
+export * from './backupService';
+export * from './sessionManager';
+export * from './accountDeletionService';

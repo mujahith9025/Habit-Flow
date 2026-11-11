@@ -26,7 +26,7 @@ export const FloatingActionButton: React.FC<FABProps> = ({
       onClick={handleClick}
       aria-label={ariaLabel}
       title="Add new habit"
-      className="fixed bottom-[84px] md:bottom-8 right-container-padding lg:right-10 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0px_8px_24px_rgba(0,99,152,0.3)] flex items-center justify-center hover:bg-on-primary-fixed-variant hover:-translate-y-1 active:scale-95 transition-all duration-200 z-40 group"
+      className="fixed bottom-[84px] md:bottom-8 right-container-padding lg:right-10 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0px_10px_25px_rgba(24,25,27,0.3)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 z-40 group border border-white/10 dark:border-white/20"
     >
       <span className="material-symbols-outlined text-[28px] group-hover:rotate-90 transition-transform duration-300">
         add

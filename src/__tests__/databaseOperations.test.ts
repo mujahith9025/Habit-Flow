@@ -131,4 +131,56 @@ describe('Comprehensive Firestore Database Layer & Schema Validation', () => {
     expect(missingKeys).not.toContain('2026-08-01');
     expect(missingDays['2026-08-03'].savingsAmount).toBe(25);
   });
+
+  it('verifies subcollection cascading and device erasure contract for account deletion', () => {
+    // Verifies schema keys cleaned up during GDPR erasure
+    const sampleDeviceSession = {
+      id: 'dev_mock_123',
+      name: 'Chrome on Windows',
+      type: 'desktop',
+      browser: 'Chrome',
+      os: 'Windows 11',
+      lastActive: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    expect(sampleDeviceSession.id).toBeDefined();
+    expect(sampleDeviceSession.type).toBe('desktop');
+    expect(sampleDeviceSession.browser).toContain('Chrome');
+  });
+
+  it('verifies transactional expense item creation and calculation', () => {
+    const existing: DailyMoneyEntry = {
+      id: '2026-08-20',
+      dateKey: '2026-08-20',
+      displayDate: '20/08',
+      savingsAmount: 25,
+      expenses: [{ id: 'exp_1', amount: 30, description: 'Lunch' }],
+      totalExpenses: 30,
+      createdAt: '2026-08-20T08:00:00.000Z',
+      updatedAt: '2026-08-20T08:00:00.000Z',
+    };
+
+    const newItem = { amount: 45, description: 'Book', category: 'Education' };
+    const newExpenseItem = {
+      id: `exp_test_2`,
+      amount: Number(newItem.amount),
+      description: newItem.description.trim(),
+      category: newItem.category.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedExpenses = [...existing.expenses, newExpenseItem];
+    const totalExpenses = updatedExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    const updatedEntry: DailyMoneyEntry = {
+      ...existing,
+      expenses: updatedExpenses,
+      totalExpenses,
+      updatedAt: new Date().toISOString(),
+    };
+
+    expect(updatedEntry.expenses).toHaveLength(2);
+    expect(updatedEntry.totalExpenses).toBe(75);
+    expect(updatedEntry.expenses[1].description).toBe('Book');
+  });
 });

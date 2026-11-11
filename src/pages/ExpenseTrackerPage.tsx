@@ -105,7 +105,7 @@ export const ExpenseTrackerPage: React.FC = () => {
       />
 
       {/* 2. 2-View Segmented Control: [ 📝 Daily Ledger | 📊 Analytics & Insights ] */}
-      <div className="flex items-center justify-between gap-3 bg-surface-container-lowest dark:bg-surface-container p-1.5 rounded-2xl border border-outline-variant/15 shadow-xs">
+      <div className="flex items-center justify-between gap-3 bg-surface-container-lowest dark:bg-surface-container-lowest p-1.5 rounded-full border border-outline-variant/30 shadow-soft">
         <div className="flex items-center gap-1.5 w-full sm:w-auto">
           <button
             type="button"
@@ -113,10 +113,10 @@ export const ExpenseTrackerPage: React.FC = () => {
               triggerHaptic('selection');
               setActiveView('ledger');
             }}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-stat-label text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-stat-label text-xs font-bold transition-all cursor-pointer ${
               activeView === 'ledger'
                 ? 'bg-primary text-on-primary shadow-soft scale-[1.01]'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
             }`}
           >
             <span className="material-symbols-outlined text-[18px]">format_list_bulleted</span>
@@ -129,10 +129,10 @@ export const ExpenseTrackerPage: React.FC = () => {
               triggerHaptic('selection');
               setActiveView('analytics');
             }}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-stat-label text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-stat-label text-xs font-bold transition-all cursor-pointer ${
               activeView === 'analytics'
                 ? 'bg-primary text-on-primary shadow-soft scale-[1.01]'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
             }`}
           >
             <span className="material-symbols-outlined text-[18px]">insights</span>

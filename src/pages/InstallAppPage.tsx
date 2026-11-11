@@ -84,43 +84,43 @@ export const InstallAppPage: React.FC = () => {
 
       {/* Platform Selector Navigation */}
       <div className="space-y-4">
-        <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-3 p-1.5 bg-surface-container-low dark:bg-surface-container-high/40 rounded-2xl border border-outline-variant/20 overflow-x-auto scrollbar-none">
+        <div className="inline-flex items-center gap-1.5 p-1 bg-surface-container-low dark:bg-surface-container-high/40 rounded-full border border-outline-variant/20 overflow-x-auto scrollbar-none max-w-full">
           <button
             type="button"
             onClick={() => setActiveTab('android')}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
               activeTab === 'android'
                 ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]">android</span>
+            <span className="material-symbols-outlined text-[18px]">android</span>
             <span>Android (Chrome)</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('ios')}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
               activeTab === 'ios'
                 ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]">phone_iphone</span>
+            <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
             <span>iPhone / iPad (Safari)</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('desktop')}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
               activeTab === 'desktop'
                 ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]">computer</span>
+            <span className="material-symbols-outlined text-[18px]">computer</span>
             <span>PC & Mac</span>
           </button>
         </div>
@@ -130,9 +130,9 @@ export const InstallAppPage: React.FC = () => {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Step 1 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     1
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -145,9 +145,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     2
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -160,9 +160,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     3
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -175,9 +175,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 4 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     4
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -197,9 +197,9 @@ export const InstallAppPage: React.FC = () => {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Step 1 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
                     1
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -212,9 +212,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
                     2
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -227,9 +227,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
                     3
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -242,9 +242,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 4 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-secondary text-on-secondary font-bold text-sm flex items-center justify-center shadow-soft">
                     4
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -264,9 +264,9 @@ export const InstallAppPage: React.FC = () => {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Step 1 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     1
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -279,9 +279,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     2
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -294,9 +294,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     3
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -309,9 +309,9 @@ export const InstallAppPage: React.FC = () => {
               </div>
 
               {/* Step 4 */}
-              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-soft space-y-3">
+              <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
+                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold text-sm flex items-center justify-center shadow-soft">
                     4
                   </div>
                   <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface">
@@ -334,8 +334,8 @@ export const InstallAppPage: React.FC = () => {
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
               <span className="material-symbols-outlined text-[24px]">offline_bolt</span>
             </div>
             <h4 className="font-habit-name text-sm font-bold text-on-surface">
@@ -346,8 +346,8 @@ export const InstallAppPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
               <span className="material-symbols-outlined text-[24px]">speed</span>
             </div>
             <h4 className="font-habit-name text-sm font-bold text-on-surface">
@@ -358,8 +358,8 @@ export const InstallAppPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-tertiary/10 text-tertiary flex items-center justify-center">
+          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-tertiary/10 text-tertiary flex items-center justify-center">
               <span className="material-symbols-outlined text-[24px]">fullscreen</span>
             </div>
             <h4 className="font-habit-name text-sm font-bold text-on-surface">
@@ -370,8 +370,8 @@ export const InstallAppPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+          <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 border border-outline-variant/15 shadow-soft space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center">
               <span className="material-symbols-outlined text-[24px]">memory</span>
             </div>
             <h4 className="font-habit-name text-sm font-bold text-on-surface">
@@ -390,7 +390,7 @@ export const InstallAppPage: React.FC = () => {
           Frequently Asked Questions
         </h3>
 
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl border border-outline-variant/15 shadow-soft divide-y divide-outline-variant/15 overflow-hidden">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl border border-outline-variant/15 shadow-soft divide-y divide-outline-variant/15 overflow-hidden">
           <div className="p-4 sm:p-5 space-y-1.5">
             <h4 className="font-habit-name text-sm font-bold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[18px]">help</span>

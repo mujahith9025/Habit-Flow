@@ -96,7 +96,7 @@ export const LoginPage: React.FC = () => {
                 if (errorMsg) setErrorMsg(null);
               }}
               placeholder="email@example.com"
-              className={`block w-full pl-11 pr-4 py-3 border rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
+              className={`block w-full pl-11 pr-4 py-3 border rounded-2xl bg-surface-container-low dark:bg-surface-container-low text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
                 errorMsg && !email ? 'border-error ring-1 ring-error' : 'border-outline-variant/30'
               }`}
             />
@@ -124,7 +124,7 @@ export const LoginPage: React.FC = () => {
                 if (errorMsg) setErrorMsg(null);
               }}
               placeholder="••••••••"
-              className={`block w-full pl-11 pr-11 py-3 border rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
+              className={`block w-full pl-11 pr-11 py-3 border rounded-2xl bg-surface-container-low dark:bg-surface-container-low text-on-surface placeholder:text-outline-variant font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
                 errorMsg && !password ? 'border-error ring-1 ring-error' : 'border-outline-variant/30'
               }`}
             />

@@ -74,10 +74,10 @@ export const ForgotPasswordPage: React.FC = () => {
 
         {/* Content Card with optional success border highlight */}
         <div
-          className={`bg-surface-container-lowest dark:bg-surface-container rounded-[24px] shadow-soft p-6 sm:p-8 border transition-all duration-300 ${
+          className={`bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl shadow-soft p-6 sm:p-8 border border-outline-variant/30 transition-all duration-300 ${
             isSuccess
-              ? 'border-t-4 border-secondary border-outline-variant/20'
-              : 'border-outline-variant/20'
+              ? 'border-t-4 border-secondary'
+              : ''
           }`}
         >
           {!isSuccess ? (

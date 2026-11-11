@@ -7,9 +7,11 @@ import {
   orderBy,
   limit,
   startAfter,
+  runTransaction,
   getExpenseEntryDocRef,
   getExpenseEntriesCollectionRef,
   getExpenseSettingsDocRef,
+  db,
   type QueryDocumentSnapshot,
 } from './firestore';
 import { DailyMoneyEntry, ExpenseItem, ExpenseTrackerSettings } from '../../types/expense';
@@ -84,7 +86,8 @@ export async function batchSaveDailyMoneyEntries(
 }
 
 /**
- * Adds an expense item to a specific date entry
+ * Adds an expense item to a specific date entry using a Firestore transaction
+ * to prevent race conditions from concurrent writes across devices
  */
 export async function addExpenseItemToDate(
   uid: string,
@@ -92,37 +95,42 @@ export async function addExpenseItemToDate(
   item: Omit<ExpenseItem, 'id' | 'createdAt'>
 ): Promise<DailyMoneyEntry> {
   const docRef = getExpenseEntryDocRef(uid, dateKey);
-  const snap = await getDoc(docRef);
-  const existing = snap.data() || {
-    id: dateKey,
-    dateKey,
-    displayDate: formatDayMonth(dateKey),
-    savingsAmount: 25,
-    expenses: [],
-    totalExpenses: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
 
-  const newExpenseItem: ExpenseItem = {
-    id: `exp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-    amount: Number(item.amount),
-    description: item.description.trim(),
-    category: item.category?.trim(),
-    createdAt: new Date().toISOString(),
-  };
+  const updatedEntry = await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(docRef);
+    const existing = snap.data() || {
+      id: dateKey,
+      dateKey,
+      displayDate: formatDayMonth(dateKey),
+      savingsAmount: 25,
+      expenses: [],
+      totalExpenses: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-  const updatedExpenses = [...(existing.expenses || []), newExpenseItem];
-  const totalExpenses = updatedExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    const newExpenseItem: ExpenseItem = {
+      id: `exp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      amount: Number(item.amount),
+      description: item.description.trim(),
+      category: item.category?.trim(),
+      createdAt: new Date().toISOString(),
+    };
 
-  const updatedEntry: DailyMoneyEntry = {
-    ...existing,
-    expenses: updatedExpenses,
-    totalExpenses,
-    updatedAt: new Date().toISOString(),
-  };
+    const updatedExpenses = [...(existing.expenses || []), newExpenseItem];
+    const totalExpenses = updatedExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
-  await setDoc(docRef, updatedEntry, { merge: true });
+    const entry: DailyMoneyEntry = {
+      ...existing,
+      expenses: updatedExpenses,
+      totalExpenses,
+      updatedAt: new Date().toISOString(),
+    };
+
+    transaction.set(docRef, entry, { merge: true });
+    return entry;
+  });
+
   return updatedEntry;
 }
 

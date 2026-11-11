@@ -204,9 +204,19 @@ export async function archiveHabit(
 }
 
 /**
- * Deletes a habit document permanently across all months
+ * Deletes a habit document permanently across all months,
+ * including all entries in the subcollection users/{uid}/habits/{habitId}/entries
  */
 export async function deleteHabit(uid: string, habitId: string): Promise<void> {
+  // 1. Delete all entry documents in the entries subcollection first
+  const entriesColRef = getEntriesCollectionRef(uid, habitId);
+  const entriesSnap = await getDocs(entriesColRef);
+  if (!entriesSnap.empty) {
+    const entryDeletions = entriesSnap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+    await Promise.all(entryDeletions);
+  }
+
+  // 2. Delete the habit document itself
   const habitRef = getHabitDocRef(uid, habitId);
   await deleteDoc(habitRef);
 }

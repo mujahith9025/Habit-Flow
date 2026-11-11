@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useHabits } from '../hooks/useHabits';
 import { useSingleHabitHistory } from '../hooks/useSingleHabitHistory';
@@ -54,19 +54,25 @@ export const HabitDetailPage: React.FC = () => {
   const { formattedTitle } = formatMonthYear(selectedDate);
 
   // Active habits list filtered for the currently selected month
-  const activeHabits = habits.filter((h) => isHabitActiveInMonth(h, currentMonthKey));
+  const activeHabits = useMemo(
+    () => habits.filter((h) => isHabitActiveInMonth(h, currentMonthKey)),
+    [habits, currentMonthKey]
+  );
 
   // Group habits by category
-  const categoryHabitsMap: Record<string, typeof activeHabits> = {};
-  activeHabits.forEach((h) => {
-    const cat = h.category?.trim() || 'General';
-    if (!categoryHabitsMap[cat]) {
-      categoryHabitsMap[cat] = [];
-    }
-    categoryHabitsMap[cat].push(h);
-  });
+  const categoryHabitsMap = useMemo(() => {
+    const map: Record<string, typeof activeHabits> = {};
+    activeHabits.forEach((h) => {
+      const cat = h.category?.trim() || 'General';
+      if (!map[cat]) {
+        map[cat] = [];
+      }
+      map[cat].push(h);
+    });
+    return map;
+  }, [activeHabits]);
 
-  const categories = Object.keys(categoryHabitsMap).sort();
+  const categories = useMemo(() => Object.keys(categoryHabitsMap).sort(), [categoryHabitsMap]);
 
   // Match habit if URL ID passed
   const matchedHabit = id ? activeHabits.find((h) => h.id === id) : undefined;
@@ -301,18 +307,18 @@ export const HabitDetailPage: React.FC = () => {
         habit && (
           <div className="space-y-6">
             {/* Habit Header Banner */}
-            <div className="bg-surface-container-lowest dark:bg-surface-container p-5 sm:p-6 rounded-2xl border border-outline-variant/15 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-surface-container-lowest dark:bg-surface-container-lowest p-5 sm:p-6 rounded-3xl border border-outline-variant/30 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
                     {habit.name}
                   </h1>
                   {habit.category && (
-                    <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-primary-fixed/40 text-primary dark:text-primary-fixed-dim font-stat-label">
+                    <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
                       {habit.category}
                     </span>
                   )}
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
+                  <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-stat-label">
                     {habit.frequency || 'daily'}
                   </span>
                 </div>
@@ -327,7 +333,7 @@ export const HabitDetailPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditModalOpen(true)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-full"
                 >
                   <span className="material-symbols-outlined text-[18px]">edit</span>
                   <span>Edit</span>
@@ -337,7 +343,7 @@ export const HabitDetailPage: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handleDelete}
-                  className="text-error hover:bg-error-container/20 px-3"
+                  className="text-error hover:bg-error-container/20 px-3 rounded-full"
                   title="Delete Habit Permanently"
                 >
                   <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -347,7 +353,7 @@ export const HabitDetailPage: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handleArchive}
-                  className="text-on-surface-variant hover:bg-surface-container-high px-2.5"
+                  className="text-on-surface-variant hover:bg-surface-container-high px-2.5 rounded-full"
                   title="Archive Habit"
                 >
                   <span className="material-symbols-outlined text-[18px]">archive</span>
@@ -364,10 +370,10 @@ export const HabitDetailPage: React.FC = () => {
 
             {/* Graph / Calendar / All-Time View Switcher Tabs */}
             <div className="flex items-center justify-between px-1">
-              <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low dark:bg-surface-container p-1 rounded-xl border border-outline-variant/20 shadow-sm">
+              <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low dark:bg-surface-container-low p-1 rounded-full border border-outline-variant/30 shadow-sm">
                 <button
                   onClick={() => setActiveAnalyticsView('graphs')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     activeAnalyticsView === 'graphs'
                       ? 'bg-primary text-on-primary shadow-soft'
                       : 'text-on-surface-variant hover:text-on-surface'
@@ -379,7 +385,7 @@ export const HabitDetailPage: React.FC = () => {
 
                 <button
                   onClick={() => setActiveAnalyticsView('calendar')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     activeAnalyticsView === 'calendar'
                       ? 'bg-primary text-on-primary shadow-soft'
                       : 'text-on-surface-variant hover:text-on-surface'
@@ -391,7 +397,7 @@ export const HabitDetailPage: React.FC = () => {
 
                 <button
                   onClick={() => setActiveAnalyticsView('alltime')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     activeAnalyticsView === 'alltime'
                       ? 'bg-primary text-on-primary shadow-soft'
                       : 'text-on-surface-variant hover:text-on-surface'

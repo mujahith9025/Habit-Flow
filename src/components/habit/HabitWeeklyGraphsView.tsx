@@ -108,7 +108,7 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
       : 0;
 
   return (
-    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 sm:p-6 shadow-soft border border-outline-variant/15 space-y-6">
+    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-4 sm:p-6 shadow-soft border border-outline-variant/15 space-y-6">
       {/* 1. Header with Month Navigator */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-outline-variant/15">
         <div>

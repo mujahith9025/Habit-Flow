@@ -20,7 +20,7 @@ export const ViewTabs: React.FC<ViewTabsProps> = ({
 }) => {
   return (
     <div className={`flex justify-center sm:justify-start ${className}`}>
-      <div className="bg-surface-container-low dark:bg-surface-container p-1 rounded-full inline-flex border border-outline-variant/15 shadow-inner">
+      <div className="bg-surface-container-low dark:bg-surface-container-low p-1 rounded-full inline-flex border border-outline-variant/30 shadow-inner">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -28,9 +28,9 @@ export const ViewTabs: React.FC<ViewTabsProps> = ({
               key={tab.id}
               type="button"
               onClick={() => onChangeTab(tab.id)}
-              className={`px-5 sm:px-6 py-2 rounded-full font-stat-label text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 ${
+              className={`px-5 sm:px-6 py-2 rounded-full font-stat-label text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                 isActive
-                  ? 'bg-surface-container-lowest dark:bg-surface-container-high text-primary dark:text-primary-fixed-dim font-bold shadow-soft scale-100'
+                  ? 'bg-primary text-on-primary font-bold shadow-soft scale-100'
                   : 'text-on-surface-variant hover:text-on-surface font-semibold'
               }`}
             >

@@ -41,7 +41,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
       <main className="w-full max-w-md mx-auto my-auto z-10 relative pt-8 pb-4">
         {/* Header / Identity */}
         <header className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-container-lowest dark:bg-surface-container text-primary dark:text-primary-fixed-dim mb-4 shadow-soft border border-outline-variant/15">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface-container-lowest dark:bg-surface-container-lowest text-primary mb-4 shadow-soft border border-outline-variant/30">
             <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
               {iconName}
             </span>
@@ -55,7 +55,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         </header>
 
         {/* Card Body */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-[24px] shadow-soft p-6 sm:p-8 border border-outline-variant/20 relative">
+        <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl shadow-soft p-6 sm:p-8 border border-outline-variant/30 relative">
           {children}
         </div>
       </main>

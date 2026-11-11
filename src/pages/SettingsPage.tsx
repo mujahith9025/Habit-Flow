@@ -105,7 +105,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* 1. Profile Overview */}
-      <section className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-5 sm:p-6 shadow-soft border border-outline-variant/15 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+      <section className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 shadow-soft border border-outline-variant/30 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xl font-app-title shadow-sm ring-2 ring-primary/20">
             {profile?.photoURL ? (
@@ -147,7 +147,7 @@ export const SettingsPage: React.FC = () => {
           Preferences & Reminders
         </h3>
 
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/10">
+        <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl shadow-soft border border-outline-variant/30 overflow-hidden divide-y divide-outline-variant/15">
           {/* Reminders & Notifications Clickable Section */}
           <button
             type="button"
@@ -323,7 +323,7 @@ export const SettingsPage: React.FC = () => {
           Account & Data Sovereignty
         </h3>
 
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-soft border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/10">
+        <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl shadow-soft border border-outline-variant/30 overflow-hidden divide-y divide-outline-variant/15">
           {/* Export Data Button */}
           <button
             type="button"
