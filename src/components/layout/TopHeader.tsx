@@ -26,7 +26,7 @@ export const TopHeader: React.FC = () => {
         </Link>
 
         {/* Right: Actions & User Profile in the Right Corner */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Real-Time Cloud Sync Verification Indicator */}
           <CloudSyncStatus variant="header" />
           {/* How to Install App / PWA Install Guide Link (Hidden if already installed) */}
@@ -34,10 +34,10 @@ export const TopHeader: React.FC = () => {
             <Link
               to="/install"
               title="How to Install HabitFlow on Phone & PC"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors border border-primary/20 shadow-xs"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors border border-primary/20 shadow-xs"
             >
               <span className="material-symbols-outlined text-[16px]">install_mobile</span>
-              <span className="hidden xs:inline">Install App</span>
+              <span className="hidden sm:inline">Install App</span>
             </Link>
           )}
 
@@ -45,7 +45,7 @@ export const TopHeader: React.FC = () => {
           <button
             onClick={toggleTheme}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
             aria-label="Toggle Theme"
           >
             <span className="material-symbols-outlined text-[20px]">
@@ -58,7 +58,7 @@ export const TopHeader: React.FC = () => {
             <Link
               to="/settings"
               title="Go to Settings & Profile"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-soft flex items-center justify-center ring-2 ring-primary/20 hover:ring-primary/40"
+              className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-soft flex items-center justify-center ring-2 ring-primary/20 hover:ring-primary/40"
             >
               {user.photoURL ? (
                 <img

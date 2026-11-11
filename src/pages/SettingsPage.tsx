@@ -56,12 +56,12 @@ export const SettingsPage: React.FC = () => {
   const { habits } = useHabits();
   const { isInstalled } = usePWAInstall();
 
-  // Mobile detection & master-detail state
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
+  // Compact (mobile & tablet) vs wide desktop layout state
+  const [isCompact, setIsCompact] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 1024
   );
   const [activeGroup, setActiveGroup] = useState<SettingsGroupKey | null>(() =>
-    typeof window !== 'undefined' && window.innerWidth < 768 ? null : 'profile'
+    typeof window !== 'undefined' && window.innerWidth < 1024 ? null : 'profile'
   );
 
   // Settings state
@@ -97,9 +97,9 @@ export const SettingsPage: React.FC = () => {
   // Handle window resizing
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile && activeGroup === null) {
+      const compact = window.innerWidth < 1024;
+      setIsCompact(compact);
+      if (!compact && activeGroup === null) {
         setActiveGroup('profile');
       }
     };
@@ -726,11 +726,11 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-24 animate-fadeIn">
+    <div className="w-full min-w-0 max-w-5xl mx-auto pb-24 animate-fadeIn">
       {/* ========================================================= */}
-      {/* MOBILE LIST VIEW (When on mobile and no group is selected) */}
+      {/* COMPACT VIEW (Mobile & Tablet drill-down list navigation)  */}
       {/* ========================================================= */}
-      {isMobile && !activeGroup && (
+      {isCompact && !activeGroup && (
         <div className="space-y-4">
           <div className="pb-2 border-b border-outline-variant/15 flex items-center gap-3">
             <Link
@@ -780,9 +780,9 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {/* ========================================================= */}
-      {/* MOBILE DETAIL VIEW (When on mobile and a group is chosen)  */}
+      {/* COMPACT DETAIL VIEW (Subpage with Back to Settings)       */}
       {/* ========================================================= */}
-      {isMobile && activeGroup && (
+      {isCompact && activeGroup && (
         <div className="space-y-4">
           <button
             type="button"
@@ -797,9 +797,9 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {/* ========================================================= */}
-      {/* DESKTOP / TABLET TWO-COLUMN MASTER-DETAIL LAYOUT           */}
+      {/* DESKTOP TWO-COLUMN MASTER-DETAIL LAYOUT (>= 1024px)       */}
       {/* ========================================================= */}
-      {!isMobile && (
+      {!isCompact && (
         <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl border border-outline-variant/20 shadow-soft overflow-hidden flex min-h-[580px]">
           {/* Left Column: Navigation Pane (240px) */}
           <nav className="w-64 p-4 border-r border-outline-variant/15 flex flex-col justify-between shrink-0 bg-surface-container-low/40 dark:bg-surface-container-high/20">
