@@ -147,7 +147,7 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
       </div>
 
       {/* 2. Week-by-Week Segmented Bar Charts & Doughnut Gauges */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-3 overflow-x-auto pb-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-3 overflow-x-auto pb-2 scrollbar-none [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] md:[mask-image:none]">
         {weeksData.map((week) => {
           const radius = 34;
           const circumference = 2 * Math.PI * radius; // ~213.6

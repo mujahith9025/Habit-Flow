@@ -28,7 +28,7 @@ export const ViewTabs: React.FC<ViewTabsProps> = ({
               key={tab.id}
               type="button"
               onClick={() => onChangeTab(tab.id)}
-              className={`px-5 sm:px-6 py-2 rounded-full font-stat-label text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+              className={`px-5 sm:px-6 py-2 rounded-full font-stat-label text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 ease-out active:scale-95 cursor-pointer ${
                 isActive
                   ? 'bg-primary text-on-primary font-bold shadow-soft scale-100'
                   : 'text-on-surface-variant hover:text-on-surface font-semibold'

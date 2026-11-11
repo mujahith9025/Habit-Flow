@@ -84,45 +84,52 @@ export const InstallAppPage: React.FC = () => {
 
       {/* Platform Selector Navigation */}
       <div className="space-y-4">
-        <div className="inline-flex items-center gap-1.5 p-1 bg-surface-container-low dark:bg-surface-container-high/40 rounded-full border border-outline-variant/20 overflow-x-auto scrollbar-none max-w-full">
-          <button
-            type="button"
-            onClick={() => setActiveTab('android')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
-              activeTab === 'android'
-                ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">android</span>
-            <span>Android (Chrome)</span>
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-1.5 p-1 bg-surface-container-low dark:bg-surface-container-high/40 rounded-full border border-outline-variant/20 overflow-x-auto scrollbar-none max-w-full">
+            <button
+              type="button"
+              onClick={() => setActiveTab('android')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
+                activeTab === 'android'
+                  ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">android</span>
+              <span>Android (Chrome)</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('ios')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
-              activeTab === 'ios'
-                ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
-            <span>iPhone / iPad (Safari)</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('ios')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
+                activeTab === 'ios'
+                  ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
+              <span>iPhone / iPad (Safari)</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('desktop')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
-              activeTab === 'desktop'
-                ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">computer</span>
-            <span>PC & Mac</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('desktop')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-habit-name text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95 ${
+                activeTab === 'desktop'
+                  ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">computer</span>
+              <span>PC & Mac</span>
+            </button>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold font-stat-label w-fit border border-primary/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span>Smart Pre-selection: {activeTab === 'ios' ? 'Apple iOS' : activeTab === 'android' ? 'Android Device' : 'Desktop Browser'}</span>
+          </div>
         </div>
 
         {/* Tab 1: Android Instructions */}

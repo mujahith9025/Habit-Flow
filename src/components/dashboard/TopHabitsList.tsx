@@ -40,7 +40,7 @@ export const TopHabitsList: React.FC<TopHabitsListProps> = ({
           return (
             <div
               key={habit.id}
-              className="bg-surface-container-lowest dark:bg-surface-container shadow-soft border border-outline-variant/15 rounded-xl p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:border-primary/40 transition-all duration-200"
+              className="bg-surface-container-lowest dark:bg-surface-container shadow-soft border border-outline-variant/15 rounded-2xl p-4 flex items-center justify-between gap-3 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40 transition-all duration-200"
             >
               {/* Left: Mini SVG Progress Ring + Habit Info */}
               <div className="flex items-center gap-3.5 min-w-0">

@@ -23,6 +23,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     return localStorage.getItem('habitflow_sidebar_collapsed') === 'true';
   });
 
+  const [isBoardsOpen, setIsBoardsOpen] = useState(true);
+
   const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
 
   const handleToggle = () => {
@@ -179,8 +181,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                       )}
                     </>
                   ) : (
-                    /* Floating Tooltip in Collapsed Mode */
-                    <div className="absolute left-full ml-3 px-2.5 py-1 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-xs font-semibold rounded-lg shadow-soft opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                    /* High-Taste Floating Tooltip in Collapsed Mode */
+                    <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#18191B] dark:bg-[#232629] text-white text-xs font-semibold rounded-xl shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 whitespace-nowrap z-50">
                       {item.label}
                     </div>
                   )}
@@ -190,29 +192,38 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           ))}
         </nav>
 
-        {/* Tracker Boards Category List (Expanded view) */}
+        {/* Tracker Boards Category List (Expanded view with collapse toggle) */}
         {!isCollapsed && categories.length > 0 && (
           <div className="pt-3 border-t border-outline-variant/15 px-2 space-y-1.5 animate-fadeIn">
-            <span className="font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold block px-2 mb-1">
-              Tracker Boards
-            </span>
-            <div className="space-y-1 max-h-44 overflow-y-auto scrollbar-thin pr-1">
-              {categories.map((cat) => {
-                const count = categoryCounts[cat];
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors text-left"
-                  >
-                    <span className="truncate font-medium">{cat}</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-surface-container-highest dark:bg-surface-container-high text-on-surface-variant">
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsBoardsOpen(!isBoardsOpen)}
+              className="w-full flex items-center justify-between font-stat-label text-[11px] text-on-surface-variant uppercase tracking-wider font-bold px-2 py-1 hover:text-on-surface transition-colors cursor-pointer"
+            >
+              <span>Tracker Boards</span>
+              <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isBoardsOpen ? 'rotate-0' : '-rotate-90'}`}>
+                expand_more
+              </span>
+            </button>
+            {isBoardsOpen && (
+              <div className="space-y-1 max-h-44 overflow-y-auto scrollbar-thin pr-1 animate-fadeIn">
+                {categories.map((cat) => {
+                  const count = categoryCounts[cat];
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => navigate('/dashboard')}
+                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors text-left group"
+                    >
+                      <span className="truncate font-medium group-hover:text-primary transition-colors">{cat}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

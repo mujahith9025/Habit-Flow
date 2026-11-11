@@ -307,9 +307,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       {/* Card Footer: Status Banner */}
       <div className="mt-3 pt-2.5 border-t border-outline-variant/15 flex items-center justify-between text-xs">
         {allDone ? (
-          <div className="flex items-center gap-1.5 text-secondary dark:text-secondary-fixed font-bold">
-            <span className="material-symbols-outlined text-[16px]">verified</span>
-            <span>All done for today! Calm momentum in motion.</span>
+          <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold bg-[#E8EFE8] dark:bg-[#1E2E20] px-3 py-1 rounded-full border border-emerald-500/20 animate-fadeIn text-xs">
+            <span className="material-symbols-outlined text-[16px] text-emerald-700 dark:text-emerald-400">spa</span>
+            <span>All done for today. Rest well ᵕ̈</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-on-surface-variant text-[11px]">

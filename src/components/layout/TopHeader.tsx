@@ -11,7 +11,7 @@ export const TopHeader: React.FC = () => {
   const { isInstalled } = usePWAInstall();
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/15 transition-colors">
+    <header className="sticky top-0 z-30 w-full bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/20 shadow-[0_1px_3px_rgba(24,25,27,0.03)] transition-colors">
       <div className="flex items-center justify-between px-container-padding py-3 max-w-7xl mx-auto">
         {/* Left: Branding & App Logo */}
         <Link to="/dashboard" className="flex items-center gap-2.5 active:scale-98 transition-transform">

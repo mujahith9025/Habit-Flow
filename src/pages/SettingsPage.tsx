@@ -68,9 +68,15 @@ export const SettingsPage: React.FC = () => {
   const [displayName, setDisplayName] = useState(profile?.name || '');
   const [firstDayOfWeek, setFirstDayOfWeek] = useState<'monday' | 'sunday'>('monday');
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const [showSavedPill, setShowSavedPill] = useState(false);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(() =>
     getNotificationSettings()
   );
+
+  const triggerSavedFeedback = () => {
+    setShowSavedPill(true);
+    setTimeout(() => setShowSavedPill(false), 1600);
+  };
 
   // Modals state
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
@@ -135,11 +141,19 @@ export const SettingsPage: React.FC = () => {
       case 'profile':
         return (
           <div className="space-y-6 animate-fadeIn">
-            <div>
-              <h3 className="font-section-header text-xl font-bold text-on-surface">Profile</h3>
-              <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Your personal identity, cloud sync status, and account credentials
-              </p>
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/15">
+              <div>
+                <h3 className="font-section-header text-xl font-bold text-on-surface">Profile</h3>
+                <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                  Your personal identity, cloud sync status, and account credentials
+                </p>
+              </div>
+              {showSavedPill && (
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 text-xs font-bold font-stat-label animate-fadeIn flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">check</span>
+                  Saved
+                </span>
+              )}
             </div>
 
             {/* Profile Avatar Card */}
@@ -185,7 +199,10 @@ export const SettingsPage: React.FC = () => {
                   id="settings-display-name"
                   type="text"
                   value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    triggerSavedFeedback();
+                  }}
                   className="block w-full px-4 py-2.5 rounded-2xl bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/25 text-on-surface font-body-text text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                   placeholder="Your Name"
                 />
@@ -216,11 +233,19 @@ export const SettingsPage: React.FC = () => {
       case 'preferences':
         return (
           <div className="space-y-6 animate-fadeIn">
-            <div>
-              <h3 className="font-section-header text-xl font-bold text-on-surface">Preferences</h3>
-              <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Customize weekly start days, interaction feedback, and habits workflow
-              </p>
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/15">
+              <div>
+                <h3 className="font-section-header text-xl font-bold text-on-surface">Preferences</h3>
+                <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                  Customize weekly start days, interaction feedback, and habits workflow
+                </p>
+              </div>
+              {showSavedPill && (
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 text-xs font-bold font-stat-label animate-fadeIn flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">check</span>
+                  Saved
+                </span>
+              )}
             </div>
 
             <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 border border-outline-variant/20 shadow-soft divide-y divide-outline-variant/15 space-y-4">
@@ -238,6 +263,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={() => {
                       triggerHaptic('light');
                       setFirstDayOfWeek('monday');
+                      triggerSavedFeedback();
                     }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       firstDayOfWeek === 'monday'
@@ -252,6 +278,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={() => {
                       triggerHaptic('light');
                       setFirstDayOfWeek('sunday');
+                      triggerSavedFeedback();
                     }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       firstDayOfWeek === 'sunday'
@@ -278,6 +305,7 @@ export const SettingsPage: React.FC = () => {
                     const next = !hapticsEnabled;
                     setHapticsEnabled(next);
                     if (next) triggerHaptic('success');
+                    triggerSavedFeedback();
                   }}
                   className={`w-12 h-7 rounded-full p-1 transition-colors ${
                     hapticsEnabled ? 'bg-primary' : 'bg-surface-container-high'

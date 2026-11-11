@@ -112,6 +112,9 @@ export const HabitCalendarHeatmap: React.FC<HabitCalendarHeatmapProps> = ({
               }}
             >
               <span className="text-xs sm:text-sm">{cell.dayNum}</span>
+              {isToday && !completed && (
+                <span className="w-1.5 h-1.5 rounded-full bg-primary absolute bottom-1 animate-pulse" />
+              )}
               {completed && (
                 <span
                   className="material-symbols-outlined text-[13px] sm:text-[15px] leading-none mt-0.5"

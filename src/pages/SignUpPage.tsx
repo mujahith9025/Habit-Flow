@@ -168,6 +168,45 @@ export const SignUpPage: React.FC = () => {
               </span>
             </button>
           </div>
+
+          {/* High-Taste Password Strength Entropy Indicator */}
+          {password.length > 0 && (
+            <div className="pt-2 px-1 space-y-1 animate-fadeIn">
+              <div className="flex gap-1.5 h-1">
+                {[1, 2, 3, 4].map((level) => {
+                  let score = 0;
+                  if (password.length >= 8) score++;
+                  if (/[A-Z]/.test(password)) score++;
+                  if (/[0-9]/.test(password)) score++;
+                  if (/[^A-Za-z0-9]/.test(password)) score++;
+                  const active = score >= level;
+
+                  return (
+                    <div
+                      key={level}
+                      className={`flex-1 rounded-full transition-all duration-300 ${
+                        active
+                          ? score <= 2
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-600 dark:bg-emerald-400'
+                          : 'bg-surface-container-high'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-on-surface-variant font-stat-label">
+                <span>Password entropy</span>
+                <span className="font-bold">
+                  {password.length < 8
+                    ? 'Too short (min 8)'
+                    : (password.match(/[A-Z]/) && password.match(/[0-9]/) && password.match(/[^A-Za-z0-9]/))
+                    ? 'Robust 🛡️'
+                    : 'Good'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Confirm Password */}
