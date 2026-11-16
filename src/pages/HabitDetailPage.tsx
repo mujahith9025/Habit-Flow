@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { useHabits } from '../hooks/useHabits';
 import { useSingleHabitHistory } from '../hooks/useSingleHabitHistory';
 import { useDailyHabitsData } from '../hooks/useDailyHabitsData';
@@ -16,6 +17,8 @@ import { Card } from '../components/ui/Card';
 import { HabitFlowLogo } from '../components/ui/HabitFlowLogo';
 import { isHabitActiveInMonth } from '../types';
 import { getCategoryIcon } from '../lib/calculations';
+import { exportToPDF, exportToExcel, ExportData } from '../utils/exportUtils';
+import { triggerHaptic } from '../utils/haptics';
 
 const MONTH_NAMES = [
   'January',
@@ -35,6 +38,7 @@ const MONTH_NAMES = [
 export const HabitDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     habits,
     loading: habitsLoading,
@@ -150,6 +154,24 @@ export const HabitDetailPage: React.FC = () => {
     setSelectedDate((prev) => {
       return new Date(prev.getFullYear() + offset, prev.getMonth(), 1);
     });
+  };
+
+  const handleExportReport = async (format: 'pdf' | 'csv') => {
+    triggerHaptic('selection');
+    const exportData: ExportData = {
+      profile: user,
+      habits: activeHabits,
+      habitMetricsMap: aggregateMetricsMap,
+    };
+    try {
+      if (format === 'pdf') {
+        await exportToPDF(exportData);
+      } else {
+        exportToExcel(exportData);
+      }
+    } catch (err) {
+      console.error('Failed to export report:', err);
+    }
   };
 
   const handleDelete = async () => {
@@ -288,6 +310,7 @@ export const HabitDetailPage: React.FC = () => {
         onSelectYear={handleSelectYear}
         onResetToCurrentMonth={() => setSelectedDate(new Date())}
         onOpenCreateHabitModal={() => setIsCreateModalOpen(true)}
+        onExportReport={handleExportReport}
       />
 
       {/* 3. Main Analytics Content Area */}
@@ -362,11 +385,13 @@ export const HabitDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Metrics Summary Grid for the selected habit */}
+            {/* Metrics Summary Grid for the selected habit with 30-Day Momentum Sparkline */}
             <HabitStatsGrid
               metrics={singleMetrics}
               selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
               habitColor={habit.color || '#2D5A34'}
+              isCompleted={isSingleCompleted}
+              selectedDate={selectedDate}
             />
 
             {/* Graph / Calendar / All-Time View Switcher Tabs */}

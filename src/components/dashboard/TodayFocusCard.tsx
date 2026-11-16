@@ -37,6 +37,15 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [showUndoBanner, setShowUndoBanner] = useState(false);
   const [lastBatchCompletedIds, setLastBatchCompletedIds] = useState<string[]>([]);
+  const [filterMode, setFilterMode] = useState<'all' | 'remaining'>(() => {
+    return (localStorage.getItem('habitflow_today_filter') as 'all' | 'remaining') || 'all';
+  });
+
+  const handleSetFilterMode = (mode: 'all' | 'remaining') => {
+    setFilterMode(mode);
+    localStorage.setItem('habitflow_today_filter', mode);
+    triggerHaptic('selection');
+  };
 
   const activeHabits = habits.filter((h) => !h.archived);
 
@@ -52,6 +61,13 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const remainingCount = totalCount - completedCount;
   const percentDone = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
+
+  const displayedHabits = activeHabits.filter((h) => {
+    if (filterMode === 'remaining') {
+      return !isCompleted(h.id, todayDateKey);
+    }
+    return true;
+  });
 
   const handleToggle = async (habitId: string) => {
     const isCurrentlyDone = isCompleted(habitId, todayDateKey);
@@ -196,6 +212,41 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
+        {/* Today Habit Filter: "Show Remaining Only" vs "Show All" */}
+        {totalCount > 0 && completedCount > 0 && (
+          <div className="flex items-center justify-between text-xs mb-2.5 px-0.5">
+            <span className="text-[11px] font-stat-label text-on-surface-variant font-medium">
+              {filterMode === 'remaining'
+                ? `${remainingCount} remaining today`
+                : `All ${totalCount} habits`}
+            </span>
+            <div className="inline-flex rounded-lg bg-surface-container-low dark:bg-surface-container-high/40 p-0.5 border border-outline-variant/20 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => handleSetFilterMode('all')}
+                className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                  filterMode === 'all'
+                    ? 'bg-primary text-on-primary shadow-xs font-bold'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                Show All ({totalCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetFilterMode('remaining')}
+                className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                  filterMode === 'remaining'
+                    ? 'bg-primary text-on-primary shadow-xs font-bold'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                Remaining Only ({remainingCount})
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Habit Checklist or Empty State */}
         {totalCount === 0 ? (
           <div className="py-6 text-center space-y-2.5">
@@ -216,9 +267,30 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               </button>
             )}
           </div>
+        ) : filterMode === 'remaining' && displayedHabits.length === 0 ? (
+          <div className="py-6 text-center space-y-2 bg-surface-container-low/40 dark:bg-surface-container-low/20 rounded-2xl border border-outline-variant/20 p-4 animate-fadeIn">
+            <div className="w-10 h-10 rounded-full bg-secondary-container/40 text-secondary mx-auto flex items-center justify-center">
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                task_alt
+              </span>
+            </div>
+            <p className="font-section-header text-xs font-bold text-on-surface">
+              All tasks checked off for today!
+            </p>
+            <p className="font-body-text text-[11px] text-on-surface-variant max-w-xs mx-auto">
+              Every habit in {categoryName || 'this board'} is completed.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleSetFilterMode('all')}
+              className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer pt-1"
+            >
+              <span>Show all completed habits ({totalCount})</span>
+            </button>
+          </div>
         ) : (
           <div className="space-y-2 max-h-[185px] overflow-y-auto scrollbar-thin pr-1">
-            {activeHabits.map((habit) => {
+            {displayedHabits.map((habit) => {
               const done = isCompleted(habit.id, todayDateKey);
               const metrics = habitMetricsMap[habit.id];
               const streak = metrics?.streakCount ?? 0;

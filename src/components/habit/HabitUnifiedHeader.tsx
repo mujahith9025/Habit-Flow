@@ -17,6 +17,7 @@ interface HabitUnifiedHeaderProps {
   onSelectYear: (offset: number) => void;
   onResetToCurrentMonth: () => void;
   onOpenCreateHabitModal: () => void;
+  onExportReport?: (format: 'pdf' | 'csv') => void;
 }
 
 const MONTH_NAMES = [
@@ -40,12 +41,15 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
   onSelectYear,
   onResetToCurrentMonth,
   onOpenCreateHabitModal,
+  onExportReport,
 }) => {
   const [isBoardPickerOpen, setIsBoardPickerOpen] = useState(false);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
   const boardPickerRef = useRef<HTMLDivElement>(null);
   const monthPickerRef = useRef<HTMLDivElement>(null);
+  const exportPickerRef = useRef<HTMLDivElement>(null);
 
   const selectedYear = selectedDate.getFullYear();
   const selectedMonthIdx = selectedDate.getMonth();
@@ -61,6 +65,9 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
       }
       if (monthPickerRef.current && !monthPickerRef.current.contains(target)) {
         setIsMonthPickerOpen(false);
+      }
+      if (exportPickerRef.current && !exportPickerRef.current.contains(target)) {
+        setIsExportMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -301,6 +308,65 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
               </div>
             )}
           </div>
+
+          {/* 1-Tap Export Report Dropdown Trigger */}
+          {onExportReport && (
+            <div ref={exportPickerRef} className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExportMenuOpen((prev) => !prev);
+                  setIsMonthPickerOpen(false);
+                  setIsBoardPickerOpen(false);
+                }}
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all flex items-center gap-1 shrink-0 active:scale-95 border border-outline-variant/25 cursor-pointer shadow-2xs"
+                title="Export Monthly Performance Report (PDF / CSV)"
+              >
+                <span className="material-symbols-outlined text-[15px] text-primary">download</span>
+                <span className="hidden sm:inline">Export</span>
+                <span className="material-symbols-outlined text-[13px] text-on-surface-variant">
+                  {isExportMenuOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </button>
+
+              {/* Export Popover Menu */}
+              {isExportMenuOpen && (
+                <div className="absolute top-10 right-0 z-50 w-48 bg-surface-container-lowest dark:bg-surface-container-high rounded-xl shadow-xl border border-outline-variant/20 p-1.5 space-y-1 animate-scaleUp">
+                  <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
+                    Download Report
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsExportMenuOpen(false);
+                      onExportReport('pdf');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-red-500">picture_as_pdf</span>
+                    <div>
+                      <div className="font-semibold text-xs leading-none">PDF Report</div>
+                      <span className="text-[10px] text-on-surface-variant">Executive summary</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsExportMenuOpen(false);
+                      onExportReport('csv');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-emerald-600">table_chart</span>
+                    <div>
+                      <div className="font-semibold text-xs leading-none">CSV Spreadsheet</div>
+                      <span className="text-[10px] text-on-surface-variant">Excel / Numbers data</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* New Habit Action Button */}
           <button
