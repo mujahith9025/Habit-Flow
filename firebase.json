@@ -3,6 +3,7 @@
     "rules": "firestore.rules"
   },
   "hosting": {
+    "site": "habitflow-2a53e",
     "public": "dist",
     "ignore": [
       "firebase.json",

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../../types/auth';
 import { Habit } from '../../types/habit';
-import { DailyLedgerRow, MonthExpenseSummary, ExpenseTrackerSettings } from '../../types/expense';
 import { exportToPDF, exportToExcel, exportToJSON, HabitMetricDetail } from '../../utils/exportUtils';
 import { triggerHaptic } from '../../utils/haptics';
 
@@ -11,10 +10,6 @@ interface ExportDataModalProps {
   profile?: UserProfile | null;
   habits: Habit[];
   habitMetricsMap?: Record<string, HabitMetricDetail>;
-  expenseRows?: DailyLedgerRow[];
-  monthSummaries?: MonthExpenseSummary[];
-  totalCumulativeSavings?: number;
-  expenseSettings?: ExpenseTrackerSettings;
 }
 
 export const ExportDataModal: React.FC<ExportDataModalProps> = ({
@@ -23,10 +18,6 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
   profile,
   habits,
   habitMetricsMap,
-  expenseRows,
-  monthSummaries,
-  totalCumulativeSavings,
-  expenseSettings,
 }) => {
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -37,10 +28,6 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
     profile,
     habits,
     habitMetricsMap,
-    expenseRows,
-    monthSummaries,
-    totalCumulativeSavings,
-    expenseSettings,
   };
 
   const handleExportPDF = async () => {
@@ -49,7 +36,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
       setIsExportingPDF(true);
       triggerHaptic('success');
       await exportToPDF(exportPayload);
-      setDownloadSuccessMessage('✅ Advanced Executive PDF Report downloaded successfully!');
+      setDownloadSuccessMessage('✅ Executive PDF Performance Report downloaded successfully!');
       setTimeout(() => {
         setDownloadSuccessMessage(null);
         onClose();
@@ -64,7 +51,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
   const handleExportExcel = () => {
     triggerHaptic('success');
     exportToExcel(exportPayload);
-    setDownloadSuccessMessage('✅ Comprehensive Multi-Section Excel Spreadsheet downloaded!');
+    setDownloadSuccessMessage('✅ Habit Analytics Spreadsheet downloaded successfully!');
     setTimeout(() => {
       setDownloadSuccessMessage(null);
       onClose();
@@ -74,7 +61,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
   const handleExportJSON = () => {
     triggerHaptic('success');
     exportToJSON(exportPayload);
-    setDownloadSuccessMessage('✅ Complete Data & Financial Backup JSON downloaded!');
+    setDownloadSuccessMessage('✅ Complete HabitFlow System Backup JSON downloaded!');
     setTimeout(() => {
       setDownloadSuccessMessage(null);
       onClose();
@@ -101,7 +88,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
                 Executive Data Export
               </h3>
               <p className="font-body-text text-xs text-on-surface-variant">
-                Select your format ({habits.length} habits & {(expenseRows || []).length} financial records)
+                Select your format ({habits.length} habits tracked across all boards)
               </p>
             </div>
           </div>
@@ -150,7 +137,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Multi-section styled document with KPI cards, category breakdown, habit deep dive, and monthly financial ledger tables.
+                Multi-section styled document with KPI cards, category boards breakdown, habit deep dive, and monthly consistency heatmaps.
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
@@ -176,7 +163,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Structured multi-table spreadsheet with metadata, category metrics, full habit matrix (12 columns), and financial ledger logs.
+                Structured spreadsheet with tracker board distribution, habit matrix (12 columns), and consistency history.
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
@@ -202,7 +189,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
                 </span>
               </div>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Complete raw JSON archive including habit histories, category configs, and daily financial savings ledger data.
+                Complete raw JSON archive including habit histories, category configs, streaks, and user preferences.
               </p>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">

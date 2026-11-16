@@ -469,7 +469,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                       cy="50"
                       r={monthRadius}
                       fill="transparent"
-                      stroke="#006398"
+                      stroke="#2D5A34"
                       strokeWidth="7"
                       strokeDasharray={monthCircumference}
                       strokeDashoffset={monthStrokeDashoffset}
@@ -516,7 +516,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                   const habitStrokeDashoffset =
                     habitCircumference -
                     (habitCircumference * Math.min(100, Math.max(0, metrics.monthProgressPercent))) / 100;
-                  const habitColor = h.color || '#006398';
+                  const habitColor = h.color || '#2D5A34';
 
                   return (
                     <div
@@ -657,13 +657,13 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
             <div className="flex flex-col items-center justify-center shrink-0">
               <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(0, 99, 152, 0.15)" strokeWidth="7" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(45, 90, 52, 0.15)" strokeWidth="7" />
                   <circle
                     cx="50"
                     cy="50"
                     r="40"
                     fill="transparent"
-                    stroke="#006398"
+                    stroke="#2D5A34"
                     strokeWidth="7"
                     strokeDasharray={2 * Math.PI * 40}
                     strokeDashoffset={2 * Math.PI * 40 - (2 * Math.PI * 40 * Math.min(100, Math.max(0, allTimeData.overallConsistencyPercent))) / 100}
@@ -696,7 +696,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {allTimeData.habitStatsList.map((stat, idx) => {
-                const habitColor = stat.habit.color || '#006398';
+                const habitColor = stat.habit.color || '#2D5A34';
                 const isTop1 = idx === 0;
 
                 return (

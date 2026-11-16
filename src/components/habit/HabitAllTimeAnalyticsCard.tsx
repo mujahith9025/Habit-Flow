@@ -9,7 +9,7 @@ interface HabitAllTimeAnalyticsCardProps {
 
 export const HabitAllTimeAnalyticsCard: React.FC<HabitAllTimeAnalyticsCardProps> = ({
   habitName,
-  habitColor = '#006398',
+  habitColor = '#2D5A34',
   metrics,
 }) => {
   const {

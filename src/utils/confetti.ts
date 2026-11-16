@@ -14,7 +14,7 @@ interface Particle {
 }
 
 const BRAND_COLORS = [
-  '#006398', // Primary Deep Cyan / Blue
+  '#2D5A34', // Primary Forest Green
   '#286b33', // Secondary Forest Emerald
   '#f59e0b', // Amber / Golden
   '#10b981', // Mint Green

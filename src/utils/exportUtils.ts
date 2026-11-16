@@ -67,7 +67,7 @@ export async function exportToPDF(data: ExportData): Promise<void> {
   });
 
   // 1. Executive Header Banner
-  doc.setFillColor(0, 99, 152); // #006398 Primary Navy
+  doc.setFillColor(45, 90, 52); // #2D5A34 Japandi Deep Forest
   doc.rect(0, 0, 210, 36, 'F');
 
   doc.setTextColor(255, 255, 255);
@@ -77,7 +77,7 @@ export async function exportToPDF(data: ExportData): Promise<void> {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.text('Comprehensive Habit Analytics, Streaks & Financial Ledger History', 14, 23);
+  doc.text('Comprehensive Habit Analytics, Streaks & Consistency History', 14, 23);
 
   doc.setFontSize(8.5);
   doc.setTextColor(215, 235, 255);
@@ -92,7 +92,7 @@ export async function exportToPDF(data: ExportData): Promise<void> {
   // KPI 1: Habits Tracked
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.setTextColor(0, 99, 152);
+  doc.setTextColor(45, 90, 52);
   doc.text(`${habits.length}`, 22, 53);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
@@ -219,7 +219,7 @@ export async function exportToPDF(data: ExportData): Promise<void> {
     body: habitRows,
     theme: 'grid',
     headStyles: {
-      fillColor: [0, 99, 152],
+      fillColor: [45, 90, 52],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 8,
@@ -333,7 +333,7 @@ export async function exportToPDF(data: ExportData): Promise<void> {
       body: recentRows,
       theme: 'grid',
       headStyles: {
-        fillColor: [0, 99, 152],
+        fillColor: [45, 90, 52],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         fontSize: 8,
@@ -346,7 +346,7 @@ export async function exportToPDF(data: ExportData): Promise<void> {
       columnStyles: {
         0: { cellWidth: 25, fontStyle: 'bold' },
         1: { cellWidth: 25 },
-        2: { cellWidth: 35, fontStyle: 'bold', textColor: [0, 99, 152] },
+        2: { cellWidth: 35, fontStyle: 'bold', textColor: [45, 90, 52] },
         3: { cellWidth: 95 },
       },
     });

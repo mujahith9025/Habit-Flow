@@ -62,7 +62,7 @@ export const DataLayerDebugPage: React.FC = () => {
         name: newHabitName.trim(),
         frequency: newHabitFreq,
         icon: newHabitFreq === 'daily' ? 'mindfulness' : newHabitFreq === 'weekly' ? 'fitness_center' : 'menu_book',
-        color: newHabitFreq === 'daily' ? '#006398' : newHabitFreq === 'weekly' ? '#286b33' : '#a03e40',
+        color: newHabitFreq === 'daily' ? '#2D5A34' : newHabitFreq === 'weekly' ? '#52995D' : '#A65A42',
         goalCount: 1,
         sortOrder: habits.length,
       });

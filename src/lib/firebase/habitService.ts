@@ -230,7 +230,7 @@ export async function seedSampleHabits(uid: string): Promise<Habit[]> {
       name: 'Morning Meditation',
       category: 'Mindfulness',
       icon: 'self_improvement',
-      color: '#006398', // Primary Teal/Blue
+      color: '#2D5A34', // Primary Forest Green
       frequency: 'daily',
       goalCount: 1,
       sortOrder: 0,
