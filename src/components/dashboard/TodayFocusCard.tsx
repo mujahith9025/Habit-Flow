@@ -4,6 +4,7 @@ import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { formatDateKey } from '../../hooks/useDashboardMetrics';
 import { triggerHaptic } from '../../utils/haptics';
 import { triggerMilestoneCelebration } from '../../utils/confetti';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -197,7 +198,10 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
         {/* Habit Checklist or Empty State */}
         {totalCount === 0 ? (
-          <div className="py-6 text-center space-y-2">
+          <div className="py-6 text-center space-y-2.5">
+            <div className="flex justify-center">
+              <HabitFlowLogo size={36} />
+            </div>
             <p className="font-body-text text-xs text-on-surface-variant">
               No habits in {categoryName ? `"${categoryName}"` : 'this board'} yet.
             </p>

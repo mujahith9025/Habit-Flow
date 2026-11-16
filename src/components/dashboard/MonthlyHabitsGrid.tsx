@@ -2,6 +2,7 @@ import React from 'react';
 import { Habit } from '../../types';
 import { MonthlyHabitMetrics } from '../../hooks/useMonthlyHabitsData';
 import { Button } from '../ui/Button';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 interface MonthlyHabitsGridProps {
   monthlyHabits: Habit[];
@@ -25,8 +26,8 @@ export const MonthlyHabitsGrid: React.FC<MonthlyHabitsGridProps> = ({
   if (monthlyHabits.length === 0) {
     return (
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-xl shadow-soft border border-outline-variant/15 p-8 text-center space-y-3">
-        <div className="w-12 h-12 rounded-full bg-tertiary-container/30 text-tertiary mx-auto flex items-center justify-center">
-          <span className="material-symbols-outlined text-[24px]">calendar_month</span>
+        <div className="flex justify-center">
+          <HabitFlowLogo size={44} />
         </div>
         <h3 className="font-section-header text-base font-semibold text-on-surface">
           No Monthly Habits Found

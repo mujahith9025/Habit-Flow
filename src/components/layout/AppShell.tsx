@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { DesktopSidebar } from './DesktopSidebar';
 import { TopHeader } from './TopHeader';
@@ -10,6 +10,18 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 export const AppShell: React.FC = () => {
   const { showExitToast } = useBackButtonHandler();
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('habitflow_sidebar_collapsed') === 'true';
+  });
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('habitflow_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row antialiased selection:bg-primary-container selection:text-on-primary-container">
       {/* Back Button Exit Warning Toast */}
@@ -19,12 +31,15 @@ export const AppShell: React.FC = () => {
       <OfflineBanner />
 
       {/* Desktop Collapsible Sidebar (visible on md+) */}
-      <DesktopSidebar />
+      <DesktopSidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
+      />
 
       {/* Main Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300">
         {/* Sticky Top Header */}
-        <TopHeader />
+        <TopHeader isSidebarCollapsed={isSidebarCollapsed} />
 
         {/* Dynamic Route Content */}
         <main className="flex-1 px-container-padding py-md sm:py-lg pb-28 md:pb-12 max-w-[1500px] mx-auto w-full transition-all duration-300">

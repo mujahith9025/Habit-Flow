@@ -42,7 +42,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
       <main className="w-full max-w-md mx-auto my-auto z-10 relative pt-8 pb-4">
         {/* Header / Identity */}
         <header className="text-center mb-6 sm:mb-8">
-          {iconName && iconName !== 'energy_savings_leaf' ? (
+          {iconName ? (
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface-container-lowest dark:bg-surface-container-lowest text-primary mb-4 shadow-soft border border-outline-variant/30">
               <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
                 {iconName}

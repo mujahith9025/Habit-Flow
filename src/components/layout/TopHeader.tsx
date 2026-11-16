@@ -1,26 +1,107 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { CloudSyncStatus } from '../ui/CloudSyncStatus';
 import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
-export const TopHeader: React.FC = () => {
+interface TopHeaderProps {
+  isSidebarCollapsed?: boolean;
+}
+
+export const TopHeader: React.FC<TopHeaderProps> = ({ isSidebarCollapsed = false }) => {
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { isInstalled } = usePWAInstall();
+  const location = useLocation();
+
+  const getScreenMeta = (pathname: string): { title: string; subtitle?: string; icon: string } => {
+    if (pathname.startsWith('/dashboard')) {
+      return { title: 'Dashboard', icon: 'dashboard', subtitle: 'Daily Routine & Focus' };
+    }
+    if (pathname.startsWith('/habit')) {
+      return { title: 'Analytics & Reports', icon: 'insights', subtitle: 'Performance & Heatmaps' };
+    }
+    if (pathname.startsWith('/setting')) {
+      return { title: 'Settings', icon: 'tune', subtitle: 'Preferences & System' };
+    }
+    if (pathname.startsWith('/install')) {
+      return { title: 'Install App', icon: 'install_mobile', subtitle: 'PWA Setup' };
+    }
+    if (pathname.startsWith('/debug')) {
+      return { title: 'Data Layer Debug', icon: 'bug_report', subtitle: 'Diagnostics' };
+    }
+    return { title: 'HabitFlow', icon: 'spa' };
+  };
+
+  const screenMeta = getScreenMeta(location.pathname);
 
   return (
     <header className="sticky top-0 z-30 w-full bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/20 shadow-[0_1px_3px_rgba(24,25,27,0.03)] transition-colors">
       <div className="flex items-center justify-between px-container-padding py-3 max-w-7xl mx-auto">
-        {/* Left: Branding & App Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2.5 active:scale-98 transition-transform">
-          <HabitFlowLogo size={32} />
-          <span className="font-app-title text-xl sm:text-2xl font-bold text-primary dark:text-primary-fixed-dim">
-            HabitFlow
-          </span>
-        </Link>
+        {/* Left: Responsive Brand / Active Screen Title */}
+        <div className="flex items-center gap-3">
+          {/* Mobile view (< md): Always show HabitFlow Brand & Logo since sidebar is hidden */}
+          <Link
+            to="/dashboard"
+            className="flex md:hidden items-center gap-2.5 active:scale-98 transition-transform"
+          >
+            <HabitFlowLogo size={32} />
+            <span className="font-app-title text-xl font-bold text-primary dark:text-primary-fixed-dim">
+              HabitFlow
+            </span>
+          </Link>
+
+          {/* Desktop view (md+): Eliminate double-branding when sidebar is visible */}
+          <div className="hidden md:flex items-center gap-3">
+            {isSidebarCollapsed ? (
+              // When desktop sidebar is collapsed (72px): show compact brand + active breadcrumb
+              <div className="flex items-center gap-2.5 animate-fadeIn">
+                <Link to="/dashboard" className="flex items-center gap-2 group">
+                  <HabitFlowLogo size={28} />
+                  <span className="font-app-title text-lg font-bold text-primary dark:text-primary-fixed-dim">
+                    HabitFlow
+                  </span>
+                </Link>
+                <span className="text-outline-variant/40 font-light text-base select-none">/</span>
+                <div className="flex items-center gap-1.5 text-on-surface">
+                  <span
+                    className="material-symbols-outlined text-primary text-[19px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    {screenMeta.icon}
+                  </span>
+                  <h2 className="font-app-title text-base font-bold text-on-surface tracking-tight">
+                    {screenMeta.title}
+                  </h2>
+                </div>
+              </div>
+            ) : (
+              // When desktop sidebar is EXPANDED (w-64/72): Replace redundant logo/text with active screen title
+              <div className="flex items-center gap-2.5 animate-fadeIn">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <span
+                    className="material-symbols-outlined text-[20px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    {screenMeta.icon}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <h2 className="font-app-title text-lg lg:text-xl font-bold text-on-surface tracking-tight leading-none">
+                    {screenMeta.title}
+                  </h2>
+                  {screenMeta.subtitle && (
+                    <span className="hidden lg:inline text-xs text-on-surface-variant font-body-text">
+                      • {screenMeta.subtitle}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Right: Actions & User Profile in the Right Corner */}
         <div className="flex items-center gap-1.5 sm:gap-3">

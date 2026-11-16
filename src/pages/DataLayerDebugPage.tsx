@@ -365,10 +365,10 @@ export const DataLayerDebugPage: React.FC = () => {
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
-                    style={{ backgroundColor: habit.color || '#006398' }}
+                    style={{ backgroundColor: habit.color || '#2D5A34' }}
                   >
                     <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      {habit.icon || 'energy_savings_leaf'}
+                      {habit.icon || 'spa'}
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">

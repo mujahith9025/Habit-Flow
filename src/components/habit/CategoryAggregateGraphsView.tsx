@@ -3,6 +3,7 @@ import { Habit } from '../../types';
 import { HabitGridMetrics, MonthDayInfo } from '../../hooks/useDailyHabitsData';
 import { useCategoryAllTimeData } from '../../hooks/useCategoryAllTimeData';
 import { Button } from '../ui/Button';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 import { triggerHaptic } from '../../utils/haptics';
 
 interface CategoryAggregateGraphsViewProps {
@@ -43,8 +44,8 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
   if (totalHabits === 0) {
     return (
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-8 shadow-soft border border-outline-variant/15 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center">
-          <span className="material-symbols-outlined text-[24px]">dataset</span>
+        <div className="flex justify-center">
+          <HabitFlowLogo size={44} />
         </div>
         <h3 className="font-section-header text-lg font-bold text-on-surface">
           No Habits in {categoryName}

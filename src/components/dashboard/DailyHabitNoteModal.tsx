@@ -118,9 +118,9 @@ export const DailyHabitNoteModal: React.FC<DailyHabitNoteModalProps> = ({
           <div className="flex items-center gap-2.5 min-w-0">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-soft"
-              style={{ backgroundColor: habit.color || '#006398' }}
+              style={{ backgroundColor: habit.color || '#2D5A34' }}
             >
-              <span className="material-symbols-outlined text-[22px]">{habit.icon || 'energy_savings_leaf'}</span>
+              <span className="material-symbols-outlined text-[22px]">{habit.icon || 'spa'}</span>
             </div>
             <div className="min-w-0">
               <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface truncate">
