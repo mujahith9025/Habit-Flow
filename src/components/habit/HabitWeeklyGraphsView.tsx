@@ -30,11 +30,11 @@ interface WeekData {
 }
 
 const WEEK_THEMES = [
-  { color: '#64b5f6', ringBg: 'rgba(100, 181, 246, 0.2)', name: 'week 1' },
-  { color: '#f06292', ringBg: 'rgba(240, 98, 146, 0.2)', name: 'week 2' },
-  { color: '#4db6ac', ringBg: 'rgba(77, 182, 172, 0.2)', name: 'week 3' },
-  { color: '#ffb74d', ringBg: 'rgba(255, 183, 77, 0.2)', name: 'week 4' },
-  { color: '#7986cb', ringBg: 'rgba(121, 134, 203, 0.2)', name: 'week 5' },
+  { color: '#2D5A34', ringBg: 'rgba(45, 90, 52, 0.15)', name: 'Week 1' },
+  { color: '#52995D', ringBg: 'rgba(82, 153, 93, 0.15)', name: 'Week 2' },
+  { color: '#A65A42', ringBg: 'rgba(166, 90, 66, 0.15)', name: 'Week 3' },
+  { color: '#D4A373', ringBg: 'rgba(212, 163, 115, 0.18)', name: 'Week 4' },
+  { color: '#4A6B82', ringBg: 'rgba(74, 107, 130, 0.15)', name: 'Week 5' },
 ];
 
 const WEEKDAY_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -162,7 +162,7 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
               {/* Week Title (Italicized Serif style matching reference sheet) */}
               <div className="text-center">
                 <h4
-                  className="font-serif italic text-base sm:text-lg font-medium tracking-wide capitalize"
+                  className="font-app-title text-base sm:text-lg font-bold tracking-tight capitalize"
                   style={{ color: week.color }}
                 >
                   {week.label}

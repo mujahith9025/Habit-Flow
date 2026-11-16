@@ -13,6 +13,7 @@ import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { HabitFlowLogo } from '../components/ui/HabitFlowLogo';
 import { isHabitActiveInMonth } from '../types';
 import { getCategoryIcon } from '../lib/calculations';
 
@@ -236,8 +237,8 @@ export const HabitDetailPage: React.FC = () => {
   if (activeHabits.length === 0) {
     return (
       <Card variant="elevated" className="max-w-md mx-auto my-12 p-8 text-center space-y-5">
-        <div className="w-14 h-14 rounded-2xl bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center shadow-soft">
-          <span className="material-symbols-outlined text-[32px]">energy_savings_leaf</span>
+        <div className="flex justify-center">
+          <HabitFlowLogo size={52} />
         </div>
         <div className="space-y-1">
           <h2 className="font-section-header text-xl font-bold text-on-surface">
@@ -365,7 +366,7 @@ export const HabitDetailPage: React.FC = () => {
             <HabitStatsGrid
               metrics={singleMetrics}
               selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
-              habitColor={habit.color || '#006398'}
+              habitColor={habit.color || '#2D5A34'}
             />
 
             {/* Graph / Calendar / All-Time View Switcher Tabs */}
@@ -436,7 +437,7 @@ export const HabitDetailPage: React.FC = () => {
                   onChangeMonth={handleMonthChange}
                   isCompleted={isSingleCompleted}
                   onToggleDate={toggleSingleEntry}
-                  habitColor={habit.color || '#006398'}
+                  habitColor={habit.color || '#2D5A34'}
                   habitName={habit.name}
                 />
                 <HabitAllTimeAnalyticsCard

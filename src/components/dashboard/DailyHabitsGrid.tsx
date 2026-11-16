@@ -3,6 +3,7 @@ import { Habit } from '../../types';
 import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { DailyGridCell } from './DailyGridCell';
 import { Button } from '../ui/Button';
+import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 import { triggerHaptic } from '../../utils/haptics';
 import { triggerMilestoneCelebration } from '../../utils/confetti';
@@ -61,8 +62,8 @@ export const DailyHabitsGrid: React.FC<DailyHabitsGridProps> = ({
   if (dailyHabits.length === 0) {
     return (
       <div className="bg-surface-container-lowest dark:bg-surface-container rounded-xl shadow-soft border border-outline-variant/20 p-8 sm:p-12 text-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-primary-fixed/30 text-primary mx-auto flex items-center justify-center">
-          <span className="material-symbols-outlined text-[28px]">energy_savings_leaf</span>
+        <div className="flex justify-center">
+          <HabitFlowLogo size={44} />
         </div>
         <div className="space-y-1">
           <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">

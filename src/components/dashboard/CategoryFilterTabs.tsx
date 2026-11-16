@@ -40,7 +40,7 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
             Current Projects & Boards
           </h3>
           <span className="text-[11px] font-stat-label text-on-surface-variant font-medium hidden xs:inline">
-            • Specific Category
+            • Active Boards
           </span>
         </div>
 
@@ -55,7 +55,30 @@ export const CategoryFilterTabs: React.FC<CategoryFilterTabsProps> = ({
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {/* Specific Category Boards Only */}
+        {/* All Boards / Overview Pill */}
+        <button
+          type="button"
+          onClick={() => onSelectCategory('all')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer ${
+            selectedCategory === 'all'
+              ? 'bg-primary text-on-primary shadow-soft scale-[1.02]'
+              : 'bg-surface-container-low dark:bg-surface-container-low text-on-surface hover:bg-surface-container border border-outline-variant/30'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">apps</span>
+          <span>All Boards</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+              selectedCategory === 'all'
+                ? 'bg-white/20 text-white'
+                : 'bg-surface-container-high dark:bg-surface-container text-on-surface-variant'
+            }`}
+          >
+            {activeHabits.length}
+          </span>
+        </button>
+
+        {/* Specific Category Boards */}
         {categories.map((cat) => {
           const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
           const count = categoryCounts[cat];

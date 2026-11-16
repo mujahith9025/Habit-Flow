@@ -35,11 +35,13 @@ function getProgressSnippet(percentage: number, remaining: number): { label: str
 }
 
 function getNextStreakMilestone(streak: number): string {
-  if (streak < 7) return `${7 - streak}d to Bronze 🥉`;
-  if (streak < 14) return `${14 - streak}d to Silver 🥈`;
-  if (streak < 30) return `${30 - streak}d to Gold 🥇`;
-  if (streak < 100) return `${100 - streak}d to Diamond 💎`;
-  return 'Legendary 👑';
+  if (streak === 0) return 'Plant the seed 🌱';
+  if (streak < 3) return `${3 - streak}d to Sprout 🌿`;
+  if (streak < 7) return `${7 - streak}d to Bamboo 🎋`;
+  if (streak < 14) return `${14 - streak}d to Cedar 🌲`;
+  if (streak < 30) return `${30 - streak}d to Deep Roots 🌳`;
+  if (streak < 100) return `${100 - streak}d to Evergreen 🍃`;
+  return 'Eternal Flow 🌊';
 }
 
 export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, userName, className = '' }) => {

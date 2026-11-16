@@ -18,7 +18,7 @@ export const HabitCalendarHeatmap: React.FC<HabitCalendarHeatmapProps> = ({
   onChangeMonth,
   isCompleted,
   onToggleDate,
-  habitColor = '#006398',
+  habitColor = '#2D5A34',
 }) => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth(); // 0-indexed

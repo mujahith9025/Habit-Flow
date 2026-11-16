@@ -52,13 +52,13 @@ export const DashboardPage: React.FC = () => {
   });
   const categories = Object.keys(categoryCounts).sort();
 
-  // Effective category strictly selects the specific category (defaults to first available board)
+  // Effective category supports 'all' (all boards) or specific selected category
   const effectiveCategory =
-    categories.length > 0
-      ? selectedCategory && categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
+    !selectedCategory || selectedCategory === 'all'
+      ? 'all'
+      : categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
         ? selectedCategory
-        : categories[0]
-      : 'General';
+        : 'all';
 
   // Live real-time dashboard summary metrics & daily habit data for Today's Focus Card
   const metrics = useDashboardMetrics(selectedMonthKey, effectiveCategory);
@@ -165,7 +165,7 @@ export const DashboardPage: React.FC = () => {
             habits={dailyHabits}
             habitMetricsMap={habitMetricsMap}
             isCompleted={isCompleted}
-            categoryName={effectiveCategory}
+            categoryName={effectiveCategory === 'all' ? 'All Habits' : effectiveCategory}
             getHabitEntry={getHabitEntry}
             onToggleEntry={toggleHabitEntry}
             onBatchCompleteToday={batchCompleteTodayHabits}
