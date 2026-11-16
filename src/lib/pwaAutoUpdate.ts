@@ -24,6 +24,10 @@ export function initPWAAutoUpdate() {
       },
       onRegisteredSW(_swUrl, registration) {
         if (registration) {
+          // Immediately check for SW & manifest update on launch
+          if (navigator.onLine) {
+            registration.update().catch(() => {});
+          }
           // Check for background updates periodically every 30 minutes without interrupting UI
           setInterval(() => {
             if (navigator.onLine) {

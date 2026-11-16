@@ -426,6 +426,16 @@ export const InstallAppPage: React.FC = () => {
 
           <div className="p-4 sm:p-5 space-y-1.5">
             <h4 className="font-habit-name text-sm font-bold text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[18px]">cached</span>
+              How do I refresh the app icon if my phone shows the older logo?
+            </h4>
+            <p className="font-body-text text-xs text-on-surface-variant pl-6">
+              Phones cache home screen icons aggressively in their OS launcher. To update immediately: remove or uninstall the older icon from your phone's home screen, open <strong className="text-primary dark:text-primary-fixed-dim">https://habitflow-2a53e.web.app</strong> in your browser, and tap "Install App" (Chrome on Android) or "Add to Home Screen" (Safari on iOS). The new HabitFlow logo will appear instantly!
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5 space-y-1.5">
+            <h4 className="font-habit-name text-sm font-bold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[18px]">delete</span>
               How do I uninstall or remove the app?
             </h4>

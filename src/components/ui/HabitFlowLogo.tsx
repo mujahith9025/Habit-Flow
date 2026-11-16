@@ -74,6 +74,7 @@ export const HabitFlowLogo: React.FC<HabitFlowLogoProps> = ({
       {/* Continuous Habit Loop into Ascending Checkmark Streak */}
       <path
         d="M 32 60 C 32 46 44 36 58 36 C 72 36 80 46 76 60 C 72 74 60 84 48 84 C 36 84 28 74 34 62 L 52 80 C 56 84 62 84 66 80 L 96 42"
+        fill="none"
         stroke={isLight ? `url(#hfRibbonLight-${variant}-${size})` : `url(#hfRibbon-${variant}-${size})`}
         strokeWidth={size <= 24 ? '14' : size <= 36 ? '12' : '10.5'}
         strokeLinecap="round"

@@ -45,16 +45,35 @@ export default defineConfig({
         enabled: false, // Keep service worker disabled in development for maximum speed
       },
       manifest: {
+        id: 'com.habitflow.app',
         name: 'HabitFlow - Habit Tracker',
         short_name: 'HabitFlow',
         description: 'Build gentle persistence with calming, distraction-free habit tracking.',
         theme_color: '#18191b',
-        background_color: '#f7f6f2',
+        background_color: '#18191b',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',
         start_url: '/',
         icons: [
+          {
+            src: '/icons/habitflow-icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/habitflow-icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/habitflow-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
           {
             src: '/icons/icon-192x192.png',
             sizes: '192x192',
