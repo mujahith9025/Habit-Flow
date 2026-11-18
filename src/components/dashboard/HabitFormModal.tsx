@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Habit, HabitFrequency } from '../../types';
+import { Habit, HabitFrequency, HabitTimeOfDay } from '../../types';
 import { Button } from '../ui/Button';
 import { BottomSheetModal } from '../ui/BottomSheetModal';
 
@@ -14,6 +14,7 @@ interface HabitFormModalProps {
     name: string;
     category?: string;
     frequency: HabitFrequency;
+    timeOfDay?: HabitTimeOfDay;
     goalCount: number;
     color?: string;
     icon?: string;
@@ -54,6 +55,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [customCategory, setCustomCategory] = useState('');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
+  const [timeOfDay, setTimeOfDay] = useState<HabitTimeOfDay>('anytime');
   const [goalCount, setGoalCount] = useState(1);
   const [monthScope, setMonthScope] = useState<'all' | 'from_current' | 'current_only'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +79,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         setCustomCategory(initialCat);
       }
       setFrequency(habitToEdit.frequency || 'daily');
+      setTimeOfDay(habitToEdit.timeOfDay || 'anytime');
       setGoalCount(habitToEdit.goalCount || 1);
 
       if (habitToEdit.startMonth && habitToEdit.endMonth && habitToEdit.startMonth === habitToEdit.endMonth) {
@@ -100,6 +103,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         setCustomCategory(initialCat);
       }
       setFrequency('daily');
+      setTimeOfDay('anytime');
       setGoalCount(1);
       setMonthScope('all');
     }
@@ -153,6 +157,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         name: name.trim(),
         category: finalCategory,
         frequency,
+        timeOfDay,
         goalCount: Math.max(1, goalCount),
         startMonth,
         endMonth,
@@ -395,6 +400,53 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Time-Aware Ritual Bundle Selector (for daily habits) */}
+          {frequency === 'daily' && (
+            <div className="space-y-1.5 animate-fadeIn">
+              <label className="block font-section-header text-xs font-semibold text-on-surface">
+                Ritual Time of Day
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { value: 'morning', label: 'Morning', icon: 'wb_sunny', desc: '5am - 12pm' },
+                  { value: 'afternoon', label: 'Afternoon', icon: 'light_mode', desc: '12pm - 5pm' },
+                  { value: 'evening', label: 'Evening', icon: 'nights_stay', desc: '5pm - Night' },
+                  { value: 'anytime', label: 'Anytime', icon: 'schedule', desc: 'All Day' },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setTimeOfDay(item.value as HabitTimeOfDay)}
+                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      timeOfDay === item.value
+                        ? 'border-primary ring-2 ring-primary/20 bg-primary/10 shadow-xs'
+                        : 'border-outline-variant/25 bg-surface-container-low dark:bg-surface-container-high/30 hover:border-outline-variant/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="material-symbols-outlined text-[18px] text-primary">
+                        {item.icon}
+                      </span>
+                      {timeOfDay === item.value && (
+                        <span className="material-symbols-outlined text-[15px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          check_circle
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1">
+                      <span className="font-habit-name text-xs font-bold text-on-surface block">
+                        {item.label}
+                      </span>
+                      <span className="text-[10px] text-on-surface-variant block">
+                        {item.desc}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 5. Goal Stepper */}
           <div className="space-y-1.5">

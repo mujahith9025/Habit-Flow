@@ -39,7 +39,7 @@ export default defineConfig({
                 enabled: false, // Keep service worker disabled in development for maximum speed
             },
             manifest: {
-                id: 'com.habitflow.pwa.v2',
+                id: 'com.habitflow.pwa.v3',
                 name: 'HabitFlow',
                 short_name: 'HabitFlow',
                 description: 'Build gentle persistence with calming, distraction-free habit tracking.',
@@ -48,28 +48,28 @@ export default defineConfig({
                 display: 'standalone',
                 orientation: 'portrait-primary',
                 scope: '/',
-                start_url: '/?source=pwa',
+                start_url: '/?v=3',
                 icons: [
                     {
-                        src: '/icons/habitflow-v2-maskable-512.png',
+                        src: '/icons/habitflow-v3-maskable-512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'maskable',
                     },
                     {
-                        src: '/icons/habitflow-v2-maskable-192.png',
+                        src: '/icons/habitflow-v3-maskable-192.png',
                         sizes: '192x192',
                         type: 'image/png',
                         purpose: 'maskable',
                     },
                     {
-                        src: '/icons/habitflow-v2-512.png',
+                        src: '/icons/habitflow-v3-512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any',
                     },
                     {
-                        src: '/icons/habitflow-v2-192.png',
+                        src: '/icons/habitflow-v3-192.png',
                         sizes: '192x192',
                         type: 'image/png',
                         purpose: 'any',

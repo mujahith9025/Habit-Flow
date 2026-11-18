@@ -5,6 +5,13 @@ const { execSync } = require('child_process');
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 const icons = [
+  // Cache-busting v3 filenames for WebAPK minting server (Forced Fresh Android Package)
+  { name: 'habitflow-v3-512.png', size: 512, emblemSize: 440, type: 'standard' },
+  { name: 'habitflow-v3-192.png', size: 192, emblemSize: 165, type: 'standard' },
+  { name: 'habitflow-v3-maskable-512.png', size: 512, emblemSize: 340, type: 'maskable' },
+  { name: 'habitflow-v3-maskable-192.png', size: 192, emblemSize: 128, type: 'maskable' },
+  { name: 'habitflow-v3-apple-touch-icon.png', size: 180, emblemSize: 154, type: 'standard' },
+
   // Cache-busting v2 filenames for WebAPK minting server
   { name: 'habitflow-v2-512.png', size: 512, emblemSize: 440, type: 'standard' },
   { name: 'habitflow-v2-192.png', size: 192, emblemSize: 165, type: 'standard' },

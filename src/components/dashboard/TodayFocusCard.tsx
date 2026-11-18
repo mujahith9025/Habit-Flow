@@ -9,12 +9,14 @@ import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 import { RadialOrbitGauge } from '../ui/RadialOrbitGauge';
 import { SwipeableHabitItem } from './SwipeableHabitItem';
 import { DailyHabitNoteModal } from './DailyHabitNoteModal';
+import { WeeklyReviewModal } from './WeeklyReviewModal';
 
 interface TodayFocusCardProps {
   habits: Habit[];
   habitMetricsMap: Record<string, HabitGridMetrics>;
   isCompleted: (habitId: string, dateKey: string) => boolean;
   categoryName?: string;
+  entriesByHabit?: Record<string, Record<string, HabitEntry>>;
   getHabitEntry?: (habitId: string, dateKey: string) => HabitEntry | undefined;
   onToggleEntry: (habitId: string, dateKey: string) => Promise<void>;
   onBatchCompleteToday?: (habitIds: string[]) => Promise<void>;
@@ -29,6 +31,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   habitMetricsMap,
   isCompleted,
   categoryName,
+  entriesByHabit = {},
   getHabitEntry,
   onToggleEntry,
   onBatchCompleteToday,
@@ -45,13 +48,29 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const [lastBatchCompletedIds, setLastBatchCompletedIds] = useState<string[]>([]);
   const [noteHabit, setNoteHabit] = useState<Habit | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
+  const [selectedRitual, setSelectedRitual] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'remaining'>(() => {
     return (localStorage.getItem('habitflow_today_filter') as 'all' | 'remaining') || 'all';
   });
 
+  // Time-aware ritual slot detection
+  const currentHour = today.getHours();
+  const activeRitualSlot: 'morning' | 'afternoon' | 'evening' =
+    currentHour >= 5 && currentHour < 12
+      ? 'morning'
+      : currentHour >= 12 && currentHour < 17
+      ? 'afternoon'
+      : 'evening';
+
   const handleSetFilterMode = (mode: 'all' | 'remaining') => {
     setFilterMode(mode);
     localStorage.setItem('habitflow_today_filter', mode);
+    triggerHaptic('selection');
+  };
+
+  const handleSelectRitual = (slot: 'all' | 'morning' | 'afternoon' | 'evening') => {
+    setSelectedRitual(slot);
     triggerHaptic('selection');
   };
 
@@ -76,12 +95,23 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const percentDone = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
 
-  const displayedHabits = activeHabits.filter((h) => {
+  // Filter by ritual bundle
+  const ritualFilteredHabits = activeHabits.filter((h) => {
+    if (selectedRitual === 'all') return true;
+    const slot = h.timeOfDay || 'anytime';
+    return slot === selectedRitual || slot === 'anytime';
+  });
+
+  const displayedHabits = ritualFilteredHabits.filter((h) => {
     if (filterMode === 'remaining') {
       return !isCompleted(h.id, todayDateKey);
     }
     return true;
   });
+
+  // "Never Miss Twice" Grace Days check
+  const protectedHabits = activeHabits.filter((h) => habitMetricsMap[h.id]?.isShieldActive);
+  const isSundayOrMonday = today.getDay() === 0 || today.getDay() === 1;
 
   const handleToggle = async (habitId: string) => {
     const isCurrentlyDone = isCompleted(habitId, todayDateKey);
@@ -288,6 +318,91 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         )}
 
         {/* Habit Checklist or Empty State */}
+        {/* "Never Miss Twice" Grace Day Streak Protection Banner */}
+        {protectedHabits.length > 0 && (
+          <div className="mb-2.5 px-3.5 py-2 rounded-2xl bg-secondary-container/40 border border-secondary/25 text-on-secondary-container flex items-center justify-between text-xs animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-secondary">
+                shield
+              </span>
+              <div>
+                <p className="font-semibold text-[11px] leading-tight">
+                  <span className="font-bold">Never Miss Twice Shield:</span> {protectedHabits[0].name} missed yesterday, but your streak is protected! Complete it today to keep the flow.
+                </p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-secondary/15 text-secondary text-[10px] font-bold shrink-0">
+              Shielded
+            </span>
+          </div>
+        )}
+
+        {/* Sunday/Monday Weekly Mindful Review Banner */}
+        {isSundayOrMonday && (
+          <div className="mb-2.5 px-3.5 py-2 rounded-2xl bg-primary/10 border border-primary/20 text-on-surface flex items-center justify-between text-xs animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-primary">
+                auto_stories
+              </span>
+              <p className="text-[11px] text-on-surface font-medium leading-tight">
+                <span className="font-bold text-primary">Weekly Review:</span> Reflect on this week's momentum and mindful wins.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsWeeklyReviewOpen(true)}
+              className="px-2.5 py-1 rounded-full bg-primary text-on-primary text-[10px] font-bold hover:scale-102 active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              Review ↗
+            </button>
+          </div>
+        )}
+
+        {/* Time-Aware Ritual Bundles Bar */}
+        {totalCount > 0 && (
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-2 mb-1">
+            {[
+              { id: 'all', label: 'All', icon: 'apps' },
+              { id: 'morning', label: 'Morning', icon: 'wb_sunny' },
+              { id: 'afternoon', label: 'Afternoon', icon: 'light_mode' },
+              { id: 'evening', label: 'Evening', icon: 'bedtime' },
+            ].map((slot) => {
+              const isSelected = selectedRitual === slot.id;
+              const isCurrentTimeSlot = slot.id === activeRitualSlot;
+              const count = activeHabits.filter((h) => {
+                if (slot.id === 'all') return true;
+                const hSlot = h.timeOfDay || 'anytime';
+                return hSlot === slot.id || hSlot === 'anytime';
+              }).length;
+
+              if (slot.id !== 'all' && count === 0) return null;
+
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => handleSelectRitual(slot.id as any)}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    isSelected
+                      ? 'bg-primary text-on-primary font-bold shadow-xs'
+                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[13px]">{slot.icon}</span>
+                  <span>{slot.label}</span>
+                  <span className={`text-[10px] px-1 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-surface-variant/40'}`}>
+                    {count}
+                  </span>
+                  {isCurrentTimeSlot && slot.id !== 'all' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" title="Active ritual right now" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Habit Checklist or Empty State */}
         {totalCount === 0 ? (
           <div className="py-6 text-center space-y-2.5">
             <div className="flex justify-center">
@@ -400,6 +515,14 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           setIsNoteModalOpen(false);
           setNoteHabit(null);
         }}
+      />
+
+      {/* Sunday Mindful Weekly Review Bottom Sheet */}
+      <WeeklyReviewModal
+        isOpen={isWeeklyReviewOpen}
+        habits={habits}
+        entriesByHabit={entriesByHabit}
+        onClose={() => setIsWeeklyReviewOpen(false)}
       />
     </div>
   );

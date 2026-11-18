@@ -97,8 +97,8 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
   const completionPercentage =
     totalDailyHabits > 0 ? Math.round((completedTodayCount / totalDailyHabits) * 100) : 0;
 
-  // Compute consecutive days streak with Gentle Persistence Streak Shield
-  const gentleOverall = calculateGentleOverallStreak(entriesByHabit, dailyHabits, today, 1);
+  // Compute consecutive days streak with "Never Miss Twice" Grace Days
+  const gentleOverall = calculateGentleOverallStreak(entriesByHabit, dailyHabits, today, 2);
   const streakCount = gentleOverall.streak;
   const isShieldActive = gentleOverall.isShieldActive;
   const shieldsRemaining = gentleOverall.shieldsRemaining;
@@ -110,6 +110,9 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
     streakCount,
     isShieldActive,
     shieldsRemaining,
+    graceDaysAllowed: gentleOverall.graceDaysAllowed,
+    graceDaysUsed: gentleOverall.graceDaysUsed,
+    graceDatesProtected: gentleOverall.graceDatesProtected,
     todayDateKey,
     loading: (habitsLoading && dailyHabits.length === 0) || entriesLoading,
   };

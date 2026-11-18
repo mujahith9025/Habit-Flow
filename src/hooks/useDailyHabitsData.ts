@@ -26,6 +26,10 @@ export interface HabitGridMetrics {
   monthProgressPercent: number;
   streakCount: number;
   isShieldActive?: boolean;
+  shieldsRemaining?: number;
+  graceDaysAllowed?: number;
+  graceDaysUsed?: number;
+  graceDatesProtected?: string[];
   targetCount: number;
   rank?: number;
 }
@@ -35,6 +39,7 @@ export interface UseDailyHabitsDataResult {
   daysInMonth: MonthDayInfo[];
   habitMetricsMap: Record<string, HabitGridMetrics>;
   topHabits: HabitGridMetrics[];
+  entriesByHabit: Record<string, HabitEntryMap>;
   loading: boolean;
   isCompleted: (habitId: string, dateKey: string) => boolean;
   getHabitEntry: (habitId: string, dateKey: string) => HabitEntry | undefined;
@@ -169,8 +174,8 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       }
     });
 
-    // Compute streak for this individual habit with Gentle Streak Shield
-    const gentleResult = calculateGentleHabitStreak(habitEntries, today, 1);
+    // Compute streak for this individual habit with "Never Miss Twice" Grace Days (up to 2 per month)
+    const gentleResult = calculateGentleHabitStreak(habitEntries, today, 2);
     const streakCount = gentleResult.streak;
     const isShieldActive = gentleResult.isShieldActive;
 
@@ -184,6 +189,10 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       monthProgressPercent,
       streakCount,
       isShieldActive,
+      shieldsRemaining: gentleResult.shieldsRemaining,
+      graceDaysAllowed: gentleResult.graceDaysAllowed,
+      graceDaysUsed: gentleResult.graceDaysUsed,
+      graceDatesProtected: gentleResult.graceDatesProtected,
       targetCount,
     };
   });
@@ -412,6 +421,7 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     daysInMonth,
     habitMetricsMap,
     topHabits,
+    entriesByHabit,
     loading: habitsLoading || entriesLoading,
     isCompleted,
     getHabitEntry,

@@ -1,4 +1,5 @@
 export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
+export type HabitTimeOfDay = 'morning' | 'afternoon' | 'evening' | 'anytime';
 
 export interface Habit {
   id: string;
@@ -7,6 +8,7 @@ export interface Habit {
   icon: string;
   color: string;
   frequency: HabitFrequency;
+  timeOfDay?: HabitTimeOfDay; // Time-aware ritual bundle: 'morning' | 'afternoon' | 'evening' | 'anytime'
   goalCount: number;
   createdAt: string;
   archived: boolean;
@@ -16,6 +18,17 @@ export interface Habit {
   startMonth?: string; // e.g. "2026-08" (habit only active from this month onwards)
   endMonth?: string; // e.g. "2026-08" (habit only active up to this month)
   excludedMonths?: string[]; // e.g. ["2026-08"] (months where this habit was removed/hidden without deleting from other months)
+}
+
+export interface WeeklyReviewRecord {
+  weekKey: string; // e.g. "2026-W46"
+  createdAt: string;
+  totalCompletions: number;
+  totalPossible: number;
+  completionRate: number;
+  reflection: string;
+  highlightHabit?: string;
+  peakDay?: string;
 }
 
 /**

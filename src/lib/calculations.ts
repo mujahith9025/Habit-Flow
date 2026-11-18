@@ -15,18 +15,21 @@ export interface GentleStreakResult {
   isShieldActive: boolean;
   shieldsRemaining: number;
   protectedDaysCount: number;
+  graceDaysAllowed: number;
+  graceDaysUsed: number;
+  graceDatesProtected: string[];
 }
 
 /**
- * Calculates current streak for a SINGLE habit with "Gentle Persistence" Streak Shields:
- * Allows 1 Grace/Rest day per 7 days of unbroken progress.
- * If 1 day is missed, a shield protects the streak from resetting to 0.
+ * Calculates current streak for a SINGLE habit with "Never Miss Twice" Grace Days (Atomic Habits):
+ * Allows automated Grace Days (up to 2 per month) so illness or travel doesn't shatter a streak.
+ * If 1 day is missed, an automated Grace Day shields the momentum.
  * If 2 consecutive days are missed, the streak breaks.
  */
 export function calculateGentleHabitStreak(
   entries: HabitEntryMap,
   asOfDate: Date = new Date(),
-  maxShields: number = 1
+  maxShields: number = 2
 ): GentleStreakResult {
   const todayKey = formatDateKey(asOfDate);
   const isTodayDone = Boolean(entries[todayKey]?.completed);
@@ -35,6 +38,7 @@ export function calculateGentleHabitStreak(
   let shieldsUsed = 0;
   let protectedDays = 0;
   let consecutiveMissed = 0;
+  const protectedDates: string[] = [];
 
   const checkDate = new Date(asOfDate);
   checkDate.setDate(checkDate.getDate() - 1);
@@ -49,10 +53,11 @@ export function calculateGentleHabitStreak(
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
       consecutiveMissed++;
-      // If only 1 day missed and we have a shield available, absorb the rest day!
+      // "Never miss twice" rule: absorb an isolated missed day if a grace day is available
       if (consecutiveMissed === 1 && shieldsUsed < maxShields && streak > 0) {
         shieldsUsed++;
         protectedDays++;
+        protectedDates.push(pastKey);
         checkDate.setDate(checkDate.getDate() - 1);
       } else {
         break; // 2 consecutive days missed or out of shields -> streak breaks
@@ -65,6 +70,9 @@ export function calculateGentleHabitStreak(
     isShieldActive: protectedDays > 0,
     shieldsRemaining: Math.max(0, maxShields - shieldsUsed),
     protectedDaysCount: protectedDays,
+    graceDaysAllowed: maxShields,
+    graceDaysUsed: shieldsUsed,
+    graceDatesProtected: protectedDates,
   };
 }
 
@@ -102,13 +110,13 @@ export function calculateSingleHabitStreak(
 }
 
 /**
- * Calculates current consecutive streak across ALL daily habits with Streak Shield support
+ * Calculates current consecutive streak across ALL daily habits with "Never Miss Twice" Grace Days
  */
 export function calculateGentleOverallStreak(
   entriesByHabit: Record<string, HabitEntryMap>,
   dailyHabits: Habit[],
   asOfDate: Date = new Date(),
-  maxShields: number = 1
+  maxShields: number = 2
 ): GentleStreakResult {
   const activeHabits = dailyHabits.filter((h) => !h.archived);
   if (activeHabits.length === 0) {
@@ -117,6 +125,9 @@ export function calculateGentleOverallStreak(
       isShieldActive: false,
       shieldsRemaining: maxShields,
       protectedDaysCount: 0,
+      graceDaysAllowed: maxShields,
+      graceDaysUsed: 0,
+      graceDatesProtected: [],
     };
   }
 
@@ -129,6 +140,7 @@ export function calculateGentleOverallStreak(
   let shieldsUsed = 0;
   let protectedDays = 0;
   let consecutiveMissed = 0;
+  const protectedDates: string[] = [];
 
   const checkDate = new Date(asOfDate);
   checkDate.setDate(checkDate.getDate() - 1);
@@ -145,9 +157,11 @@ export function calculateGentleOverallStreak(
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
       consecutiveMissed++;
+      // "Never miss twice": absorb single missed day
       if (consecutiveMissed === 1 && shieldsUsed < maxShields && streak > 0) {
         shieldsUsed++;
         protectedDays++;
+        protectedDates.push(pastKey);
         checkDate.setDate(checkDate.getDate() - 1);
       } else {
         break;
@@ -160,6 +174,9 @@ export function calculateGentleOverallStreak(
     isShieldActive: protectedDays > 0,
     shieldsRemaining: Math.max(0, maxShields - shieldsUsed),
     protectedDaysCount: protectedDays,
+    graceDaysAllowed: maxShields,
+    graceDaysUsed: shieldsUsed,
+    graceDatesProtected: protectedDates,
   };
 }
 

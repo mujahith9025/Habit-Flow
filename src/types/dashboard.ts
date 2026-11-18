@@ -14,6 +14,9 @@ export interface DashboardMetrics {
   streakCount: number;
   isShieldActive?: boolean;
   shieldsRemaining?: number;
+  graceDaysAllowed?: number;
+  graceDaysUsed?: number;
+  graceDatesProtected?: string[];
   todayDateKey: string;
   loading: boolean;
 }
