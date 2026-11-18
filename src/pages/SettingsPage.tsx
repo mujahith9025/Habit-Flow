@@ -650,17 +650,39 @@ export const SettingsPage: React.FC = () => {
                 </p>
               </div>
 
-              {!isInstalled && (
-                <div className="pt-2">
-                  <Link
-                    to="/install"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-all"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">install_mobile</span>
-                    <span>How to Install on Phone / Desktop</span>
-                  </Link>
-                </div>
-              )}
+              <div className="pt-3 border-t border-outline-variant/15 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      if ('caches' in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map((k) => caches.delete(k)));
+                      }
+                      if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(registrations.map((r) => r.unregister()));
+                      }
+                      localStorage.removeItem('habitflow_pwa_installed');
+                      window.location.href = window.location.origin + '/settings?refreshed=' + Date.now();
+                    } catch {
+                      window.location.reload();
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/25 transition-all active:scale-95 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-secondary">cached</span>
+                  <span>Force Refresh App Cache &amp; Icon</span>
+                </button>
+
+                <Link
+                  to="/install"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-all"
+                >
+                  <span className="material-symbols-outlined text-[16px]">install_mobile</span>
+                  <span>Installation Guide</span>
+                </Link>
+              </div>
             </div>
           </div>
         );
