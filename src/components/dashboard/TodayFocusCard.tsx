@@ -5,6 +5,7 @@ import { formatDateKey } from '../../hooks/useDashboardMetrics';
 import { triggerHaptic } from '../../utils/haptics';
 import { triggerMilestoneCelebration } from '../../utils/confetti';
 import { HabitFlowLogo } from '../ui/HabitFlowLogo';
+import { RadialOrbitGauge } from '../ui/RadialOrbitGauge';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -180,18 +181,29 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               </button>
             )}
 
-            {/* Progress Pill */}
+            {/* Progress Pill & Compact Radial Orbit */}
             {totalCount > 0 && (
-              <span
-                className={`text-[11px] font-stat-label font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
-                  allDone
-                    ? 'bg-secondary-container text-on-secondary-container'
-                    : 'bg-surface-container-low dark:bg-surface-container-high text-on-surface-variant'
-                }`}
-              >
-                {allDone && <span className="material-symbols-outlined text-[13px]">verified</span>}
-                {completedCount}/{totalCount} ({percentDone}%)
-              </span>
+              <div className="flex items-center gap-1.5">
+                <RadialOrbitGauge
+                  percentage={percentDone}
+                  size={26}
+                  strokeWidth={3}
+                  showOrbitMarker={false}
+                  showValue={false}
+                  gradientColors={['#2D5A34', '#52995D', '#88C490']}
+                  trackColor="rgba(45, 90, 52, 0.15)"
+                />
+                <span
+                  className={`text-[11px] font-stat-label font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
+                    allDone
+                      ? 'bg-secondary-container text-on-secondary-container'
+                      : 'bg-surface-container-low dark:bg-surface-container-high text-on-surface-variant'
+                  }`}
+                >
+                  {allDone && <span className="material-symbols-outlined text-[13px]">verified</span>}
+                  {completedCount}/{totalCount} ({percentDone}%)
+                </span>
+              </div>
             )}
           </div>
         </div>

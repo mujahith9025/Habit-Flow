@@ -1,5 +1,6 @@
 import React from 'react';
 import { DashboardMetrics } from '../../types';
+import { RadialOrbitGauge } from '../ui/RadialOrbitGauge';
 
 interface SummaryCardProps {
   metrics: DashboardMetrics;
@@ -96,40 +97,55 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, userName, cla
         </div>
       </div>
 
-      {/* Hero Cinematic Progress Card matching Reference UI */}
+      {/* Hero Cinematic Progress Card with Radial Orbit Gauge */}
       <div className="relative rounded-2xl overflow-hidden p-4 sm:p-5 bg-gradient-to-br from-[#1C1F22] via-[#24282D] to-[#161719] text-white shadow-soft">
         {/* Subtle decorative forest/mountain glow backdrop */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-secondary/20 via-transparent to-transparent pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between text-xs text-white/70">
-            <span className="uppercase tracking-wider font-bold text-[11px]">Today's Progress</span>
-            <span className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>{progressSnip.label}</span>
-            </span>
+        <div className="relative z-10 flex items-center justify-between gap-4">
+          <div className="flex-1 flex flex-col justify-between gap-2.5 min-w-0">
+            <div className="flex items-center justify-between text-xs text-white/70">
+              <span className="uppercase tracking-wider font-bold text-[11px]">Today's Progress</span>
+              <span className="text-[11px] font-medium text-white/90 flex items-center gap-1 truncate ml-2">
+                <span>{progressSnip.label}</span>
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-2">
+              <span className="font-app-title text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                {completedTodayCount} <span className="text-xl font-normal text-white/60">/ {totalDailyHabits}</span>
+              </span>
+              <span className="text-xs text-white/70 font-medium truncate">habits completed</span>
+            </div>
+
+            {/* Sleek Pill Progress Bar */}
+            <div className="w-full h-2 rounded-full bg-white/20 overflow-hidden relative">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#52995D] to-[#88C490] transition-all duration-700 ease-out"
+                style={{ width: `${Math.min(100, Math.max(0, completionPercentage))}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-white/80 pt-0.5">
+              <span>{completionPercentage}% complete</span>
+              <span className="flex items-center gap-1 text-white font-semibold">
+                <span>Keep going</span>
+                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-2">
-            <span className="font-app-title text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-              {completedTodayCount} <span className="text-xl font-normal text-white/60">/ {totalDailyHabits}</span>
-            </span>
-            <span className="text-xs text-white/70 font-medium">habits completed</span>
-          </div>
-
-          {/* Sleek Pill Progress Bar matching Reference UI */}
-          <div className="w-full h-2 rounded-full bg-white/20 overflow-hidden relative">
-            <div
-              className="h-full rounded-full bg-white transition-all duration-700 ease-out"
-              style={{ width: `${Math.min(100, Math.max(0, completionPercentage))}%` }}
+          {/* Radial Habit Orbit Gauge */}
+          <div className="shrink-0 flex items-center justify-center pl-2">
+            <RadialOrbitGauge
+              percentage={completionPercentage}
+              size={84}
+              strokeWidth={7}
+              showValue={true}
+              gradientColors={['#2D5A34', '#52995D', '#88C490']}
+              trackColor="rgba(255, 255, 255, 0.15)"
+              showOrbitMarker={true}
             />
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-white/80 pt-0.5">
-            <span>{completionPercentage}% complete</span>
-            <span className="flex items-center gap-1 text-white font-semibold">
-              <span>Keep going</span>
-              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-            </span>
           </div>
         </div>
       </div>

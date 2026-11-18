@@ -417,8 +417,8 @@ export const HabitDetailPage: React.FC = () => {
                       : 'text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-                  <span>Calendar Heatmap</span>
+                  <span className="material-symbols-outlined text-[16px]">grain</span>
+                  <span>Year-in-Pixels Heatmap</span>
                 </button>
 
                 <button

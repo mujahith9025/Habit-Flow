@@ -51,19 +51,25 @@ export default defineConfig({
                 start_url: '/?source=pwa',
                 icons: [
                     {
-                        src: '/icons/habitflow-v2-maskable-512.png?v=20261118',
+                        src: '/icons/habitflow-v2-maskable-512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'maskable',
                     },
                     {
-                        src: '/icons/habitflow-v2-512.png?v=20261118',
+                        src: '/icons/habitflow-v2-maskable-192.png',
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'maskable',
+                    },
+                    {
+                        src: '/icons/habitflow-v2-512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any',
                     },
                     {
-                        src: '/icons/habitflow-v2-192.png?v=20261118',
+                        src: '/icons/habitflow-v2-192.png',
                         sizes: '192x192',
                         type: 'image/png',
                         purpose: 'any',

@@ -11,7 +11,7 @@ interface TopHeaderProps {
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({ isSidebarCollapsed = false }) => {
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, isDark, isOled, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { isInstalled } = usePWAInstall();
   const location = useLocation();
@@ -119,15 +119,29 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ isSidebarCollapsed = false
             </Link>
           )}
 
-          {/* Theme Toggle */}
+          {/* Theme Toggle (3-way: Light -> Dark -> OLED Obsidian) */}
           <button
             onClick={toggleTheme}
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95"
+            title={
+              theme === 'oled'
+                ? 'Theme: OLED Obsidian (Click for Warm Light)'
+                : isDark
+                ? 'Theme: Japandi Charcoal (Click for OLED Obsidian)'
+                : 'Theme: Warm Light (Click for Japandi Charcoal)'
+            }
+            className={`w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all active:scale-95 ${
+              isOled ? 'ring-1 ring-primary/40 bg-surface-container-high/60 shadow-oled-glow' : ''
+            }`}
             aria-label="Toggle Theme"
           >
-            <span className="material-symbols-outlined text-[20px]">
-              {isDark ? 'light_mode' : 'dark_mode'}
+            <span
+              className={`material-symbols-outlined text-[20px] transition-transform ${
+                theme === 'oled'
+                  ? 'text-primary-fixed-dim drop-shadow-[0_0_8px_rgba(82,153,93,0.5)]'
+                  : ''
+              }`}
+            >
+              {theme === 'oled' ? 'nights_stay' : isDark ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
 

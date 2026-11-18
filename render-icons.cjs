@@ -9,18 +9,21 @@ const icons = [
   { name: 'habitflow-v2-512.png', size: 512, emblemSize: 440, type: 'standard' },
   { name: 'habitflow-v2-192.png', size: 192, emblemSize: 165, type: 'standard' },
   { name: 'habitflow-v2-maskable-512.png', size: 512, emblemSize: 340, type: 'maskable' },
+  { name: 'habitflow-v2-maskable-192.png', size: 192, emblemSize: 128, type: 'maskable' },
   { name: 'habitflow-v2-apple-touch-icon.png', size: 180, emblemSize: 154, type: 'standard' },
 
   // Standard HabitFlow filenames
   { name: 'habitflow-icon-512.png', size: 512, emblemSize: 440, type: 'standard' },
   { name: 'habitflow-icon-192.png', size: 192, emblemSize: 165, type: 'standard' },
   { name: 'habitflow-maskable-512.png', size: 512, emblemSize: 340, type: 'maskable' },
+  { name: 'habitflow-maskable-192.png', size: 192, emblemSize: 128, type: 'maskable' },
   { name: 'habitflow-apple-touch-icon.png', size: 180, emblemSize: 154, type: 'standard' },
 
   // Backwards compatible filenames
   { name: 'icon-512x512.png', size: 512, emblemSize: 440, type: 'standard' },
   { name: 'icon-192x192.png', size: 192, emblemSize: 165, type: 'standard' },
   { name: 'maskable-icon-512x512.png', size: 512, emblemSize: 340, type: 'maskable' },
+  { name: 'maskable-icon-192x192.png', size: 192, emblemSize: 128, type: 'maskable' },
   { name: 'apple-touch-icon.png', size: 180, emblemSize: 154, type: 'standard' },
 ];
 

@@ -52,7 +52,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, setTheme, isDark } = useTheme();
   const { user, firebaseUser, signOut } = useAuth();
   const { habits } = useHabits();
   const { isInstalled } = usePWAInstall();
@@ -327,41 +327,119 @@ export const SettingsPage: React.FC = () => {
         return (
           <div className="space-y-6 animate-fadeIn">
             <div>
-              <h3 className="font-section-header text-xl font-bold text-on-surface">Appearance</h3>
+              <h3 className="font-section-header text-xl font-bold text-on-surface">Appearance & Theme</h3>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Clean Japandi minimalist theme calibrated for long focus sessions
+                Choose your visual theme tailored for sunlight, evening reading, or maximum AMOLED battery life
               </p>
             </div>
 
-            <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 border border-outline-variant/20 shadow-soft space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-habit-name text-sm font-bold text-on-surface">Theme Mode</h4>
-                  <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
-                    Currently using {isDark ? 'Dark Obsidian' : 'Warm Linen'}
-                  </p>
-                </div>
+            <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 border border-outline-variant/20 shadow-soft space-y-6">
+              <div>
+                <h4 className="font-habit-name text-sm font-bold text-on-surface">Color Theme</h4>
+                <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                  Select your preferred ambient lighting profile
+                </p>
+              </div>
+
+              {/* 3-State Theme Picker Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                {/* 1. Warm Organic Light */}
                 <button
                   type="button"
-                  onClick={toggleTheme}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold bg-primary text-on-primary shadow-soft hover:bg-on-primary-fixed-variant transition-all active:scale-95 cursor-pointer"
+                  onClick={() => setTheme('light')}
+                  className={`relative p-4 rounded-2xl border text-left transition-all active:scale-98 cursor-pointer flex flex-col justify-between h-36 ${
+                    theme === 'light'
+                      ? 'border-primary ring-2 ring-primary/30 bg-[#F7F6F2] shadow-sm'
+                      : 'border-outline-variant/30 bg-[#FBFBFA] hover:border-outline-variant/60'
+                  }`}
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {isDark ? 'light_mode' : 'dark_mode'}
-                  </span>
-                  <span>{isDark ? 'Switch to Light' : 'Switch to Dark'}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="material-symbols-outlined text-[22px] text-[#2D5A34]">light_mode</span>
+                    {theme === 'light' && (
+                      <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-habit-name font-bold text-sm block text-[#141517]">Warm Linen</span>
+                    <span className="text-[11px] text-[#60646B] mt-0.5 block leading-tight">
+                      Soft botanical tones for bright rooms & daytime focus
+                    </span>
+                  </div>
+                </button>
+
+                {/* 2. Japandi Charcoal Dark */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`relative p-4 rounded-2xl border text-left transition-all active:scale-98 cursor-pointer flex flex-col justify-between h-36 ${
+                    theme === 'dark'
+                      ? 'border-primary ring-2 ring-primary/30 bg-[#141517] shadow-sm text-white'
+                      : 'border-outline-variant/30 bg-[#1E2024] hover:border-outline-variant/60 text-white/90'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="material-symbols-outlined text-[22px] text-[#88C490]">dark_mode</span>
+                    {theme === 'dark' && (
+                      <span className="material-symbols-outlined text-[18px] text-[#88C490]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-habit-name font-bold text-sm block text-white">Japandi Charcoal</span>
+                    <span className="text-[11px] text-white/60 mt-0.5 block leading-tight">
+                      Balanced deep grey for low-glare evening routines
+                    </span>
+                  </div>
+                </button>
+
+                {/* 3. OLED Pure Obsidian */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('oled')}
+                  className={`relative p-4 rounded-2xl border text-left transition-all active:scale-98 cursor-pointer flex flex-col justify-between h-36 ${
+                    theme === 'oled'
+                      ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 bg-[#0B0C0E] shadow-oled-glow text-white'
+                      : 'border-outline-variant/20 bg-[#0B0C0E] hover:border-outline-variant/50 text-white/90'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="material-symbols-outlined text-[22px] text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]">
+                      nights_stay
+                    </span>
+                    {theme === 'oled' && (
+                      <span className="material-symbols-outlined text-[18px] text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-habit-name font-bold text-sm block text-white">OLED Obsidian</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        AMOLED
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-white/60 mt-0.5 block leading-tight">
+                      Pitch #0B0C0E black for maximum battery savings on mobile
+                    </span>
+                  </div>
                 </button>
               </div>
 
-              {/* Theme Palette Preview Swatches */}
+              {/* Theme Palette Details */}
               <div className="p-4 rounded-2xl bg-surface-container-low dark:bg-surface-container-high/30 border border-outline-variant/15 space-y-2.5">
                 <span className="text-[11px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider block">
                   Active Palette Tokens
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3 rounded-xl bg-[#F7F6F2] dark:bg-[#141517] border border-outline-variant/30 text-center">
+                  <div className="p-3 rounded-xl bg-[#F7F6F2] dark:bg-[#141517] oled:!bg-[#0B0C0E] border border-outline-variant/30 text-center">
                     <span className="text-[11px] font-bold block text-on-surface">Canvas</span>
-                    <span className="text-[10px] text-on-surface-variant">{isDark ? '#141517' : '#F7F6F2'}</span>
+                    <span className="text-[10px] text-on-surface-variant">
+                      {theme === 'oled' ? '#0B0C0E' : isDark ? '#141517' : '#F7F6F2'}
+                    </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#18191B] text-white text-center">
                     <span className="text-[11px] font-bold block">Charcoal</span>
@@ -373,7 +451,9 @@ export const SettingsPage: React.FC = () => {
                   </div>
                   <div className="p-3 rounded-xl bg-surface-container-lowest dark:bg-surface-container-high text-center border border-outline-variant/20">
                     <span className="text-[11px] font-bold block text-on-surface">Card</span>
-                    <span className="text-[10px] text-on-surface-variant">Squircle 24px</span>
+                    <span className="text-[10px] text-on-surface-variant">
+                      {theme === 'oled' ? 'Obsidian Glass' : 'Squircle 24px'}
+                    </span>
                   </div>
                 </div>
               </div>

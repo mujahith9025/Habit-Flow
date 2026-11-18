@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'oled';
 
 interface ThemeContextType {
   theme: Theme;
   isDark: boolean;
+  isOled: boolean;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
 }
@@ -17,7 +18,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [theme, setThemeState] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem(THEME_KEY) as Theme;
-      if (saved === 'dark' || saved === 'light') return saved;
+      if (saved === 'dark' || saved === 'light' || saved === 'oled') return saved;
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } catch {
       return 'light';
@@ -28,25 +29,38 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = document.documentElement;
     const body = document.body;
 
-    if (theme === 'dark') {
-      root.classList.add('dark');
+    if (theme === 'oled') {
+      root.classList.add('dark', 'oled');
       root.classList.remove('light');
+      root.setAttribute('data-theme', 'oled');
+      root.style.colorScheme = 'dark';
+
+      if (body) {
+        body.classList.add('dark', 'oled');
+        body.classList.remove('light');
+        body.setAttribute('data-theme', 'oled');
+      }
+    } else if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light', 'oled');
       root.setAttribute('data-theme', 'dark');
       root.style.colorScheme = 'dark';
 
       if (body) {
         body.classList.add('dark');
-        body.classList.remove('light');
+        body.classList.remove('light', 'oled');
+        body.setAttribute('data-theme', 'dark');
       }
     } else {
-      root.classList.remove('dark');
+      root.classList.remove('dark', 'oled');
       root.classList.add('light');
       root.setAttribute('data-theme', 'light');
       root.style.colorScheme = 'light';
 
       if (body) {
-        body.classList.remove('dark');
+        body.classList.remove('dark', 'oled');
         body.classList.add('light');
+        body.setAttribute('data-theme', 'light');
       }
     }
 
@@ -58,18 +72,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [theme]);
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setThemeState((prev) => {
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'oled';
+      return 'light';
+    });
   };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
   };
 
+  const isDark = theme === 'dark' || theme === 'oled';
+  const isOled = theme === 'oled';
+
   return (
     <ThemeContext.Provider
       value={{
         theme,
-        isDark: theme === 'dark',
+        isDark,
+        isOled,
         toggleTheme,
         setTheme,
       }}
