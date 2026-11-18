@@ -49,13 +49,31 @@ export default defineConfig({
         name: 'HabitFlow - Habit Tracker',
         short_name: 'HabitFlow',
         description: 'Build gentle persistence with calming, distraction-free habit tracking.',
-        theme_color: '#18191b',
-        background_color: '#18191b',
+        theme_color: '#141517',
+        background_color: '#141517',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',
         start_url: '/',
         icons: [
+          {
+            src: '/icons/habitflow-v2-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: '/icons/habitflow-v2-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/habitflow-v2-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
           {
             src: '/icons/habitflow-icon-192.png',
             sizes: '192x192',

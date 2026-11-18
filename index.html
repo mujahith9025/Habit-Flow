@@ -2,9 +2,9 @@
 <html lang="en" class="light notranslate" translate="no">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261116" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/habitflow-icon-192.png?v=20261116" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/icons/habitflow-icon-512.png?v=20261116" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261118" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/habitflow-v2-192.png?v=20261118" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/habitflow-v2-512.png?v=20261118" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
     <!-- Disable Google Translate Bar / Popups on Mobile PWA & Desktop -->
@@ -14,12 +14,12 @@
     <!-- PWA & Mobile Web App Meta -->
     <title>HabitFlow — Gentle Persistence Habit Tracker</title>
     <meta name="description" content="Build lasting habits with gentle persistence. Calming, distraction-free habit tracking available anywhere." />
-    <meta name="theme-color" content="#18191b" />
+    <meta name="theme-color" content="#141517" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="HabitFlow" />
-    <link rel="apple-touch-icon" href="/icons/habitflow-apple-touch-icon.png?v=20261116" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/habitflow-apple-touch-icon.png?v=20261116" />
+    <link rel="apple-touch-icon" href="/icons/habitflow-v2-apple-touch-icon.png?v=20261118" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/habitflow-v2-apple-touch-icon.png?v=20261118" />
 
     <!-- Google Fonts: Plus Jakarta Sans & Manrope (Non-render-blocking async load) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -32,11 +32,76 @@
     </noscript>
     <style>
       body { background-color: #f7f6f2; margin: 0; }
-      @media (prefers-color-scheme: dark) { body { background-color: #18191b; } }
+      @media (prefers-color-scheme: dark) { body { background-color: #141517; } }
+      .app-preloader {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #141517;
+        color: #f7f6f2;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        text-align: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      .app-preloader-logo {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulseGlow 2.4s ease-in-out infinite;
+      }
+      @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); opacity: 0.95; }
+        50% { transform: scale(1.03); opacity: 1; }
+      }
     </style>
   </head>
   <body class="bg-background text-on-surface font-body-text antialiased selection:bg-primary-container selection:text-on-primary-container notranslate" translate="no">
-    <div id="root" class="notranslate" translate="no"></div>
+    <div id="root" class="notranslate" translate="no">
+      <!-- Instant PWA Launch & Opening Splash Screen with Brand New Logo -->
+      <div class="app-preloader" aria-label="Loading HabitFlow">
+        <div class="app-preloader-logo">
+          <svg width="76" height="76" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hfBgSplash" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1E2024" />
+                <stop offset="100%" stop-color="#141517" />
+              </linearGradient>
+              <linearGradient id="hfRibbonSplash" x1="24" y1="90" x2="96" y2="30" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#2D5A34" />
+                <stop offset="50%" stop-color="#4E8A56" />
+                <stop offset="100%" stop-color="#88C490" />
+              </linearGradient>
+              <linearGradient id="hfGoldSplash" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#F2D594" />
+                <stop offset="100%" stop-color="#D4A373" />
+              </linearGradient>
+            </defs>
+            <rect width="120" height="120" rx="32" fill="url(#hfBgSplash)" />
+            <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="31.25" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" />
+            <path
+              d="M 32 60 C 32 46 44 36 58 36 C 72 36 80 46 76 60 C 72 74 60 84 48 84 C 36 84 28 74 34 62 L 52 80 C 56 84 62 84 66 80 L 96 42"
+              fill="none"
+              stroke="url(#hfRibbonSplash)"
+              stroke-width="11"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="96" cy="42" r="5.5" fill="url(#hfGoldSplash)" />
+          </svg>
+        </div>
+        <div style="margin-top: 18px; font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: #FFFFFF;">
+          Habit<span style="color: #88C490;">Flow</span>
+        </div>
+        <div style="margin-top: 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.45); font-weight: 600;">
+          Gentle Persistence
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
