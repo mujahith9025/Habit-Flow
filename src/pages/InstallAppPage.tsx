@@ -9,6 +9,25 @@ export const InstallAppPage: React.FC = () => {
 
   // Detect user platform for smart pre-selection
   const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'desktop'>('android');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleClearCacheAndRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((r) => r.unregister()));
+      }
+      localStorage.removeItem('habitflow_pwa_installed');
+      window.location.href = window.location.origin + '/install?refreshed=' + Date.now();
+    } catch {
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -64,13 +83,8 @@ export const InstallAppPage: React.FC = () => {
           </div>
 
           {/* Quick Install Action Card */}
-          <div className="shrink-0 w-full md:w-auto">
-            {isInstalled ? (
-              <div className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-secondary-container text-on-secondary-container font-semibold text-sm shadow-soft">
-                <span className="material-symbols-outlined text-[22px]">check_circle</span>
-                <span>App Already Installed</span>
-              </div>
-            ) : isInstallable ? (
+          <div className="shrink-0 w-full md:w-auto flex flex-col gap-2.5">
+            {isInstallable ? (
               <button
                 type="button"
                 onClick={installPWA}
@@ -79,10 +93,31 @@ export const InstallAppPage: React.FC = () => {
                 <span className="material-symbols-outlined text-[20px]">download</span>
                 <span>Install HabitFlow Now</span>
               </button>
-            ) : (
-              <div className="text-center md:text-right text-xs text-on-surface-variant bg-surface-container-low dark:bg-surface-container-high/40 px-4 py-3 rounded-2xl border border-outline-variant/20">
-                <span>Follow the steps below to add to your home screen ⬇️</span>
+            ) : isInstalled ? (
+              <div className="flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-secondary-container text-on-secondary-container font-semibold text-sm shadow-soft">
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[22px]">check_circle</span>
+                  <span>Installed</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClearCacheAndRefresh}
+                  disabled={isRefreshing}
+                  className="text-xs px-3 py-1 rounded-full bg-surface/60 dark:bg-surface/30 hover:bg-surface transition-colors font-bold text-on-surface"
+                >
+                  {isRefreshing ? 'Refreshing...' : 'Refresh Icon'}
+                </button>
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleClearCacheAndRefresh}
+                disabled={isRefreshing}
+                className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-surface-container-high text-on-surface font-semibold text-xs border border-outline-variant/30 hover:bg-surface-container-highest transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">cached</span>
+                <span>{isRefreshing ? 'Refreshing Icon Cache...' : 'Refresh App Cache'}</span>
+              </button>
             )}
           </div>
         </div>
@@ -141,6 +176,20 @@ export const InstallAppPage: React.FC = () => {
         {/* Tab 1: Android Instructions */}
         {activeTab === 'android' && (
           <div className="space-y-6 animate-fadeIn">
+            {/* Notice for updating existing installations */}
+            <div className="p-4 rounded-2xl bg-secondary/10 border border-secondary/20 flex items-start gap-3 text-xs text-on-surface">
+              <span className="material-symbols-outlined text-secondary shrink-0 text-[20px] mt-0.5">info</span>
+              <div>
+                <strong className="font-bold text-secondary block mb-1">Updating an existing installation on your phone?</strong>
+                On Android (especially Realme UI / ColorOS / OxygenOS), if your phone still displays the old blue icon:
+                <ol className="list-decimal pl-4 mt-1.5 space-y-1 text-on-surface-variant font-medium">
+                  <li>Long-press the old <strong>HabitFlow</strong> icon on your phone's home screen.</li>
+                  <li>Tap <strong>App Info (ⓘ)</strong> and then tap <strong>Uninstall</strong>. <em>(Important: Do not just tap &quot;Remove&quot;, because &quot;Remove&quot; only hides the shortcut from your desktop while keeping the old app package in your phone!).</em></li>
+                  <li>Tap the <strong>&quot;Refresh App Cache&quot;</strong> button above, then tap <strong>&quot;Install HabitFlow Now&quot;</strong> (or Chrome menu ⋮ &gt; Install).</li>
+                </ol>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Step 1 */}
               <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-5 sm:p-6 border border-outline-variant/15 shadow-soft space-y-3">

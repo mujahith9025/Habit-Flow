@@ -45,7 +45,7 @@ export default defineConfig({
         enabled: false, // Keep service worker disabled in development for maximum speed
       },
       manifest: {
-        id: 'com.habitflow.app',
+        id: 'com.habitflow.pwa.v2',
         name: 'HabitFlow - Habit Tracker',
         short_name: 'HabitFlow',
         description: 'Build gentle persistence with calming, distraction-free habit tracking.',
