@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Habit, HabitFrequency } from '../../types';
 import { Button } from '../ui/Button';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface HabitFormModalProps {
   isOpen: boolean;
@@ -231,44 +232,21 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        aria-hidden="true"
-      />
-
-      {/* Modal / Bottom Sheet Box */}
-      <div className="relative w-full sm:max-w-lg bg-surface-container-lowest dark:bg-surface-container rounded-t-3xl sm:rounded-3xl shadow-2xl border border-outline-variant/20 p-6 max-h-[92vh] overflow-y-auto z-10 animate-scaleUp">
-        {/* Mobile Drag Indicator */}
-        <div className="sm:hidden w-12 h-1.5 bg-outline-variant/40 rounded-full mx-auto mb-4" />
-
-        {/* Modal Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-outline-variant/15">
-          <div>
-            <h2 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-              {isEditMode ? 'Edit Habit' : 'Create New Habit'}
-            </h2>
-            {currentMonthKey && (
-              <p className="text-[11px] font-stat-label text-primary dark:text-primary-fixed-dim font-semibold">
-                Viewing: {activeMonthTitle}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close modal"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
-        </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="space-y-5 pt-4">
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+      title={isEditMode ? 'Edit Habit' : 'Create New Habit'}
+      subtitle={
+        currentMonthKey ? (
+          <span className="text-[11px] font-stat-label text-primary dark:text-primary-fixed-dim font-semibold">
+            Viewing: {activeMonthTitle}
+          </span>
+        ) : undefined
+      }
+    >
+      {/* Form Body */}
+      <form onSubmit={handleSubmit} className="space-y-5 pt-1">
           {error && (
             <div className="p-3 rounded-xl bg-error-container/30 border border-error/20 text-error text-xs leading-relaxed">
               {error}
@@ -520,7 +498,6 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </BottomSheetModal>
   );
 };

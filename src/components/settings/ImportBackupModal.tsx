@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { FullAccountBackupPayload, importFullAccountBackup } from '../../lib/firebase/backupService';
 import { triggerHaptic } from '../../utils/haptics';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface ImportBackupModalProps {
   isOpen: boolean;
@@ -58,141 +59,124 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
       setError(null);
       triggerHaptic('medium');
 
-      const result = await importFullAccountBackup(user.uid, backupData, (msg) => {
-        setProgressText(msg);
+      await importFullAccountBackup(user.uid, backupData, (progress) => {
+        setProgressText(progress);
       });
 
-      setSuccessMessage(
-        `✅ Successfully restored ${result.importedHabits} habits, ${result.importedEntries} check-ins, and ${result.importedExpenses} financial records!`
-      );
       triggerHaptic('success');
-
+      setSuccessMessage('Backup restored successfully! Refreshing data...');
       setTimeout(() => {
         onSuccess?.();
         onClose();
-      }, 2000);
+        window.location.reload();
+      }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed.');
-      triggerHaptic('warning');
+      console.error('Import error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to restore backup.');
     } finally {
       setIsImporting(false);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl w-full max-w-lg shadow-2xl border border-outline-variant/20 overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-outline-variant/15 flex items-center justify-between bg-surface-container-low/40">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">cloud_upload</span>
-            </div>
-            <div>
-              <h3 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-                Restore Account Backup
-              </h3>
-              <p className="font-body-text text-xs text-on-surface-variant">
-                Upload a HabitFlow JSON backup file
-              </p>
-            </div>
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
+            <span className="material-symbols-outlined text-[22px]">cloud_upload</span>
           </div>
+          <div>
+            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
+              Restore Account Backup
+            </h3>
+            <p className="font-body-text text-xs text-on-surface-variant">
+              Upload a HabitFlow JSON backup file
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        {/* File Picker */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          onChange={handleFileChange}
+          className="hidden"
+        />
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-outline-variant/40 hover:border-primary/60 rounded-2xl p-6 text-center cursor-pointer hover:bg-surface-container-low/40 transition-all group active:scale-98"
+        >
+          <span className="material-symbols-outlined text-[36px] text-primary mb-2 group-hover:scale-110 transition-transform">
+            upload_file
+          </span>
+          <p className="font-habit-name text-sm font-bold text-on-surface">
+            {fileName ? fileName : 'Choose JSON Backup File'}
+          </p>
+          <p className="font-body-text text-xs text-on-surface-variant mt-1">
+            Supports full account archives (`habitflow_full_backup_*.json`)
+          </p>
         </div>
 
-        {/* Content */}
-        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto">
-          {/* File Picker */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-outline-variant/40 hover:border-primary/60 rounded-2xl p-6 text-center cursor-pointer hover:bg-surface-container-low/40 transition-all group"
-          >
-            <span className="material-symbols-outlined text-[36px] text-primary mb-2 group-hover:scale-110 transition-transform">
-              upload_file
-            </span>
-            <p className="font-habit-name text-sm font-bold text-on-surface">
-              {fileName ? fileName : 'Choose JSON Backup File'}
-            </p>
-            <p className="font-body-text text-xs text-on-surface-variant mt-1">
-              Supports full account archives (`habitflow_full_backup_*.json`)
-            </p>
+        {/* Validation Error */}
+        {error && (
+          <div className="p-3.5 rounded-2xl bg-error-container text-on-error-container text-xs flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span>{error}</span>
           </div>
+        )}
 
-          {/* Backup Preview Info */}
-          {backupData && (
-            <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 space-y-2 animate-fadeIn">
-              <h4 className="font-habit-name text-xs font-bold text-on-surface uppercase tracking-wider">
-                Backup Contents Overview
-              </h4>
-              <div className="grid grid-cols-3 gap-2 text-center pt-1">
-                <div className="p-2.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container-high/40">
-                  <span className="font-bold text-sm text-primary block">
-                    {backupData.habits?.length || 0}
-                  </span>
-                  <span className="text-[10px] text-on-surface-variant">Habits</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container-high/40">
-                  <span className="font-bold text-sm text-secondary block">
-                    {Object.values(backupData.habitEntriesByHabit || {}).flat().length}
-                  </span>
-                  <span className="text-[10px] text-on-surface-variant">Check-ins</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container-high/40">
-                  <span className="font-bold text-sm text-amber-600 dark:text-amber-400 block">
-                    {backupData.expenseEntries?.length || 0}
-                  </span>
-                  <span className="text-[10px] text-on-surface-variant">Ledger Rows</span>
-                </div>
+        {/* Success Message */}
+        {successMessage && (
+          <div className="p-3.5 rounded-2xl bg-secondary-container text-on-secondary-container text-xs flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        {/* Backup Summary if parsed successfully */}
+        {backupData && (
+          <div className="p-4 rounded-2xl bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/20 space-y-2">
+            <h4 className="font-habit-name text-xs font-bold text-on-surface uppercase tracking-wider">
+              Backup Contents Summary
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/15">
+                <span className="text-on-surface-variant text-[11px] block">Habits Count</span>
+                <span className="font-bold text-on-surface text-base">{backupData.habits?.length || 0}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/15">
+                <span className="text-on-surface-variant text-[11px] block">Logs & Entries</span>
+                <span className="font-bold text-on-surface text-base">
+                  {backupData.summary?.totalHabitEntries || 0}
+                </span>
               </div>
             </div>
-          )}
+            <p className="text-[11px] text-on-surface-variant pt-1">
+              Exported on: {new Date(backupData.exportedAt).toLocaleDateString()}
+            </p>
+          </div>
+        )}
 
-          {/* Progress / Error Messages */}
-          {error && (
-            <div className="p-3.5 rounded-2xl bg-red-500/15 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">error</span>
-              <span>{error}</span>
+        {/* Progress Bar when importing */}
+        {isImporting && (
+          <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 space-y-2 animate-fadeIn">
+            <div className="flex items-center justify-between text-xs font-semibold text-primary">
+              <span>Restoring your habits...</span>
+              <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
             </div>
-          )}
+            <p className="text-[11px] text-on-surface-variant">{progressText}</p>
+          </div>
+        )}
 
-          {isImporting && (
-            <div className="p-3.5 rounded-2xl bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 animate-pulse">
-              <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
-              <span>{progressText || 'Restoring your data...'}</span>
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="p-3.5 rounded-2xl bg-secondary-container text-on-secondary-container text-xs font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">verified</span>
-              <span>{successMessage}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 sm:p-5 border-t border-outline-variant/15 flex items-center justify-end gap-2 bg-surface-container-low/30">
+        {/* Action Buttons */}
+        <div className="pt-2 flex items-center justify-end gap-2 border-t border-outline-variant/15">
           <button
             type="button"
             onClick={onClose}
@@ -218,6 +202,6 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </BottomSheetModal>
   );
 };

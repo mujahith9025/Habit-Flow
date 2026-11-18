@@ -7,6 +7,7 @@ import { useHabits } from '../hooks/useHabits';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Badge } from '../components/ui/Badge';
 import { triggerHaptic } from '../utils/haptics';
+import { isZenSoundEnabled, setZenSoundEnabled, playCheckChime, playCelebrationChime } from '../utils/zenAudio';
 import { getNotificationSettings } from '../lib/notificationService';
 import { NotificationSettings } from '../types/notification';
 import { NotificationDetailsModal } from '../components/settings/NotificationDetailsModal';
@@ -69,6 +70,7 @@ export const SettingsPage: React.FC = () => {
   const [displayName, setDisplayName] = useState(profile?.name || '');
   const [firstDayOfWeek, setFirstDayOfWeek] = useState<'monday' | 'sunday'>('monday');
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const [zenSoundEnabled, setZenSoundState] = useState(() => isZenSoundEnabled());
   const [showSavedPill, setShowSavedPill] = useState(false);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(() =>
     getNotificationSettings()
@@ -292,12 +294,12 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Haptic Vibration Feedback */}
+              {/* Multi-Tiered Haptic Vibration Feedback */}
               <div className="pt-4 flex items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-habit-name text-sm font-bold text-on-surface">Haptic Vibration</h4>
+                  <h4 className="font-habit-name text-sm font-bold text-on-surface">Tactile Haptics</h4>
                   <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
-                    Physical vibration tap when completing tasks or toggling days
+                    Multi-tiered physical vibrations (short tick on check, double pulse on streak, ripple on 100%)
                   </p>
                 </div>
                 <button
@@ -305,12 +307,13 @@ export const SettingsPage: React.FC = () => {
                   onClick={() => {
                     const next = !hapticsEnabled;
                     setHapticsEnabled(next);
-                    if (next) triggerHaptic('success');
+                    if (next) triggerHaptic('ripple');
                     triggerSavedFeedback();
                   }}
-                  className={`w-12 h-7 rounded-full p-1 transition-colors ${
+                  className={`w-12 h-7 rounded-full p-1 transition-colors cursor-pointer shrink-0 ${
                     hapticsEnabled ? 'bg-primary' : 'bg-surface-container-high'
                   }`}
+                  aria-label="Toggle Haptic Feedback"
                 >
                   <div
                     className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -318,6 +321,95 @@ export const SettingsPage: React.FC = () => {
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* Zen Soundscapes & Ambient Chimes */}
+              <div className="pt-4 flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-habit-name text-sm font-bold text-on-surface">Zen Soundscapes</h4>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
+                      528Hz Solfeggio
+                    </span>
+                  </div>
+                  <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                    Gentle singing bowl and bamboo chimes synthesized in-browser when completing habits
+                  </p>
+                  {zenSoundEnabled && (
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('tick');
+                          playCheckChime();
+                        }}
+                        className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">volume_up</span>
+                        <span>Sample Bell</span>
+                      </button>
+                      <span className="text-outline-variant/40">•</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('ripple');
+                          playCelebrationChime();
+                        }}
+                        className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">spa</span>
+                        <span>Sample Singing Bowl</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !zenSoundEnabled;
+                    setZenSoundState(next);
+                    setZenSoundEnabled(next);
+                    if (next) playCheckChime();
+                    triggerSavedFeedback();
+                  }}
+                  className={`w-12 h-7 rounded-full p-1 transition-colors cursor-pointer shrink-0 ${
+                    zenSoundEnabled ? 'bg-primary' : 'bg-surface-container-high'
+                  }`}
+                  aria-label="Toggle Zen Soundscapes"
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                      zenSoundEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Mobile Swipe Gestures Guide */}
+              <div className="pt-4">
+                <h4 className="font-habit-name text-sm font-bold text-on-surface mb-2">
+                  Tactile Swipe Gestures (Mobile)
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[24px] text-emerald-600 dark:text-emerald-400">
+                      swipe_right
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold block text-on-surface">Swipe Right</span>
+                      <span className="text-[11px] text-on-surface-variant">Instant check-off / complete habit</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-[#A65A42]/10 border border-[#A65A42]/20 flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[24px] text-[#A65A42]">
+                      swipe_left
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold block text-on-surface">Swipe Left</span>
+                      <span className="text-[11px] text-on-surface-variant">Open quick reflection note bottom sheet</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

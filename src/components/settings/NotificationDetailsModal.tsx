@@ -7,6 +7,7 @@ import {
   isNotificationSupported,
 } from '../../lib/notificationService';
 import { triggerHaptic } from '../../utils/haptics';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface NotificationDetailsModalProps {
   isOpen: boolean;
@@ -99,45 +100,27 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl w-full max-w-xl shadow-2xl border border-outline-variant/20 overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-outline-variant/15 flex items-center justify-between bg-surface-container-low/40">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">notifications_active</span>
-            </div>
-            <div>
-              <h3 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-                Reminders & Notifications
-              </h3>
-              <p className="font-body-text text-xs text-on-surface-variant">
-                Configure your morning kick-off and evening task completion alerts
-              </p>
-            </div>
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
+            <span className="material-symbols-outlined text-[22px]">notifications_active</span>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              onClose();
-            }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer"
-            aria-label="Close dialog"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+          <div>
+            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
+              Reminders & Notifications
+            </h3>
+            <p className="font-body-text text-xs text-on-surface-variant">
+              Configure your morning kick-off and evening task completion alerts
+            </p>
+          </div>
         </div>
-
-        {/* Scrollable Content */}
-        <div className="p-5 sm:p-6 overflow-y-auto scrollbar-thin space-y-5 flex-1">
+      }
+    >
+      <div className="space-y-5">
           {/* Feedback Message Toast */}
           {testNotifMessage && (
             <div className="p-3.5 rounded-2xl bg-secondary-container text-on-secondary-container text-xs font-semibold flex items-center justify-between shadow-sm animate-fadeIn">
@@ -349,31 +332,30 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
               <li>• ⚡ <strong>1-Tap Navigation</strong>: Tapping any notification opens your HabitFlow dashboard instantly.</li>
             </ul>
           </div>
-        </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-outline-variant/15 flex items-center justify-between bg-surface-container-low/30">
-          <button
-            type="button"
-            onClick={handleSendTest}
-            className="px-4 py-2 rounded-xl text-xs font-bold font-stat-label bg-surface-container-high hover:bg-surface-container-highest text-primary border border-outline-variant/25 transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
-          >
-            <span className="material-symbols-outlined text-[16px]">send</span>
-            <span>Send Test Alert</span>
-          </button>
+          {/* Footer Actions */}
+          <div className="pt-3 border-t border-outline-variant/15 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleSendTest}
+              className="px-4 py-2 rounded-xl text-xs font-bold font-stat-label bg-surface-container-high hover:bg-surface-container-highest text-primary border border-outline-variant/25 transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[16px]">send</span>
+              <span>Send Test Alert</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              onClose();
-            }}
-            className="px-5 py-2 rounded-xl text-xs font-bold font-stat-label bg-primary text-on-primary hover:bg-on-primary-fixed-variant shadow-soft active:scale-95 transition-all cursor-pointer"
-          >
-            Done
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              className="px-5 py-2 rounded-xl text-xs font-bold font-stat-label bg-primary text-on-primary hover:bg-on-primary-fixed-variant shadow-soft active:scale-95 transition-all cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+    </BottomSheetModal>
   );
 };

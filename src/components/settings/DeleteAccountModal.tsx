@@ -5,6 +5,7 @@ import {
   deleteAllFirestoreUserData,
 } from '../../lib/firebase/accountDeletionService';
 import { triggerHaptic } from '../../utils/haptics';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -60,32 +61,36 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         );
       } else {
         setErrorMessage(
-          errorObj?.message || 'Failed to erase all data and delete account. Please try again.'
+          errorObj?.message || 'Failed to erase account data. Please check your network and try again.'
         );
       }
+    } finally {
       setLoading(false);
-      triggerHaptic('warning');
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-error/30 space-y-5 animate-scaleUp">
-        {/* Header */}
-        <div className="flex items-start gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-error/10 text-error flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[28px]">delete_forever</span>
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-error/10 text-error flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[24px]">delete_forever</span>
           </div>
           <div>
-            <h3 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-              Erase All Data & Delete Account
+            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
+              Erase Data & Delete Account
             </h3>
             <p className="text-xs font-body-text text-error font-semibold mt-0.5">
               GDPR Article 17 / CCPA Right to Erasure
             </p>
           </div>
         </div>
-
+      }
+    >
+      <div className="space-y-4">
         {/* Warning Banner */}
         <div className="p-4 rounded-2xl bg-error-container/20 border border-error/25 text-xs space-y-2 text-on-surface">
           <p className="font-bold text-error flex items-center gap-1.5">
@@ -95,7 +100,6 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           <ul className="list-disc list-inside space-y-1 text-on-surface-variant">
             <li>All tracked <strong>Habits & Routines</strong> will be wiped</li>
             <li>All daily <strong>Check-in History & Streaks</strong> will be deleted</li>
-            <li>All <strong>Daily Money Savings & Expense records</strong> will be destroyed</li>
             <li>Your <strong>User Profile & Authentication Account</strong> will be permanently removed</li>
           </ul>
         </div>
@@ -108,7 +112,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         )}
 
         {/* Confirmation Input */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label className="block text-xs font-bold text-on-surface font-stat-label">
             Type <span className="text-error uppercase tracking-wider font-mono">DELETE</span> to confirm:
           </label>
@@ -124,12 +128,12 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-outline-variant/15">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -138,7 +142,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
             type="button"
             onClick={handleDeleteAccount}
             disabled={!isConfirmed || loading}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-error text-on-error hover:bg-error/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-soft cursor-pointer"
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-error text-on-error hover:bg-error/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-soft cursor-pointer"
           >
             {loading ? (
               <>
@@ -154,6 +158,6 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </BottomSheetModal>
   );
 };

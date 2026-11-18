@@ -4,8 +4,11 @@ import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { formatDateKey } from '../../hooks/useDashboardMetrics';
 import { triggerHaptic } from '../../utils/haptics';
 import { triggerMilestoneCelebration } from '../../utils/confetti';
+import { playCheckChime, playStreakChime, playCelebrationChime, playNoteChime } from '../../utils/zenAudio';
 import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 import { RadialOrbitGauge } from '../ui/RadialOrbitGauge';
+import { SwipeableHabitItem } from './SwipeableHabitItem';
+import { DailyHabitNoteModal } from './DailyHabitNoteModal';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -26,9 +29,11 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   habitMetricsMap,
   isCompleted,
   categoryName,
+  getHabitEntry,
   onToggleEntry,
   onBatchCompleteToday,
   onBatchResetToday,
+  onSaveNote,
   onAddNewHabit,
   className = '',
 }) => {
@@ -38,6 +43,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [showUndoBanner, setShowUndoBanner] = useState(false);
   const [lastBatchCompletedIds, setLastBatchCompletedIds] = useState<string[]>([]);
+  const [noteHabit, setNoteHabit] = useState<Habit | null>(null);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [filterMode, setFilterMode] = useState<'all' | 'remaining'>(() => {
     return (localStorage.getItem('habitflow_today_filter') as 'all' | 'remaining') || 'all';
   });
@@ -46,6 +53,12 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     setFilterMode(mode);
     localStorage.setItem('habitflow_today_filter', mode);
     triggerHaptic('selection');
+  };
+
+  const handleOpenNote = (habit: Habit) => {
+    setNoteHabit(habit);
+    setIsNoteModalOpen(true);
+    playNoteChime();
   };
 
   const activeHabits = habits.filter((h) => !h.archived);
@@ -73,15 +86,30 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const handleToggle = async (habitId: string) => {
     const isCurrentlyDone = isCompleted(habitId, todayDateKey);
 
-    // Tactile haptic feedback
-    triggerHaptic(isCurrentlyDone ? 'medium' : 'light');
+    if (!isCurrentlyDone) {
+      // Completing the habit
+      const hitsAllDone = completedCount + 1 === totalCount;
+      const currentStreak = habitMetricsMap[habitId]?.streakCount ?? 0;
 
-    // Check if completing this habit hits 100%
-    if (!isCurrentlyDone && completedCount + 1 === totalCount) {
-      setTimeout(() => {
-        triggerMilestoneCelebration();
-        triggerHaptic('success');
-      }, 150);
+      if (hitsAllDone) {
+        // Ripple vibration & celebration singing bowl chord
+        triggerHaptic('ripple');
+        playCelebrationChime();
+        setTimeout(() => {
+          triggerMilestoneCelebration();
+        }, 150);
+      } else if (currentStreak > 0) {
+        // Double pulse vibration & twin ascending chime
+        triggerHaptic('double');
+        playStreakChime();
+      } else {
+        // Crisp tick vibration & 528Hz Solfeggio bell
+        triggerHaptic('tick');
+        playCheckChime();
+      }
+    } else {
+      // Unchecking habit
+      triggerHaptic('medium');
     }
 
     await onToggleEntry(habitId, todayDateKey);
@@ -301,91 +329,26 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             </button>
           </div>
         ) : (
-          <div className="space-y-2 max-h-[185px] overflow-y-auto scrollbar-thin pr-1">
+          <div className="space-y-2 max-h-[195px] overflow-y-auto scrollbar-thin pr-1">
             {displayedHabits.map((habit) => {
               const done = isCompleted(habit.id, todayDateKey);
               const metrics = habitMetricsMap[habit.id];
               const streak = metrics?.streakCount ?? 0;
               const isShieldActive = metrics?.isShieldActive;
+              const entry = getHabitEntry?.(habit.id, todayDateKey);
+              const hasNote = Boolean(entry?.note || entry?.mood || (entry?.tags && entry.tags.length > 0));
 
               return (
-                <div
+                <SwipeableHabitItem
                   key={habit.id}
-                  onClick={() => handleToggle(habit.id)}
-                  className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer active:scale-[0.99] select-none ${
-                    done
-                      ? 'bg-surface-container-low/60 dark:bg-surface-container-low/30 border-outline-variant/30'
-                      : 'bg-surface-container-lowest dark:bg-surface-container-low border-outline-variant/40 hover:border-primary/40 shadow-xs'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    {/* Left: Checkbox + Habit info */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {/* Circular 1-tap Checkbox matching Reference Tasks */}
-                      <button
-                        type="button"
-                        aria-label={`Mark ${habit.name} ${done ? 'incomplete' : 'complete'}`}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0 ${
-                          done
-                            ? 'bg-primary text-on-primary shadow-xs scale-105'
-                            : 'border-2 border-outline-variant/70 hover:border-primary bg-transparent'
-                        }`}
-                      >
-                        {done && (
-                          <span className="material-symbols-outlined text-[15px] font-bold animate-scaleUp">
-                            check
-                          </span>
-                        )}
-                      </button>
-
-                      {/* Habit Name & Subtext */}
-                      <div className="min-w-0 flex-1">
-                        <span
-                          className={`font-habit-name text-xs sm:text-sm font-semibold truncate block transition-colors ${
-                            done
-                              ? 'text-on-surface-variant line-through opacity-70'
-                              : 'text-on-surface'
-                          }`}
-                        >
-                          {habit.name}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant mt-0.5">
-                          <span className="capitalize">{habit.category || 'General'}</span>
-                          <span>•</span>
-                          <span className="capitalize">{habit.frequency}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Streak Flame & Chevron Arrow */}
-                    <div className="flex items-center gap-2 shrink-0 ml-1">
-                      <div className="flex items-center gap-1">
-                        <span
-                          className="material-symbols-outlined text-[15px] text-tertiary"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          local_fire_department
-                        </span>
-                        <span className="font-stat-label text-xs font-bold text-on-surface">
-                          {streak}d
-                        </span>
-                        {isShieldActive && (
-                          <span
-                            title="Protected by Streak Shield"
-                            className="material-symbols-outlined text-[12px] text-secondary"
-                            style={{ fontVariationSettings: "'FILL' 1" }}
-                          >
-                            shield
-                          </span>
-                        )}
-                      </div>
-
-                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40">
-                        chevron_right
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  habit={habit}
+                  done={done}
+                  streak={streak}
+                  isShieldActive={isShieldActive}
+                  hasNote={hasNote}
+                  onToggle={() => handleToggle(habit.id)}
+                  onOpenNote={() => handleOpenNote(habit)}
+                />
               );
             })}
           </div>
@@ -402,7 +365,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         ) : (
           <div className="flex items-center gap-2 text-on-surface-variant text-[11px]">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span>Tap any habit to check-in</span>
+            <span className="hidden sm:inline">Tap or swipe right to check-in • Swipe left for reflection note</span>
+            <span className="sm:hidden">Swipe right to check-in • Left for note</span>
           </div>
         )}
 
@@ -415,6 +379,28 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Swipe Left Reflection Note Bottom Sheet Modal */}
+      <DailyHabitNoteModal
+        isOpen={isNoteModalOpen}
+        habit={noteHabit}
+        dateKey={todayDateKey}
+        initialNote={noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.note : ''}
+        initialMood={noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.mood : undefined}
+        initialTags={noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.tags : []}
+        onClose={() => {
+          setIsNoteModalOpen(false);
+          setNoteHabit(null);
+        }}
+        onSave={async (habitId, dateKey, note, mood, tags) => {
+          if (onSaveNote) {
+            await onSaveNote(habitId, dateKey, note, mood, tags);
+            playCheckChime();
+          }
+          setIsNoteModalOpen(false);
+          setNoteHabit(null);
+        }}
+      />
     </div>
   );
 };

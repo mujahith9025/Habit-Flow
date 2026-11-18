@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Habit, HabitMood } from '../../types';
 import { triggerHaptic } from '../../utils/haptics';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface DailyHabitNoteModalProps {
   isOpen: boolean;
@@ -103,43 +104,30 @@ export const DailyHabitNoteModal: React.FC<DailyHabitNoteModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-fadeIn"
-        aria-hidden="true"
-      />
-
-      {/* Modal Dialog */}
-      <div className="relative w-full max-w-md bg-surface-container-lowest dark:bg-surface-container rounded-3xl shadow-2xl border border-outline-variant/20 p-5 sm:p-6 space-y-4.5 z-10 animate-scaleUp">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/15">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-soft"
-              style={{ backgroundColor: habit.color || '#2D5A34' }}
-            >
-              <span className="material-symbols-outlined text-[22px]">{habit.icon || 'spa'}</span>
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface truncate">
-                {habit.name}
-              </h3>
-              <p className="font-stat-label text-[11px] text-on-surface-variant">
-                Daily Reflection • {formattedDate}
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors"
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      title={
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-soft"
+            style={{ backgroundColor: habit.color || '#2D5A34' }}
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+            <span className="material-symbols-outlined text-[20px]">{habit.icon || 'spa'}</span>
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-section-header text-sm sm:text-base font-bold text-on-surface truncate">
+              {habit.name}
+            </h3>
+            <p className="font-stat-label text-[11px] text-on-surface-variant">
+              Daily Reflection • {formattedDate}
+            </p>
+          </div>
         </div>
-
+      }
+    >
+      <div className="space-y-4">
         {/* 1-Tap Mood / Energy Feeling */}
         <div className="space-y-1.5">
           <label className="block font-section-header text-xs font-semibold text-on-surface">
@@ -213,8 +201,8 @@ export const DailyHabitNoteModal: React.FC<DailyHabitNoteModalProps> = ({
         </div>
 
         {/* Modal Action Buttons */}
-        <div className="pt-2 flex items-center justify-between gap-2">
-          {(initialNote || initialMood || initialTags.length > 0) ? (
+        <div className="pt-2 flex items-center justify-between gap-2 border-t border-outline-variant/15">
+          {initialNote || initialMood || initialTags.length > 0 ? (
             <button
               type="button"
               onClick={handleClear}
@@ -258,6 +246,6 @@ export const DailyHabitNoteModal: React.FC<DailyHabitNoteModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </BottomSheetModal>
   );
 };

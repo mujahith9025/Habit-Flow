@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { triggerHaptic } from '../../utils/haptics';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface SecuritySettingsModalProps {
   isOpen: boolean;
@@ -32,182 +33,178 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div
-        className="w-full max-w-xl bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-6 sm:p-7 shadow-2xl border border-outline-variant/20 space-y-5 animate-scaleUp overflow-hidden max-h-[90vh] flex flex-col"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="security-modal-title"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/15">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px]">verified_user</span>
-            </div>
-            <div>
-              <h3 id="security-modal-title" className="font-app-title text-lg sm:text-xl font-bold text-on-surface">
-                Data Privacy & Cloud Security
-              </h3>
-              <p className="font-body-text text-xs text-on-surface-variant">
-                Zero-Knowledge Encryption, App Check, and API Hardening
-              </p>
-            </div>
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[22px]">verified_user</span>
           </div>
+          <div>
+            <h3 className="font-app-title text-base sm:text-lg font-bold text-on-surface">
+              Data Privacy & Security
+            </h3>
+            <p className="font-body-text text-xs text-on-surface-variant">
+              Zero-Knowledge Encryption, App Check, and API Hardening
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-2 p-1 rounded-full bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/20">
           <button
             type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer"
-            aria-label="Close modal"
+            onClick={() => {
+              triggerHaptic('light');
+              setActiveTab('encryption');
+            }}
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold font-stat-label transition-all cursor-pointer ${
+              activeTab === 'encryption'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            Zero-Knowledge AES
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setActiveTab('appcheck');
+            }}
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold font-stat-label transition-all cursor-pointer ${
+              activeTab === 'appcheck'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            Firebase App Check
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setActiveTab('apirestrict');
+            }}
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold font-stat-label transition-all cursor-pointer ${
+              activeTab === 'apirestrict'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            API Hardening
           </button>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-container-low dark:bg-surface-container border border-outline-variant/20 text-xs font-semibold">
-          {[
-            { id: 'encryption', label: 'Zero-Knowledge', icon: 'lock' },
-            { id: 'appcheck', label: 'App Check', icon: 'shield' },
-            { id: 'apirestrict', label: 'API Restrictions', icon: 'key' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setActiveTab(tab.id as any);
-              }}
-              className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? 'bg-primary text-on-primary shadow-xs font-bold'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Contents */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
-          {/* 1. Zero-Knowledge Encryption Tab */}
-          {activeTab === 'encryption' && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20 space-y-2">
-                <div className="flex items-center gap-2 text-primary font-bold text-sm">
-                  <span className="material-symbols-outlined text-[20px]">enhanced_encryption</span>
-                  <span>Client-Side AES-GCM 256-bit Encryption</span>
-                </div>
-                <p className="font-body-text text-on-surface leading-relaxed">
-                  When enabled, all private habit reflection notes and sensitive financial transaction descriptions are encrypted locally on your device with <strong>AES-GCM 256-bit</strong> before being sent to Cloud Firestore.
-                </p>
+        {/* Tab 1: Zero-Knowledge AES-GCM 256-bit Encryption */}
+        {activeTab === 'encryption' && (
+          <form onSubmit={handleSavePassphrase} className="space-y-4 pt-1">
+            <div className="p-4 rounded-2xl bg-surface-container-low/60 dark:bg-surface-container-high/20 border border-outline-variant/20 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[18px]">lock</span>
+                <span className="font-habit-name text-xs font-bold text-on-surface uppercase tracking-wider">
+                  Client-Side Passphrase
+                </span>
               </div>
-
-              <form onSubmit={handleSavePassphrase} className="space-y-3">
-                <div>
-                  <label htmlFor="zkPassphrase" className="font-bold text-on-surface block mb-1">
-                    Custom Master Passphrase (Optional):
-                  </label>
-                  <input
-                    id="zkPassphrase"
-                    type="password"
-                    placeholder="Enter passphrase to encrypt your notes & expenses..."
-                    value={encryptionPassphrase}
-                    onChange={(e) => setEncryptionPassphrase(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low dark:bg-surface-container border border-outline-variant/30 text-on-surface font-mono text-xs focus:ring-2 focus:ring-primary focus:outline-none"
-                  />
-                  <p className="text-[11px] text-on-surface-variant mt-1">
-                    Leave blank to use device-native hardware key derivation automatically.
-                  </p>
-                </div>
-
-                {savedSuccess && (
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-2 animate-fadeIn">
-                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>Zero-Knowledge Encryption settings updated successfully!</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary text-on-primary font-stat-label font-bold active:scale-95 transition-all shadow-xs cursor-pointer"
-                >
-                  Save Encryption Preferences
-                </button>
-              </form>
+              <p className="font-body-text text-xs text-on-surface-variant leading-relaxed">
+                When configured, private reflections, daily habit notes, and diary logs are encrypted locally via Web Crypto AES-GCM 256-bit before transmitting to Firestore.
+              </p>
             </div>
-          )}
 
-          {/* 2. Firebase App Check Tab */}
-          {activeTab === 'appcheck' && (
-            <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-surface-container-low dark:bg-surface-container border border-outline-variant/20 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-sm text-on-surface">
-                  <span className="material-symbols-outlined text-[20px] text-secondary">security</span>
-                  <span>Firebase App Check & Bot Defense</span>
-                </div>
-                <p className="font-body-text text-on-surface-variant leading-relaxed">
-                  HabitFlow includes built-in <strong>reCAPTCHA Enterprise & v3</strong> App Check integration. This verifies that requests originate exclusively from the legitimate HabitFlow web application, protecting your database against automated bot traffic and scraping.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 space-y-2 font-mono text-[11px]">
-                <div className="font-bold text-on-surface">Integration Status:</div>
-                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>App Check Module: Ready & Active in Production</span>
-                </div>
-                <div className="text-on-surface-variant">
-                  Environment: <span className="text-primary font-semibold">Web PWA / Mobile</span>
-                </div>
-              </div>
+            <div className="space-y-1.5">
+              <label className="font-habit-name text-xs font-bold text-on-surface block">
+                Master Encryption Passphrase
+              </label>
+              <input
+                type="password"
+                value={encryptionPassphrase}
+                onChange={(e) => setEncryptionPassphrase(e.target.value)}
+                placeholder="Leave blank for standard encryption, or enter custom secret..."
+                className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/30 text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary focus:outline-none transition-all"
+              />
+              <p className="font-body-text text-[11px] text-on-surface-variant">
+                ⚠️ Store this passphrase safely. If lost, zero-knowledge encrypted notes cannot be recovered by server admins.
+              </p>
             </div>
-          )}
 
-          {/* 3. Google Cloud API Key Referrer Restrictions Tab */}
-          {activeTab === 'apirestrict' && (
-            <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-surface-container-low dark:bg-surface-container border border-outline-variant/20 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-sm text-on-surface">
-                  <span className="material-symbols-outlined text-[20px] text-primary">domain_verification</span>
-                  <span>Google Cloud API Key Restrictions</span>
-                </div>
-                <p className="font-body-text text-on-surface-variant leading-relaxed">
-                  Lock your Google Cloud API key so it cannot be used on unauthorized domains. Follow these steps in the Google Cloud Console:
-                </p>
+            {savedSuccess && (
+              <div className="p-3 rounded-xl bg-secondary-container text-on-secondary-container text-xs font-bold flex items-center gap-2 animate-fadeIn">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                <span>Passphrase settings saved locally!</span>
               </div>
+            )}
 
-              <ol className="list-decimal list-inside space-y-2 p-3.5 rounded-2xl bg-surface-container-low/60 border border-outline-variant/15 text-on-surface leading-relaxed">
-                <li>Go to <strong>Google Cloud Console &gt; APIs & Services &gt; Credentials</strong>.</li>
-                <li>Select your <strong>Browser key (auto created by Firebase)</strong>.</li>
-                <li>Under <strong>Application restrictions</strong>, choose <strong>Websites (HTTP referrers)</strong>.</li>
-                <li>Add these allowed website restrictions:
-                  <ul className="list-disc list-inside pl-4 mt-1 space-y-1 font-mono text-[11px] text-primary">
-                    <li>https://habitflow-2a53e.web.app/*</li>
-                    <li>https://habitflow-2a53e.firebaseapp.com/*</li>
-                    <li>http://localhost:*</li>
-                  </ul>
-                </li>
-                <li>Click <strong>Save</strong>.</li>
-              </ol>
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl text-xs font-bold font-stat-label bg-primary text-on-primary hover:bg-primary/90 transition-all shadow-xs cursor-pointer active:scale-95"
+              >
+                Save Passphrase
+              </button>
             </div>
-          )}
-        </div>
+          </form>
+        )}
+
+        {/* Tab 2: Firebase App Check */}
+        {activeTab === 'appcheck' && (
+          <div className="space-y-3 pt-1 text-xs text-on-surface-variant leading-relaxed">
+            <div className="p-4 rounded-2xl bg-surface-container-low/60 dark:bg-surface-container-high/20 border border-outline-variant/20 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-600 text-[18px]">gshield</span>
+                <span className="font-habit-name text-xs font-bold text-on-surface uppercase tracking-wider">
+                  reCAPTCHA Enterprise & App Check
+                </span>
+              </div>
+              <p>
+                HabitFlow implements Google reCAPTCHA Enterprise verification to ensure only legitimate browser sessions access backend database endpoints.
+              </p>
+            </div>
+            <ul className="list-disc list-inside space-y-1.5 pl-1">
+              <li>Automatic token generation on app launch.</li>
+              <li>Protects Firestore database write quotas from automated bots and scraper attacks.</li>
+              <li>Continuous background token refresh every 30 minutes.</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Tab 3: API Hardening */}
+        {activeTab === 'apirestrict' && (
+          <div className="space-y-3 pt-1 text-xs text-on-surface-variant leading-relaxed">
+            <div className="p-4 rounded-2xl bg-surface-container-low/60 dark:bg-surface-container-high/20 border border-outline-variant/20 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-600 text-[18px]">policy</span>
+                <span className="font-habit-name text-xs font-bold text-on-surface uppercase tracking-wider">
+                  Google Cloud Key Restrictions
+                </span>
+              </div>
+              <p>
+                Production Firebase API keys are locked with HTTP referrer whitelisting to prevent unauthorized third-party embedding.
+              </p>
+            </div>
+            <ol className="list-decimal list-inside space-y-1.5 pl-1">
+              <li>Allowed Origins: <code>habitflow-2a53e.web.app</code> and <code>localhost</code>.</li>
+              <li>Disabled unneeded Google Cloud APIs.</li>
+              <li>Strict Content-Security-Policy headers enabled on Firebase Hosting.</li>
+            </ol>
+          </div>
+        )}
 
         {/* Footer */}
-        <div className="pt-2 border-t border-outline-variant/15 flex justify-end">
+        <div className="pt-3 border-t border-outline-variant/15 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-full text-xs font-bold font-stat-label bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all active:scale-95 cursor-pointer"
+            className="px-5 py-2 rounded-xl text-xs font-bold font-stat-label bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all active:scale-95 cursor-pointer"
           >
             Done
           </button>
         </div>
       </div>
-    </div>
+    </BottomSheetModal>
   );
 };
 

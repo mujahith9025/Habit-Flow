@@ -3,6 +3,7 @@ import { UserProfile } from '../../types/auth';
 import { Habit } from '../../types/habit';
 import { exportToPDF, exportToExcel, exportToJSON, HabitMetricDetail } from '../../utils/exportUtils';
 import { triggerHaptic } from '../../utils/haptics';
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 interface ExportDataModalProps {
   isOpen: boolean;
@@ -69,149 +70,103 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
-      onClick={onClose}
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
+            <span className="material-symbols-outlined text-[22px]">download</span>
+          </div>
+          <div>
+            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
+              Executive Data Export
+            </h3>
+            <p className="font-body-text text-xs text-on-surface-variant">
+              Select your format ({habits.length} habits tracked across all boards)
+            </p>
+          </div>
+        </div>
+      }
     >
-      <div
-        className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl w-full max-w-lg shadow-2xl border border-outline-variant/20 overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-outline-variant/15 flex items-center justify-between bg-surface-container-low/40">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">download</span>
-            </div>
-            <div>
-              <h3 className="font-section-header text-lg sm:text-xl font-bold text-on-surface">
-                Executive Data Export
-              </h3>
-              <p className="font-body-text text-xs text-on-surface-variant">
-                Select your format ({habits.length} habits tracked across all boards)
-              </p>
-            </div>
+      <div className="space-y-4">
+        {downloadSuccessMessage && (
+          <div className="p-3.5 rounded-2xl bg-secondary-container text-on-secondary-container text-xs font-semibold flex items-center gap-2 shadow-sm animate-fadeIn">
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+            <span>{downloadSuccessMessage}</span>
           </div>
+        )}
 
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              onClose();
-            }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer"
-            aria-label="Close export dialog"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
-        </div>
-
-        {/* Modal Content */}
-        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto">
-          {downloadSuccessMessage && (
-            <div className="p-3.5 rounded-2xl bg-secondary-container text-on-secondary-container text-xs font-semibold flex items-center gap-2 shadow-sm animate-fadeIn">
-              <span className="material-symbols-outlined text-[18px]">verified</span>
-              <span>{downloadSuccessMessage}</span>
-            </div>
-          )}
-
-          {/* Option 1: PDF Document */}
-          <div
-            onClick={handleExportPDF}
-            className={`p-4.5 rounded-2xl border border-outline-variant/20 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/20 hover:bg-surface-container-low transition-all duration-200 cursor-pointer group active:scale-[0.99] flex items-start gap-3.5 ${
-              isExportingPDF ? 'opacity-70 pointer-events-none' : ''
-            }`}
-          >
-            <div className="w-11 h-11 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-              <span className={`material-symbols-outlined text-[24px] ${isExportingPDF ? 'animate-spin' : ''}`}>
-                {isExportingPDF ? 'progress_activity' : 'picture_as_pdf'}
+        {/* Option 1: PDF Document */}
+        <div
+          onClick={handleExportPDF}
+          className="p-4 rounded-2xl border border-outline-variant/30 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/30 transition-all cursor-pointer flex items-start justify-between group active:scale-98"
+        >
+          <div className="space-y-1 pr-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-red-500 text-[20px]">
+                picture_as_pdf
               </span>
+              <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
+                Printable PDF Performance Report
+              </h4>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  {isExportingPDF ? 'Generating PDF...' : 'Executive PDF Report (.pdf)'}
-                </h4>
-                <span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-700 dark:text-red-300 text-[10px] font-bold font-stat-label">
-                  {isExportingPDF ? 'Processing' : 'Executive Report'}
-                </span>
-              </div>
-              <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Multi-section styled document with KPI cards, category boards breakdown, habit deep dive, and monthly consistency heatmaps.
-              </p>
-            </div>
-            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
-              {isExportingPDF ? 'hourglass_top' : 'arrow_forward'}
-            </span>
+            <p className="font-body-text text-xs text-on-surface-variant">
+              A beautifully formatted Japandi PDF summary with your completion heatmaps, streaks, and focus metrics.
+            </p>
           </div>
-
-          {/* Option 2: Excel / CSV Spreadsheet */}
-          <div
-            onClick={handleExportExcel}
-            className="p-4.5 rounded-2xl border border-outline-variant/20 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/20 hover:bg-surface-container-low transition-all duration-200 cursor-pointer group active:scale-[0.99] flex items-start gap-3.5"
-          >
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">table_chart</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  Master Spreadsheet (.csv)
-                </h4>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold font-stat-label">
-                  Excel & Sheets
-                </span>
-              </div>
-              <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Structured spreadsheet with tracker board distribution, habit matrix (12 columns), and consistency history.
-              </p>
-            </div>
-            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
-              arrow_forward
-            </span>
-          </div>
-
-          {/* Option 3: JSON Data Backup */}
-          <div
-            onClick={handleExportJSON}
-            className="p-4.5 rounded-2xl border border-outline-variant/20 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/20 hover:bg-surface-container-low transition-all duration-200 cursor-pointer group active:scale-[0.99] flex items-start gap-3.5"
-          >
-            <div className="w-11 h-11 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">data_object</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  Full System Backup (.json)
-                </h4>
-                <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px] font-bold font-stat-label">
-                  Complete Backup
-                </span>
-              </div>
-              <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Complete raw JSON archive including habit histories, category configs, streaks, and user preferences.
-              </p>
-            </div>
-            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
-              arrow_forward
-            </span>
-          </div>
+          <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
+            arrow_forward
+          </span>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 sm:p-5 border-t border-outline-variant/15 flex items-center justify-end bg-surface-container-low/30">
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              onClose();
-            }}
-            className="px-5 py-2 rounded-xl text-xs font-bold font-stat-label bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/25 transition-all shadow-xs active:scale-95 cursor-pointer"
-          >
-            Cancel
-          </button>
+        {/* Option 2: Excel / CSV Spreadsheet */}
+        <div
+          onClick={handleExportExcel}
+          className="p-4 rounded-2xl border border-outline-variant/30 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/30 transition-all cursor-pointer flex items-start justify-between group active:scale-98"
+        >
+          <div className="space-y-1 pr-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-emerald-600 text-[20px]">
+                table_view
+              </span>
+              <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
+                CSV Data Spreadsheet
+              </h4>
+            </div>
+            <p className="font-body-text text-xs text-on-surface-variant">
+              Raw comma-separated tabular values ready for import into Excel, Google Sheets, Notion, or Obsidian.
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
+            arrow_forward
+          </span>
+        </div>
+
+        {/* Option 3: JSON Full System Archive */}
+        <div
+          onClick={handleExportJSON}
+          className="p-4 rounded-2xl border border-outline-variant/30 hover:border-primary/50 bg-surface-container-low/50 dark:bg-surface-container-high/30 transition-all cursor-pointer flex items-start justify-between group active:scale-98"
+        >
+          <div className="space-y-1 pr-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-500 text-[20px]">
+                data_object
+              </span>
+              <h4 className="font-habit-name text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
+                JSON Complete Backup Archive
+              </h4>
+            </div>
+            <p className="font-body-text text-xs text-on-surface-variant mt-1">
+              Complete raw JSON archive including habit histories, category configs, streaks, and user preferences.
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mt-2">
+            arrow_forward
+          </span>
         </div>
       </div>
-    </div>
+    </BottomSheetModal>
   );
 };
