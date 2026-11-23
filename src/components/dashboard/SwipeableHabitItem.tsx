@@ -6,20 +6,32 @@ interface SwipeableHabitItemProps {
   habit: Habit;
   done: boolean;
   streak: number;
+  currentValue?: number;
+  timerSecondsElapsed?: number;
+  isRestDay?: boolean;
+  isPaused?: boolean;
   isShieldActive?: boolean;
   hasNote?: boolean;
   onToggle: () => void;
   onOpenNote: () => void;
+  onUpdateValue?: (newValue: number) => void;
+  onOpenTimer?: () => void;
 }
 
 export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
   habit,
   done,
   streak,
+  currentValue = 0,
+  timerSecondsElapsed = 0,
+  isRestDay = false,
+  isPaused = false,
   isShieldActive,
   hasNote = false,
   onToggle,
   onOpenNote,
+  onUpdateValue,
+  onOpenTimer,
 }) => {
   const [offsetX, setOffsetX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -32,6 +44,12 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
 
   const SWIPE_THRESHOLD = 65;
   const MAX_SWIPE = 110;
+
+  const isNumeric = habit.habitType === 'numeric';
+  const isTimer = habit.habitType === 'timer';
+  const targetVal = habit.targetValue || 1;
+  const stepVal = habit.stepValue || 1;
+  const unit = habit.unit || '';
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -51,7 +69,6 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
       // Determine gesture direction on initial movement
       if (isHorizontalSwipeRef.current === null) {
         if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
-          // Vertical page scroll: ignore horizontal swiping
           isHorizontalSwipeRef.current = false;
           return;
         } else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
@@ -62,18 +79,14 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
 
       if (!isHorizontalSwipeRef.current) return;
 
-      // Prevent native vertical scroll while swiping horizontally
       if (e.cancelable) {
         e.preventDefault();
       }
 
       currentXRef.current = touch.clientX;
-
-      // Clamped offset with slight resistance
       const clamped = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, deltaX));
       setOffsetX(clamped);
 
-      // Trigger tactile haptic when crossing the action threshold
       if (Math.abs(clamped) >= SWIPE_THRESHOLD && !hasTriggeredHapticRef.current) {
         hasTriggeredHapticRef.current = true;
         triggerHaptic('swipe');
@@ -104,17 +117,34 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
       onOpenNote();
     }
 
-    // Spring back smoothly
     setOffsetX(0);
     setIsSwiping(false);
     isHorizontalSwipeRef.current = null;
   }, [SWIPE_THRESHOLD, onToggle, onOpenNote]);
 
   const handleCardClick = () => {
-    // Only toggle if user wasn't swiping
     if (Math.abs(offsetX) > 5) return;
     onToggle();
   };
+
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('tick');
+    if (onUpdateValue) {
+      onUpdateValue(currentValue + stepVal);
+    }
+  };
+
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('selection');
+    if (onUpdateValue) {
+      onUpdateValue(Math.max(0, currentValue - stepVal));
+    }
+  };
+
+  // Timer minutes display
+  const timerElapsedMins = Math.floor(timerSecondsElapsed / 60);
 
   return (
     <div className="relative overflow-hidden rounded-2xl select-none group">
@@ -166,6 +196,10 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
         className={`relative z-10 p-3 rounded-2xl border transition-colors duration-150 cursor-pointer active:scale-[0.99] ${
           done
             ? 'bg-surface-container-low/70 dark:bg-surface-container-low/40 oled:!bg-[#101114] border-outline-variant/30'
+            : isPaused
+            ? 'bg-amber-500/5 border-amber-500/20'
+            : isRestDay
+            ? 'bg-surface-container-low/40 border-outline-variant/20 opacity-80'
             : 'bg-surface-container-lowest dark:bg-surface-container-low oled:!bg-[#141517] border-outline-variant/40 oled:border-outline-variant/20 hover:border-primary/40 shadow-xs'
         }`}
       >
@@ -195,19 +229,51 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
 
             {/* Habit Name & Metadata */}
             <div className="min-w-0 flex-1">
-              <span
-                className={`font-habit-name text-xs sm:text-sm font-semibold truncate block transition-colors ${
-                  done
-                    ? 'text-on-surface-variant line-through opacity-70'
-                    : 'text-on-surface'
-                }`}
-              >
-                {habit.name}
-              </span>
-              <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant mt-0.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span
+                  className={`font-habit-name text-xs sm:text-sm font-semibold truncate transition-colors ${
+                    done
+                      ? 'text-on-surface-variant line-through opacity-70'
+                      : 'text-on-surface'
+                  }`}
+                >
+                  {habit.name}
+                </span>
+
+                {/* Status Badges: Paused, Rest Day */}
+                {isPaused && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                    <span className="material-symbols-outlined text-[10px]">beach_access</span>
+                    <span>Paused</span>
+                  </span>
+                )}
+                {isRestDay && !isPaused && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-secondary-container/40 text-secondary text-[10px] font-bold">
+                    <span>Rest Day 🌿</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Sub-line metadata & Tags */}
+              <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant mt-0.5 flex-wrap">
                 <span className="capitalize">{habit.category || 'General'}</span>
                 <span>•</span>
                 <span className="capitalize">{habit.frequency}</span>
+
+                {/* Custom Tags */}
+                {habit.tags && habit.tags.length > 0 && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      {habit.tags.slice(0, 2).map((t) => (
+                        <span key={t} className="text-[10px] text-primary/80 font-medium">
+                          {t.startsWith('#') ? t : `#${t}`}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+
                 {hasNote && (
                   <span
                     title="Reflection note attached for today"
@@ -221,8 +287,59 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
             </div>
           </div>
 
-          {/* Right: Streak Flame & Note Button */}
+          {/* Middle/Right: Numeric Stepper or Zen Timer Trigger */}
           <div className="flex items-center gap-2 shrink-0 ml-1">
+            {/* Numeric Target Habits: Stepper & Count */}
+            {isNumeric && (
+              <div
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 border border-outline-variant/30"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={handleDecrement}
+                  disabled={currentValue <= 0}
+                  className="w-5 h-5 rounded-lg flex items-center justify-center hover:bg-surface-container-high active:scale-90 disabled:opacity-30 cursor-pointer text-on-surface font-bold text-xs"
+                >
+                  −
+                </button>
+                <span className="text-[11px] font-mono font-bold text-on-surface px-1 min-w-[40px] text-center">
+                  {currentValue.toLocaleString()}/{targetVal.toLocaleString()}
+                  {unit ? ` ${unit}` : ''}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleIncrement}
+                  className="w-5 h-5 rounded-lg flex items-center justify-center hover:bg-surface-container-high active:scale-90 cursor-pointer text-on-surface font-bold text-xs"
+                >
+                  +
+                </button>
+              </div>
+            )}
+
+            {/* Zen Timer Habits: Timer Play Trigger */}
+            {isTimer && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triggerHaptic('tick');
+                  if (onOpenTimer) onOpenTimer();
+                }}
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
+                  done
+                    ? 'bg-secondary-container/40 text-secondary border-secondary/30'
+                    : 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[13px]">timer</span>
+                <span>
+                  {timerElapsedMins > 0 ? `${timerElapsedMins}m / ` : ''}
+                  {habit.timerDuration || 15}m
+                </span>
+              </button>
+            )}
+
             {/* Streak Counter */}
             <div className="flex items-center gap-1">
               <span
@@ -245,7 +362,7 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
               )}
             </div>
 
-            {/* Quick Note Action Button (For Desktop or direct 1-tap) */}
+            {/* Quick Note Action Button */}
             <button
               type="button"
               onClick={(e) => {

@@ -75,6 +75,62 @@ export async function toggleEntry(
 }
 
 /**
+ * Updates the quantitative numeric progress or timer duration for a habit entry
+ */
+export async function updateEntryValue(
+  uid: string,
+  habitId: string,
+  dateKey: string,
+  currentValue: number,
+  targetValue?: number,
+  timerSecondsElapsed?: number
+): Promise<HabitEntry> {
+  const entryRef = getEntryDocRef(uid, habitId, dateKey);
+  const monthKey = getMonthKey(dateKey);
+  const weekOfMonth = getWeekOfMonth(dateKey);
+  const updatedAt = new Date().toISOString();
+  const completed = targetValue ? currentValue >= targetValue : currentValue > 0;
+
+  const entryData: Record<string, unknown> = {
+    date: dateKey,
+    currentValue,
+    completed,
+    weekOfMonth,
+    monthKey,
+    updatedAt,
+  };
+
+  if (timerSecondsElapsed !== undefined) {
+    entryData.timerSecondsElapsed = timerSecondsElapsed;
+  }
+
+  await setDoc(entryRef, entryData, { merge: true });
+  return entryData as unknown as HabitEntry;
+}
+
+/**
+ * Toggles vacation/travel pause status for a habit
+ */
+export async function toggleHabitPause(
+  uid: string,
+  habitId: string,
+  isPaused: boolean,
+  pauseReason?: string,
+  pauseStartDate?: string,
+  pauseEndDate?: string
+): Promise<void> {
+  const habitRef = getHabitDocRef(uid, habitId);
+  const updates: Record<string, unknown> = {
+    isPaused,
+  };
+  if (pauseReason !== undefined) updates.pauseReason = pauseReason;
+  if (pauseStartDate !== undefined) updates.pauseStartDate = pauseStartDate;
+  if (pauseEndDate !== undefined) updates.pauseEndDate = pauseEndDate;
+
+  await updateDoc(habitRef, updates);
+}
+
+/**
  * Saves a quick 1-tap note and reflection for a habit entry
  */
 export async function saveHabitNote(
@@ -116,6 +172,20 @@ export async function createHabit(
     icon?: string;
     color?: string;
     frequency?: HabitFrequency;
+    timeOfDay?: Habit['timeOfDay'];
+    habitType?: Habit['habitType'];
+    targetValue?: number;
+    unit?: string;
+    stepValue?: number;
+    timerDuration?: number;
+    scheduleType?: Habit['scheduleType'];
+    daysOfWeek?: number[];
+    targetDaysPerWeek?: number;
+    tags?: string[];
+    isPaused?: boolean;
+    pauseStartDate?: string;
+    pauseEndDate?: string;
+    pauseReason?: string;
     goalCount?: number;
     sortOrder?: number;
     startMonth?: string;
@@ -139,6 +209,21 @@ export async function createHabit(
     archived: false,
     sortOrder: data.sortOrder ?? 0,
   };
+
+  if (data.timeOfDay) newHabit.timeOfDay = data.timeOfDay;
+  if (data.habitType) newHabit.habitType = data.habitType;
+  if (data.targetValue !== undefined) newHabit.targetValue = data.targetValue;
+  if (data.unit !== undefined) newHabit.unit = data.unit;
+  if (data.stepValue !== undefined) newHabit.stepValue = data.stepValue;
+  if (data.timerDuration !== undefined) newHabit.timerDuration = data.timerDuration;
+  if (data.scheduleType) newHabit.scheduleType = data.scheduleType;
+  if (data.daysOfWeek) newHabit.daysOfWeek = data.daysOfWeek;
+  if (data.targetDaysPerWeek !== undefined) newHabit.targetDaysPerWeek = data.targetDaysPerWeek;
+  if (data.tags) newHabit.tags = data.tags;
+  if (data.isPaused !== undefined) newHabit.isPaused = data.isPaused;
+  if (data.pauseStartDate) newHabit.pauseStartDate = data.pauseStartDate;
+  if (data.pauseEndDate) newHabit.pauseEndDate = data.pauseEndDate;
+  if (data.pauseReason) newHabit.pauseReason = data.pauseReason;
 
   if (data.startMonth) newHabit.startMonth = data.startMonth;
   if (data.endMonth) newHabit.endMonth = data.endMonth;

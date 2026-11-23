@@ -3,12 +3,20 @@ import {
   onSnapshot,
   getEntriesCollectionRef,
   toggleEntry as toggleEntryService,
+  updateEntryValue as updateEntryValueService,
+  toggleHabitPause as toggleHabitPauseService,
   saveHabitNote as saveHabitNoteService,
   getWeekOfMonth,
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
-import { Habit, HabitEntry, HabitEntryMap, isHabitActiveInMonth } from '../types';
+import {
+  Habit,
+  HabitEntry,
+  HabitEntryMap,
+  isHabitActiveInMonth,
+  isEntryCompleted,
+} from '../types';
 import { calculateGentleHabitStreak, formatDateKey } from '../lib/calculations';
 
 export interface MonthDayInfo {
@@ -44,6 +52,8 @@ export interface UseDailyHabitsDataResult {
   isCompleted: (habitId: string, dateKey: string) => boolean;
   getHabitEntry: (habitId: string, dateKey: string) => HabitEntry | undefined;
   toggleHabitEntry: (habitId: string, dateKey: string) => Promise<void>;
+  updateHabitValue: (habitId: string, dateKey: string, newValue: number, timerSecondsElapsed?: number) => Promise<void>;
+  toggleHabitPause: (habitId: string, isPaused: boolean, reason?: string, startDate?: string, endDate?: string) => Promise<void>;
   batchCompleteTodayHabits: (habitIdsToComplete: string[]) => Promise<void>;
   batchResetTodayHabits: (habitIdsToReset: string[]) => Promise<void>;
   saveHabitNote: (habitId: string, dateKey: string, note: string, mood?: string, tags?: string[]) => Promise<void>;
@@ -169,13 +179,13 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     let completedCount = 0;
 
     daysInMonth.forEach((day) => {
-      if (habitEntries[day.dateKey]?.completed) {
+      if (isEntryCompleted(habit, habitEntries[day.dateKey])) {
         completedCount++;
       }
     });
 
     // Compute streak for this individual habit with "Never Miss Twice" Grace Days (up to 2 per month)
-    const gentleResult = calculateGentleHabitStreak(habitEntries, today, 2);
+    const gentleResult = calculateGentleHabitStreak(habitEntries, today, 2, habit);
     const streakCount = gentleResult.streak;
     const isShieldActive = gentleResult.isShieldActive;
 
@@ -212,9 +222,11 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
 
   const isCompleted = useCallback(
     (habitId: string, dateKey: string): boolean => {
-      return Boolean(entriesByHabit[habitId]?.[dateKey]?.completed);
+      const habit = dailyHabits.find((h) => h.id === habitId);
+      const entry = entriesByHabit[habitId]?.[dateKey];
+      return habit ? isEntryCompleted(habit, entry) : Boolean(entry?.completed);
     },
-    [entriesByHabit]
+    [entriesByHabit, dailyHabits]
   );
 
   const getHabitEntry = useCallback(
@@ -416,6 +428,98 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     [user?.uid, todayDateKey]
   );
 
+  // Update Numeric Target Value or Zen Timer Duration
+  const updateHabitValue = useCallback(
+    async (
+      habitId: string,
+      dateKey: string,
+      newValue: number,
+      timerSecondsElapsed?: number
+    ): Promise<void> => {
+      if (!user?.uid) return;
+
+      const habit = dailyHabits.find((h) => h.id === habitId);
+      const targetVal = habit?.targetValue ?? (habit?.timerDuration ? habit.timerDuration * 60 : undefined);
+      const isComplete =
+        targetVal !== undefined
+          ? timerSecondsElapsed !== undefined
+            ? timerSecondsElapsed >= targetVal
+            : newValue >= targetVal
+          : newValue > 0;
+
+      const prevHabitEntries = entriesRef.current[habitId] || {};
+      const prevEntry = prevHabitEntries[dateKey];
+
+      // Optimistic UI update
+      setEntriesByHabit((prev) => ({
+        ...prev,
+        [habitId]: {
+          ...(prev[habitId] || {}),
+          [dateKey]: {
+            date: dateKey,
+            completed: isComplete,
+            currentValue: newValue,
+            timerSecondsElapsed:
+              timerSecondsElapsed !== undefined
+                ? timerSecondsElapsed
+                : prevEntry?.timerSecondsElapsed,
+            weekOfMonth: getWeekOfMonth(dateKey),
+            monthKey: dateKey.substring(0, 7),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      }));
+
+      try {
+        await updateEntryValueService(
+          user.uid,
+          habitId,
+          dateKey,
+          newValue,
+          targetVal,
+          timerSecondsElapsed
+        );
+      } catch (err) {
+        console.error('Failed to update habit numeric value:', err);
+        setEntriesByHabit((prev) => {
+          const habitMap = { ...(prev[habitId] || {}) };
+          if (prevEntry) {
+            habitMap[dateKey] = prevEntry;
+          } else {
+            delete habitMap[dateKey];
+          }
+          return {
+            ...prev,
+            [habitId]: habitMap,
+          };
+        });
+      }
+    },
+    [user?.uid, dailyHabits]
+  );
+
+  // Toggle Vacation / Travel Pause
+  const toggleHabitPause = useCallback(
+    async (
+      habitId: string,
+      isPaused: boolean,
+      reason?: string,
+      startDate?: string,
+      endDate?: string
+    ): Promise<void> => {
+      if (!user?.uid) return;
+      await toggleHabitPauseService(
+        user.uid,
+        habitId,
+        isPaused,
+        reason,
+        startDate,
+        endDate
+      );
+    },
+    [user?.uid]
+  );
+
   return {
     dailyHabits,
     daysInMonth,
@@ -426,6 +530,8 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
     isCompleted,
     getHabitEntry,
     toggleHabitEntry,
+    updateHabitValue,
+    toggleHabitPause,
     batchCompleteTodayHabits,
     batchResetTodayHabits,
     saveHabitNote,

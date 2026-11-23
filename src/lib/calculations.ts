@@ -1,4 +1,10 @@
-import { Habit, HabitEntryMap } from '../types';
+import {
+  Habit,
+  HabitEntryMap,
+  isEntryCompleted,
+  isHabitPausedOnDate,
+  isHabitScheduledForDate,
+} from '../types';
 
 /**
  * Formats a Date as YYYY-MM-DD
@@ -22,6 +28,7 @@ export interface GentleStreakResult {
 
 /**
  * Calculates current streak for a SINGLE habit with "Never Miss Twice" Grace Days (Atomic Habits):
+ * Supports quantitative numeric targets, vacation pause streak preservation, and flexible schedules (days of week).
  * Allows automated Grace Days (up to 2 per month) so illness or travel doesn't shatter a streak.
  * If 1 day is missed, an automated Grace Day shields the momentum.
  * If 2 consecutive days are missed, the streak breaks.
@@ -29,10 +36,13 @@ export interface GentleStreakResult {
 export function calculateGentleHabitStreak(
   entries: HabitEntryMap,
   asOfDate: Date = new Date(),
-  maxShields: number = 2
+  maxShields: number = 2,
+  habit?: Habit
 ): GentleStreakResult {
   const todayKey = formatDateKey(asOfDate);
-  const isTodayDone = Boolean(entries[todayKey]?.completed);
+  const isTodayDone = habit
+    ? isEntryCompleted(habit, entries[todayKey])
+    : Boolean(entries[todayKey]?.completed);
 
   let streak = isTodayDone ? 1 : 0;
   let shieldsUsed = 0;
@@ -45,7 +55,24 @@ export function calculateGentleHabitStreak(
 
   for (let i = 0; i < 365; i++) {
     const pastKey = formatDateKey(checkDate);
-    const isDone = Boolean(entries[pastKey]?.completed);
+
+    // If habit is paused on this day (vacation / travel) or not scheduled (rest day)
+    if (habit) {
+      if (isHabitPausedOnDate(habit, checkDate)) {
+        // Vacation day: freeze streak (skip day without penalty or resetting streak)
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      if (habit.scheduleType === 'days_of_week' && !isHabitScheduledForDate(habit, checkDate)) {
+        // Scheduled rest day: maintain streak without requiring completion
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+    }
+
+    const isDone = habit
+      ? isEntryCompleted(habit, entries[pastKey])
+      : Boolean(entries[pastKey]?.completed);
 
     if (isDone) {
       streak++;
@@ -82,14 +109,17 @@ export function calculateGentleHabitStreak(
 export function calculateSingleHabitStreak(
   entries: HabitEntryMap,
   asOfDate: Date = new Date(),
-  useShield: boolean = true
+  useShield: boolean = true,
+  habit?: Habit
 ): number {
   if (useShield) {
-    return calculateGentleHabitStreak(entries, asOfDate, 1).streak;
+    return calculateGentleHabitStreak(entries, asOfDate, 1, habit).streak;
   }
 
   const todayKey = formatDateKey(asOfDate);
-  const isTodayDone = Boolean(entries[todayKey]?.completed);
+  const isTodayDone = habit
+    ? isEntryCompleted(habit, entries[todayKey])
+    : Boolean(entries[todayKey]?.completed);
 
   let streak = isTodayDone ? 1 : 0;
 
@@ -98,7 +128,23 @@ export function calculateSingleHabitStreak(
 
   for (let i = 0; i < 365; i++) {
     const pastKey = formatDateKey(checkDate);
-    if (entries[pastKey]?.completed) {
+
+    if (habit) {
+      if (isHabitPausedOnDate(habit, checkDate)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      if (habit.scheduleType === 'days_of_week' && !isHabitScheduledForDate(habit, checkDate)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+    }
+
+    const isDone = habit
+      ? isEntryCompleted(habit, entries[pastKey])
+      : Boolean(entries[pastKey]?.completed);
+
+    if (isDone) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
@@ -132,9 +178,12 @@ export function calculateGentleOverallStreak(
   }
 
   const todayKey = formatDateKey(asOfDate);
-  const isTodayAllDone = activeHabits.every(
-    (h) => entriesByHabit[h.id]?.[todayKey]?.completed === true
+  const todayDueHabits = activeHabits.filter(
+    (h) => isHabitScheduledForDate(h, asOfDate) && !isHabitPausedOnDate(h, asOfDate)
   );
+  const isTodayAllDone =
+    todayDueHabits.length > 0 &&
+    todayDueHabits.every((h) => isEntryCompleted(h, entriesByHabit[h.id]?.[todayKey]));
 
   let streak = isTodayAllDone ? 1 : 0;
   let shieldsUsed = 0;
@@ -147,8 +196,18 @@ export function calculateGentleOverallStreak(
 
   for (let i = 0; i < 365; i++) {
     const pastKey = formatDateKey(checkDate);
-    const allDone = activeHabits.every(
-      (h) => entriesByHabit[h.id]?.[pastKey]?.completed === true
+    const dueHabits = activeHabits.filter(
+      (h) => isHabitScheduledForDate(h, checkDate) && !isHabitPausedOnDate(h, checkDate)
+    );
+
+    // If no habits were due on this date (e.g. global rest day or vacation pause), continue without penalty
+    if (dueHabits.length === 0) {
+      checkDate.setDate(checkDate.getDate() - 1);
+      continue;
+    }
+
+    const allDone = dueHabits.every(
+      (h) => isEntryCompleted(h, entriesByHabit[h.id]?.[pastKey])
     );
 
     if (allDone) {
@@ -197,9 +256,12 @@ export function calculateOverallDailyStreak(
   if (activeHabits.length === 0) return 0;
 
   const todayKey = formatDateKey(asOfDate);
-  const isTodayAllDone = activeHabits.every(
-    (h) => entriesByHabit[h.id]?.[todayKey]?.completed === true
+  const todayDueHabits = activeHabits.filter(
+    (h) => isHabitScheduledForDate(h, asOfDate) && !isHabitPausedOnDate(h, asOfDate)
   );
+  const isTodayAllDone =
+    todayDueHabits.length > 0 &&
+    todayDueHabits.every((h) => isEntryCompleted(h, entriesByHabit[h.id]?.[todayKey]));
 
   let streak = isTodayAllDone ? 1 : 0;
 
@@ -208,8 +270,17 @@ export function calculateOverallDailyStreak(
 
   for (let i = 0; i < 365; i++) {
     const pastKey = formatDateKey(checkDate);
-    const allDone = activeHabits.every(
-      (h) => entriesByHabit[h.id]?.[pastKey]?.completed === true
+    const dueHabits = activeHabits.filter(
+      (h) => isHabitScheduledForDate(h, checkDate) && !isHabitPausedOnDate(h, checkDate)
+    );
+
+    if (dueHabits.length === 0) {
+      checkDate.setDate(checkDate.getDate() - 1);
+      continue;
+    }
+
+    const allDone = dueHabits.every(
+      (h) => isEntryCompleted(h, entriesByHabit[h.id]?.[pastKey])
     );
 
     if (allDone) {
@@ -226,9 +297,9 @@ export function calculateOverallDailyStreak(
 /**
  * Calculates the longest historic streak ever for a single habit
  */
-export function calculateLongestStreak(entries: HabitEntryMap): number {
+export function calculateLongestStreak(entries: HabitEntryMap, habit?: Habit): number {
   const sortedDates = Object.keys(entries)
-    .filter((k) => entries[k]?.completed && k.length === 10)
+    .filter((k) => (habit ? isEntryCompleted(habit, entries[k]) : entries[k]?.completed) && k.length === 10)
     .sort();
 
   if (sortedDates.length === 0) return 0;
@@ -298,7 +369,7 @@ export function calculateHabitTotalTrackedDays(
   entries: HabitEntryMap,
   today: Date = new Date()
 ): number {
-  const completedCount = Object.values(entries).filter((e) => e?.completed).length;
+  const completedCount = Object.values(entries).filter((e) => isEntryCompleted(habit, e)).length;
 
   // 1. Find earliest date for THIS specific habit
   let earliestDate: Date = today;
@@ -454,7 +525,7 @@ export function calculateHabitDayOfWeekStats(
 
   // 3. Count completed entries for each day of week
   Object.values(entries).forEach((entry) => {
-    if (entry.completed && entry.date && entry.date.length === 10) {
+    if (isEntryCompleted(habit, entry) && entry.date && entry.date.length === 10) {
       const [y, m, d] = entry.date.split('-').map(Number);
       if (y && m && d) {
         const eDate = new Date(y, m - 1, d);

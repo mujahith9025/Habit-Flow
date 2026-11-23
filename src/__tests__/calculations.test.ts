@@ -2,13 +2,21 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateOverallDailyStreak,
   calculateSingleHabitStreak,
+  calculateGentleHabitStreak,
   calculateLongestStreak,
   calculateMonthProgressPercent,
   calculateWeeklyProgressPercent,
   calculateHabitTotalTrackedDays,
   calculateHabitDayOfWeekStats,
 } from '../lib/calculations';
-import { Habit, HabitEntryMap, isHabitActiveInMonth } from '../types';
+import {
+  Habit,
+  HabitEntryMap,
+  isHabitActiveInMonth,
+  isEntryCompleted,
+  isHabitPausedOnDate,
+  isHabitScheduledForDate,
+} from '../types';
 
 describe('HabitFlow Calculations Unit Test Suite', () => {
   const sampleDailyHabits: Habit[] = [
@@ -418,6 +426,196 @@ describe('HabitFlow Calculations Unit Test Suite', () => {
       const feb = new Date(mar31.getFullYear(), mar31.getMonth() - 1, 1);
       expect(feb.getMonth()).toBe(1); // February (month index 1)
       expect(feb.getDate()).toBe(1);
+    });
+  });
+
+  describe('Section 4: Advanced Functionality & Habit Types', () => {
+    describe('Numeric Target Habits', () => {
+      const waterHabit: Habit = {
+        id: 'water_1',
+        name: 'Daily Hydration',
+        icon: 'water_drop',
+        color: '#2D5A34',
+        frequency: 'daily',
+        habitType: 'numeric',
+        targetValue: 2500,
+        unit: 'ml',
+        stepValue: 250,
+        goalCount: 1,
+        createdAt: '2026-11-01T00:00:00.000Z',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      it('evaluates isEntryCompleted based on targetValue threshold', () => {
+        expect(
+          isEntryCompleted(waterHabit, {
+            date: '2026-11-20',
+            completed: false,
+            currentValue: 1500,
+            weekOfMonth: 3,
+            monthKey: '2026-11',
+            updatedAt: '',
+          })
+        ).toBe(false);
+
+        expect(
+          isEntryCompleted(waterHabit, {
+            date: '2026-11-20',
+            completed: false,
+            currentValue: 2500,
+            weekOfMonth: 3,
+            monthKey: '2026-11',
+            updatedAt: '',
+          })
+        ).toBe(true);
+
+        expect(
+          isEntryCompleted(waterHabit, {
+            date: '2026-11-20',
+            completed: false,
+            currentValue: 3000,
+            weekOfMonth: 3,
+            monthKey: '2026-11',
+            updatedAt: '',
+          })
+        ).toBe(true);
+      });
+
+      it('computes streaks correctly for numeric habits reaching target', () => {
+        const asOf = new Date(2026, 10, 23); // Nov 23, 2026
+        const entries: HabitEntryMap = {
+          '2026-11-21': { date: '2026-11-21', completed: false, currentValue: 2500, weekOfMonth: 4, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-22': { date: '2026-11-22', completed: false, currentValue: 2800, weekOfMonth: 4, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-23': { date: '2026-11-23', completed: false, currentValue: 2500, weekOfMonth: 4, monthKey: '2026-11', updatedAt: '' },
+        };
+
+        const result = calculateGentleHabitStreak(entries, asOf, 2, waterHabit);
+        expect(result.streak).toBe(3);
+      });
+    });
+
+    describe('Zen Timers & Pomodoro Habits', () => {
+      const meditationHabit: Habit = {
+        id: 'meditation_1',
+        name: 'Zen Meditation',
+        icon: 'self_improvement',
+        color: '#2D5A34',
+        frequency: 'daily',
+        habitType: 'timer',
+        timerDuration: 15, // 15 minutes = 900 seconds
+        goalCount: 1,
+        createdAt: '2026-11-01T00:00:00.000Z',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      it('recognizes completion when timer seconds reach target duration', () => {
+        expect(
+          isEntryCompleted(meditationHabit, {
+            date: '2026-11-23',
+            completed: false,
+            timerSecondsElapsed: 600, // 10 mins (less than 15m)
+            weekOfMonth: 4,
+            monthKey: '2026-11',
+            updatedAt: '',
+          })
+        ).toBe(false);
+
+        expect(
+          isEntryCompleted(meditationHabit, {
+            date: '2026-11-23',
+            completed: false,
+            timerSecondsElapsed: 900, // exact 15 mins
+            weekOfMonth: 4,
+            monthKey: '2026-11',
+            updatedAt: '',
+          })
+        ).toBe(true);
+      });
+    });
+
+    describe('Flexible Schedules (Days of Week)', () => {
+      // Workout on Mon (1), Wed (3), Fri (5) only
+      const workoutHabit: Habit = {
+        id: 'workout_1',
+        name: 'Strength Training',
+        icon: 'fitness_center',
+        color: '#A65A42',
+        frequency: 'daily',
+        scheduleType: 'days_of_week',
+        daysOfWeek: [1, 3, 5],
+        goalCount: 1,
+        createdAt: '2026-11-01T00:00:00.000Z',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      it('detects scheduled days vs rest days correctly', () => {
+        const monday = new Date(2026, 10, 16); // Monday
+        const tuesday = new Date(2026, 10, 17); // Tuesday
+        const wednesday = new Date(2026, 10, 18); // Wednesday
+
+        expect(isHabitScheduledForDate(workoutHabit, monday)).toBe(true);
+        expect(isHabitScheduledForDate(workoutHabit, tuesday)).toBe(false); // Rest Day
+        expect(isHabitScheduledForDate(workoutHabit, wednesday)).toBe(true);
+      });
+
+      it('preserves streaks through scheduled rest days without penalizing', () => {
+        // Monday Nov 16 done, Tue Nov 17 is rest day (not logged), Wed Nov 18 done, Thu Nov 19 is rest day (not logged), Fri Nov 20 done
+        const fridayAsOf = new Date(2026, 10, 20);
+        const entries: HabitEntryMap = {
+          '2026-11-16': { date: '2026-11-16', completed: true, weekOfMonth: 3, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-18': { date: '2026-11-18', completed: true, weekOfMonth: 3, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-20': { date: '2026-11-20', completed: true, weekOfMonth: 3, monthKey: '2026-11', updatedAt: '' },
+        };
+
+        const result = calculateGentleHabitStreak(entries, fridayAsOf, 0, workoutHabit);
+        // All 3 scheduled workout days completed, Tuesday & Thursday were rest days -> streak is 3!
+        expect(result.streak).toBe(3);
+      });
+    });
+
+    describe('Vacation & Travel Pause Streak Freezing', () => {
+      const runningHabit: Habit = {
+        id: 'run_1',
+        name: 'Morning Run',
+        icon: 'directions_run',
+        color: '#52995D',
+        frequency: 'daily',
+        isPaused: true,
+        pauseStartDate: '2026-11-10',
+        pauseEndDate: '2026-11-16',
+        pauseReason: 'Vacation',
+        goalCount: 1,
+        createdAt: '2026-10-01T00:00:00.000Z',
+        archived: false,
+        sortOrder: 0,
+      };
+
+      it('correctly detects paused dates during travel window', () => {
+        expect(isHabitPausedOnDate(runningHabit, '2026-11-09')).toBe(false);
+        expect(isHabitPausedOnDate(runningHabit, '2026-11-12')).toBe(true);
+        expect(isHabitPausedOnDate(runningHabit, '2026-11-16')).toBe(true);
+        expect(isHabitPausedOnDate(runningHabit, '2026-11-17')).toBe(false);
+      });
+
+      it('freezes streak through vacation days so trip does not break historical streak', () => {
+        // Active Nov 7, 8, 9 (3 days streak)
+        // Nov 10-16 is vacation (no entries logged)
+        // Nov 17 returns from vacation and completes habit
+        const asOfNov17 = new Date(2026, 10, 17);
+        const entries: HabitEntryMap = {
+          '2026-11-07': { date: '2026-11-07', completed: true, weekOfMonth: 2, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-08': { date: '2026-11-08', completed: true, weekOfMonth: 2, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-09': { date: '2026-11-09', completed: true, weekOfMonth: 2, monthKey: '2026-11', updatedAt: '' },
+          '2026-11-17': { date: '2026-11-17', completed: true, weekOfMonth: 3, monthKey: '2026-11', updatedAt: '' },
+        };
+
+        const result = calculateGentleHabitStreak(entries, asOfNov17, 0, runningHabit);
+        // 4 completed days preserved across 7-day vacation pause!
+        expect(result.streak).toBe(4);
+      });
     });
   });
 });

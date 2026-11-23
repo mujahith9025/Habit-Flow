@@ -70,6 +70,8 @@ export const DashboardPage: React.FC = () => {
     isCompleted,
     getHabitEntry,
     toggleHabitEntry,
+    updateHabitValue,
+    toggleHabitPause,
     batchCompleteTodayHabits,
     batchResetTodayHabits,
     saveHabitNote,
@@ -95,6 +97,20 @@ export const DashboardPage: React.FC = () => {
     name: string;
     category?: string;
     frequency: HabitFrequency;
+    timeOfDay?: Habit['timeOfDay'];
+    habitType?: Habit['habitType'];
+    targetValue?: number;
+    unit?: string;
+    stepValue?: number;
+    timerDuration?: number;
+    scheduleType?: Habit['scheduleType'];
+    daysOfWeek?: number[];
+    targetDaysPerWeek?: number;
+    tags?: string[];
+    isPaused?: boolean;
+    pauseStartDate?: string;
+    pauseEndDate?: string;
+    pauseReason?: string;
     goalCount: number;
     color?: string;
     icon?: string;
@@ -106,6 +122,20 @@ export const DashboardPage: React.FC = () => {
         name: data.name,
         category: data.category,
         frequency: data.frequency,
+        timeOfDay: data.timeOfDay,
+        habitType: data.habitType,
+        targetValue: data.targetValue,
+        unit: data.unit,
+        stepValue: data.stepValue,
+        timerDuration: data.timerDuration,
+        scheduleType: data.scheduleType,
+        daysOfWeek: data.daysOfWeek,
+        targetDaysPerWeek: data.targetDaysPerWeek,
+        tags: data.tags,
+        isPaused: data.isPaused,
+        pauseStartDate: data.pauseStartDate,
+        pauseEndDate: data.pauseEndDate,
+        pauseReason: data.pauseReason,
         goalCount: data.goalCount,
         color: data.color,
         startMonth: data.startMonth,
@@ -116,6 +146,20 @@ export const DashboardPage: React.FC = () => {
         name: data.name,
         category: data.category || (effectiveCategory !== 'all' ? effectiveCategory : 'General'),
         frequency: data.frequency,
+        timeOfDay: data.timeOfDay,
+        habitType: data.habitType,
+        targetValue: data.targetValue,
+        unit: data.unit,
+        stepValue: data.stepValue,
+        timerDuration: data.timerDuration,
+        scheduleType: data.scheduleType,
+        daysOfWeek: data.daysOfWeek,
+        targetDaysPerWeek: data.targetDaysPerWeek,
+        tags: data.tags,
+        isPaused: data.isPaused,
+        pauseStartDate: data.pauseStartDate,
+        pauseEndDate: data.pauseEndDate,
+        pauseReason: data.pauseReason,
         goalCount: data.goalCount,
         color: data.color,
         startMonth: data.startMonth,
@@ -171,6 +215,8 @@ export const DashboardPage: React.FC = () => {
             entriesByHabit={entriesByHabit}
             getHabitEntry={getHabitEntry}
             onToggleEntry={toggleHabitEntry}
+            onUpdateValue={updateHabitValue}
+            onTogglePause={toggleHabitPause}
             onBatchCompleteToday={batchCompleteTodayHabits}
             onBatchResetToday={batchResetTodayHabits}
             onSaveNote={saveHabitNote}

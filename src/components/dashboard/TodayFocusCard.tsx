@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
-import { Habit, HabitEntry } from '../../types';
+import {
+  Habit,
+  HabitEntry,
+  isHabitPausedOnDate,
+  isHabitScheduledForDate,
+} from '../../types';
 import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { formatDateKey } from '../../hooks/useDashboardMetrics';
 import { triggerHaptic } from '../../utils/haptics';
 import { triggerMilestoneCelebration } from '../../utils/confetti';
-import { playCheckChime, playStreakChime, playCelebrationChime, playNoteChime } from '../../utils/zenAudio';
+import {
+  playCheckChime,
+  playStreakChime,
+  playCelebrationChime,
+  playNoteChime,
+} from '../../utils/zenAudio';
 import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 import { RadialOrbitGauge } from '../ui/RadialOrbitGauge';
 import { SwipeableHabitItem } from './SwipeableHabitItem';
 import { DailyHabitNoteModal } from './DailyHabitNoteModal';
 import { WeeklyReviewModal } from './WeeklyReviewModal';
+import { ZenTimerModal } from './ZenTimerModal';
+import { VacationPauseModal } from './VacationPauseModal';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -19,9 +31,28 @@ interface TodayFocusCardProps {
   entriesByHabit?: Record<string, Record<string, HabitEntry>>;
   getHabitEntry?: (habitId: string, dateKey: string) => HabitEntry | undefined;
   onToggleEntry: (habitId: string, dateKey: string) => Promise<void>;
+  onUpdateValue?: (
+    habitId: string,
+    dateKey: string,
+    newValue: number,
+    timerSecondsElapsed?: number
+  ) => Promise<void>;
+  onTogglePause?: (
+    habitId: string,
+    isPaused: boolean,
+    reason?: string,
+    startDate?: string,
+    endDate?: string
+  ) => Promise<void>;
   onBatchCompleteToday?: (habitIds: string[]) => Promise<void>;
   onBatchResetToday?: (habitIds: string[]) => Promise<void>;
-  onSaveNote?: (habitId: string, dateKey: string, note: string, mood?: string, tags?: string[]) => Promise<void>;
+  onSaveNote?: (
+    habitId: string,
+    dateKey: string,
+    note: string,
+    mood?: string,
+    tags?: string[]
+  ) => Promise<void>;
   onAddNewHabit?: () => void;
   className?: string;
 }
@@ -34,6 +65,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   entriesByHabit = {},
   getHabitEntry,
   onToggleEntry,
+  onUpdateValue,
+  onTogglePause,
   onBatchCompleteToday,
   onBatchResetToday,
   onSaveNote,
@@ -49,9 +82,20 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const [noteHabit, setNoteHabit] = useState<Habit | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
-  const [selectedRitual, setSelectedRitual] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
+
+  // Advanced state: Zen Timer, Vacation Pause, Tags, Rituals
+  const [timerHabit, setTimerHabit] = useState<Habit | null>(null);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+  const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedRitual, setSelectedRitual] = useState<
+    'all' | 'morning' | 'afternoon' | 'evening'
+  >('all');
   const [filterMode, setFilterMode] = useState<'all' | 'remaining'>(() => {
-    return (localStorage.getItem('habitflow_today_filter') as 'all' | 'remaining') || 'all';
+    return (
+      (localStorage.getItem('habitflow_today_filter') as 'all' | 'remaining') ||
+      'all'
+    );
   });
 
   // Time-aware ritual slot detection
@@ -69,7 +113,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     triggerHaptic('selection');
   };
 
-  const handleSelectRitual = (slot: 'all' | 'morning' | 'afternoon' | 'evening') => {
+  const handleSelectRitual = (
+    slot: 'all' | 'morning' | 'afternoon' | 'evening'
+  ) => {
     setSelectedRitual(slot);
     triggerHaptic('selection');
   };
@@ -80,7 +126,20 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     playNoteChime();
   };
 
+  const handleOpenTimer = (habit: Habit) => {
+    setTimerHabit(habit);
+    setIsTimerModalOpen(true);
+  };
+
   const activeHabits = habits.filter((h) => !h.archived);
+
+  // Extract all unique tags across active habits
+  const allTags = Array.from(
+    new Set(activeHabits.flatMap((h) => h.tags || []))
+  ).filter(Boolean);
+
+  // Vacation paused habits check
+  const pausedHabits = activeHabits.filter((h) => isHabitPausedOnDate(h, today));
 
   // Compute completed count for today
   let completedCount = 0;
@@ -92,7 +151,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
   const totalCount = activeHabits.length;
   const remainingCount = totalCount - completedCount;
-  const percentDone = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const percentDone =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
 
   // Filter by ritual bundle
@@ -102,7 +162,14 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     return slot === selectedRitual || slot === 'anytime';
   });
 
-  const displayedHabits = ritualFilteredHabits.filter((h) => {
+  // Filter by tag
+  const tagFilteredHabits = ritualFilteredHabits.filter((h) => {
+    if (!selectedTag) return true;
+    return h.tags?.includes(selectedTag);
+  });
+
+  // Filter by remaining vs all
+  const displayedHabits = tagFilteredHabits.filter((h) => {
     if (filterMode === 'remaining') {
       return !isCompleted(h.id, todayDateKey);
     }
@@ -110,35 +177,32 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   });
 
   // "Never Miss Twice" Grace Days check
-  const protectedHabits = activeHabits.filter((h) => habitMetricsMap[h.id]?.isShieldActive);
+  const protectedHabits = activeHabits.filter(
+    (h) => habitMetricsMap[h.id]?.isShieldActive
+  );
   const isSundayOrMonday = today.getDay() === 0 || today.getDay() === 1;
 
   const handleToggle = async (habitId: string) => {
     const isCurrentlyDone = isCompleted(habitId, todayDateKey);
 
     if (!isCurrentlyDone) {
-      // Completing the habit
       const hitsAllDone = completedCount + 1 === totalCount;
       const currentStreak = habitMetricsMap[habitId]?.streakCount ?? 0;
 
       if (hitsAllDone) {
-        // Ripple vibration & celebration singing bowl chord
         triggerHaptic('ripple');
         playCelebrationChime();
         setTimeout(() => {
           triggerMilestoneCelebration();
         }, 150);
       } else if (currentStreak > 0) {
-        // Double pulse vibration & twin ascending chime
         triggerHaptic('double');
         playStreakChime();
       } else {
-        // Crisp tick vibration & 528Hz Solfeggio bell
         triggerHaptic('tick');
         playCheckChime();
       }
     } else {
-      // Unchecking habit
       triggerHaptic('medium');
     }
 
@@ -165,7 +229,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       if (onBatchCompleteToday) {
         await onBatchCompleteToday(pendingHabitIds);
       } else {
-        await Promise.all(pendingHabitIds.map((id) => onToggleEntry(id, todayDateKey)));
+        await Promise.all(
+          pendingHabitIds.map((id) => onToggleEntry(id, todayDateKey))
+        );
       }
       setShowUndoBanner(true);
       setTimeout(() => {
@@ -190,7 +256,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       if (onBatchResetToday) {
         await onBatchResetToday(lastBatchCompletedIds);
       } else {
-        await Promise.all(lastBatchCompletedIds.map((id) => onToggleEntry(id, todayDateKey)));
+        await Promise.all(
+          lastBatchCompletedIds.map((id) => onToggleEntry(id, todayDateKey))
+        );
       }
       setLastBatchCompletedIds([]);
     } catch (err) {
@@ -207,9 +275,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       {/* Decorative background accent */}
       <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-secondary/10 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Card Header with Quick Finish All Button */}
+      {/* Card Header with Quick Finish All & Vacation Pause Trigger */}
       <div>
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <span
               className="material-symbols-outlined text-primary text-[20px]"
@@ -222,7 +290,18 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             </h3>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Vacation Pause Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsVacationModalOpen(true)}
+              title="Pause habits for vacation or travel"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant text-[11px] font-semibold hover:text-on-surface transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[14px]">beach_access</span>
+              <span className="hidden xs:inline">Pause</span>
+            </button>
+
             {/* Quick Finish All Today Button */}
             {!allDone && totalCount > 0 && remainingCount > 0 && (
               <button
@@ -258,7 +337,11 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                       : 'bg-surface-container-low dark:bg-surface-container-high text-on-surface-variant'
                   }`}
                 >
-                  {allDone && <span className="material-symbols-outlined text-[13px]">verified</span>}
+                  {allDone && (
+                    <span className="material-symbols-outlined text-[13px]">
+                      verified
+                    </span>
+                  )}
                   {completedCount}/{totalCount} ({percentDone}%)
                 </span>
               </div>
@@ -282,42 +365,27 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
-        {/* Today Habit Filter: "Show Remaining Only" vs "Show All" */}
-        {totalCount > 0 && completedCount > 0 && (
-          <div className="flex items-center justify-between text-xs mb-2.5 px-0.5">
-            <span className="text-[11px] font-stat-label text-on-surface-variant font-medium">
-              {filterMode === 'remaining'
-                ? `${remainingCount} remaining today`
-                : `All ${totalCount} habits`}
-            </span>
-            <div className="inline-flex rounded-lg bg-surface-container-low dark:bg-surface-container-high/40 p-0.5 border border-outline-variant/20 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => handleSetFilterMode('all')}
-                className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                  filterMode === 'all'
-                    ? 'bg-primary text-on-primary shadow-xs font-bold'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                Show All ({totalCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSetFilterMode('remaining')}
-                className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                  filterMode === 'remaining'
-                    ? 'bg-primary text-on-primary shadow-xs font-bold'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                Remaining Only ({remainingCount})
-              </button>
+        {/* Vacation Paused Habits Active Banner */}
+        {pausedHabits.length > 0 && (
+          <div className="mb-2.5 px-3.5 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 flex items-center justify-between text-xs animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400">
+                beach_access
+              </span>
+              <p className="text-[11px] font-medium leading-tight">
+                <span className="font-bold">{pausedHabits.length} habit(s) paused:</span> Streaks are safely frozen and protected.
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsVacationModalOpen(true)}
+              className="px-2 py-0.5 rounded-md bg-surface-container-lowest dark:bg-surface-container text-primary text-[10px] font-bold hover:underline cursor-pointer"
+            >
+              Manage
+            </button>
           </div>
         )}
 
-        {/* Habit Checklist or Empty State */}
         {/* "Never Miss Twice" Grace Day Streak Protection Banner */}
         {protectedHabits.length > 0 && (
           <div className="mb-2.5 px-3.5 py-2 rounded-2xl bg-secondary-container/40 border border-secondary/25 text-on-secondary-container flex items-center justify-between text-xs animate-fadeIn">
@@ -358,16 +426,17 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
-        {/* Time-Aware Ritual Bundles Bar */}
+        {/* Time-Aware Ritual Bundles & Tags Filter Bar */}
         {totalCount > 0 && (
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-2 mb-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-2 mb-1">
+            {/* Rituals */}
             {[
               { id: 'all', label: 'All', icon: 'apps' },
               { id: 'morning', label: 'Morning', icon: 'wb_sunny' },
               { id: 'afternoon', label: 'Afternoon', icon: 'light_mode' },
               { id: 'evening', label: 'Evening', icon: 'bedtime' },
             ].map((slot) => {
-              const isSelected = selectedRitual === slot.id;
+              const isSelected = selectedRitual === slot.id && !selectedTag;
               const isCurrentTimeSlot = slot.id === activeRitualSlot;
               const count = activeHabits.filter((h) => {
                 if (slot.id === 'all') return true;
@@ -381,7 +450,10 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                 <button
                   key={slot.id}
                   type="button"
-                  onClick={() => handleSelectRitual(slot.id as any)}
+                  onClick={() => {
+                    setSelectedTag(null);
+                    handleSelectRitual(slot.id as any);
+                  }}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     isSelected
                       ? 'bg-primary text-on-primary font-bold shadow-xs'
@@ -390,12 +462,41 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                 >
                   <span className="material-symbols-outlined text-[13px]">{slot.icon}</span>
                   <span>{slot.label}</span>
-                  <span className={`text-[10px] px-1 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-surface-variant/40'}`}>
+                  <span
+                    className={`text-[10px] px-1 rounded-full ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-surface-variant/40'
+                    }`}
+                  >
                     {count}
                   </span>
                   {isCurrentTimeSlot && slot.id !== 'all' && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" title="Active ritual right now" />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"
+                      title="Active ritual right now"
+                    />
                   )}
+                </button>
+              );
+            })}
+
+            {/* Custom Hashtags Chips */}
+            {allTags.map((tag) => {
+              const isTagSelected = selectedTag === tag;
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setSelectedTag(isTagSelected ? null : tag);
+                  }}
+                  className={`inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    isTagSelected
+                      ? 'bg-secondary text-on-secondary font-bold shadow-xs'
+                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
                 </button>
               );
             })}
@@ -425,7 +526,10 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         ) : filterMode === 'remaining' && displayedHabits.length === 0 ? (
           <div className="py-6 text-center space-y-2 bg-surface-container-low/40 dark:bg-surface-container-low/20 rounded-2xl border border-outline-variant/20 p-4 animate-fadeIn">
             <div className="w-10 h-10 rounded-full bg-secondary-container/40 text-secondary mx-auto flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              <span
+                className="material-symbols-outlined text-[20px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
                 task_alt
               </span>
             </div>
@@ -451,7 +555,13 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
               const streak = metrics?.streakCount ?? 0;
               const isShieldActive = metrics?.isShieldActive;
               const entry = getHabitEntry?.(habit.id, todayDateKey);
-              const hasNote = Boolean(entry?.note || entry?.mood || (entry?.tags && entry.tags.length > 0));
+              const hasNote = Boolean(
+                entry?.note || entry?.mood || (entry?.tags && entry.tags.length > 0)
+              );
+              const currentValue = entry?.currentValue ?? 0;
+              const timerSecondsElapsed = entry?.timerSecondsElapsed ?? 0;
+              const isRestDay = !isHabitScheduledForDate(habit, today);
+              const isPaused = isHabitPausedOnDate(habit, today);
 
               return (
                 <SwipeableHabitItem
@@ -459,10 +569,20 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                   habit={habit}
                   done={done}
                   streak={streak}
+                  currentValue={currentValue}
+                  timerSecondsElapsed={timerSecondsElapsed}
+                  isRestDay={isRestDay}
+                  isPaused={isPaused}
                   isShieldActive={isShieldActive}
                   hasNote={hasNote}
                   onToggle={() => handleToggle(habit.id)}
                   onOpenNote={() => handleOpenNote(habit)}
+                  onUpdateValue={async (val) => {
+                    if (onUpdateValue) {
+                      await onUpdateValue(habit.id, todayDateKey, val);
+                    }
+                  }}
+                  onOpenTimer={() => handleOpenTimer(habit)}
                 />
               );
             })}
@@ -474,13 +594,17 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
       <div className="mt-3 pt-2.5 border-t border-outline-variant/15 flex items-center justify-between text-xs">
         {allDone ? (
           <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold bg-[#E8EFE8] dark:bg-[#1E2E20] px-3 py-1 rounded-full border border-emerald-500/20 animate-fadeIn text-xs">
-            <span className="material-symbols-outlined text-[16px] text-emerald-700 dark:text-emerald-400">spa</span>
+            <span className="material-symbols-outlined text-[16px] text-emerald-700 dark:text-emerald-400">
+              spa
+            </span>
             <span>All done for today. Rest well ᵕ̈</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-on-surface-variant text-[11px]">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="hidden sm:inline">Tap or swipe right to check-in • Swipe left for reflection note</span>
+            <span className="hidden sm:inline">
+              Tap or swipe right to check-in • Swipe left for reflection note
+            </span>
             <span className="sm:hidden">Swipe right to check-in • Left for note</span>
           </div>
         )}
@@ -490,7 +614,11 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             Better than yesterday ↗
           </span>
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase font-bold">
-            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            })}
           </span>
         </div>
       </div>
@@ -500,9 +628,15 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         isOpen={isNoteModalOpen}
         habit={noteHabit}
         dateKey={todayDateKey}
-        initialNote={noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.note : ''}
-        initialMood={noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.mood : undefined}
-        initialTags={noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.tags : []}
+        initialNote={
+          noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.note : ''
+        }
+        initialMood={
+          noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.mood : undefined
+        }
+        initialTags={
+          noteHabit ? getHabitEntry?.(noteHabit.id, todayDateKey)?.tags : []
+        }
         onClose={() => {
           setIsNoteModalOpen(false);
           setNoteHabit(null);
@@ -514,6 +648,53 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           }
           setIsNoteModalOpen(false);
           setNoteHabit(null);
+        }}
+      />
+
+      {/* Zen Timer & Pomodoro Bottom Sheet Modal */}
+      <ZenTimerModal
+        isOpen={isTimerModalOpen}
+        habit={timerHabit}
+        dateKey={todayDateKey}
+        initialElapsedSeconds={
+          timerHabit
+            ? getHabitEntry?.(timerHabit.id, todayDateKey)?.timerSecondsElapsed ?? 0
+            : 0
+        }
+        onClose={() => {
+          setIsTimerModalOpen(false);
+          setTimerHabit(null);
+        }}
+        onComplete={async (habitId, dateKey, elapsedSeconds) => {
+          if (onUpdateValue) {
+            const elapsedMins = Math.ceil(elapsedSeconds / 60);
+            await onUpdateValue(habitId, dateKey, elapsedMins, elapsedSeconds);
+          }
+          setIsTimerModalOpen(false);
+          setTimerHabit(null);
+        }}
+      />
+
+      {/* Vacation & Travel Pause Bottom Sheet Modal */}
+      <VacationPauseModal
+        isOpen={isVacationModalOpen}
+        habits={habits}
+        onClose={() => setIsVacationModalOpen(false)}
+        onPauseHabit={async (habitId, isPaused, reason, start, end) => {
+          if (onTogglePause) {
+            await onTogglePause(habitId, isPaused, reason, start, end);
+          }
+          setIsVacationModalOpen(false);
+        }}
+        onPauseAllHabits={async (isPaused, reason, start, end) => {
+          if (onTogglePause) {
+            await Promise.all(
+              activeHabits.map((h) =>
+                onTogglePause(h.id, isPaused, reason, start, end)
+              )
+            );
+          }
+          setIsVacationModalOpen(false);
         }}
       />
 
