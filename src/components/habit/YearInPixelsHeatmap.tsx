@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { formatDateKey } from '../../hooks/useDashboardMetrics';
+import { useAnalyticsWorker } from '../../hooks/useAnalyticsWorker';
 import { triggerHaptic } from '../../utils/haptics';
 
 export type HeatmapZoomLevel = 'week' | 'month' | 'quarter' | 'year';
@@ -139,63 +140,24 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
     });
   }, [year, month, isCompleted, todayKey]);
 
-  // 4. YEAR IN PIXELS (Full 365/366 days matrix: 52 columns x 7 rows)
-  const { yearGrid, yearStats } = useMemo(() => {
+  // Gather completed date keys for offloaded Web Worker computation
+  const completedDateKeys = useMemo(() => {
+    const keys: string[] = [];
     const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    const totalDaysInYear = isLeap ? 366 : 365;
-
-    const startDate = new Date(year, 0, 1);
-    const startDayOfWeek = startDate.getDay();
-
-    // 53 weeks x 7 days matrix
-    const grid: Array<Array<{ dateKey: string; completed: boolean; isToday: boolean; isCurrentYear: boolean } | null>> = [];
-    let activeDaysCount = 0;
-    let currentStreak = 0;
-    let longestStreak = 0;
-
-    let runningDate = new Date(startDate);
-    // Rewind to previous Sunday to align rows
-    runningDate.setDate(runningDate.getDate() - startDayOfWeek);
-
-    for (let w = 0; w < 53; w++) {
-      const weekCol: Array<{ dateKey: string; completed: boolean; isToday: boolean; isCurrentYear: boolean } | null> = [];
-      for (let day = 0; day < 7; day++) {
-        const isCurrentYear = runningDate.getFullYear() === year;
-        const dateKey = formatDateKey(runningDate);
-        const completed = isCompleted(dateKey);
-
-        if (isCurrentYear) {
-          if (completed) {
-            activeDaysCount++;
-            currentStreak++;
-            if (currentStreak > longestStreak) longestStreak = currentStreak;
-          } else {
-            currentStreak = 0;
-          }
-        }
-
-        weekCol.push({
-          dateKey,
-          completed,
-          isToday: dateKey === todayKey,
-          isCurrentYear,
-        });
-
-        runningDate.setDate(runningDate.getDate() + 1);
+    const totalDays = isLeap ? 366 : 365;
+    const d = new Date(year, 0, 1);
+    for (let i = 0; i < totalDays; i++) {
+      const key = formatDateKey(d);
+      if (isCompleted(key)) {
+        keys.push(key);
       }
-      grid.push(weekCol);
+      d.setDate(d.getDate() + 1);
     }
+    return keys;
+  }, [year, isCompleted]);
 
-    return {
-      yearGrid: grid,
-      yearStats: {
-        activeDays: activeDaysCount,
-        totalDays: totalDaysInYear,
-        percentage: Math.round((activeDaysCount / totalDaysInYear) * 100),
-        longestStreak,
-      },
-    };
-  }, [year, isCompleted, todayKey]);
+  // 4. YEAR IN PIXELS (Offloaded to background Web Worker for guaranteed 60/120 FPS UI)
+  const { yearGrid, yearStats } = useAnalyticsWorker(year, completedDateKeys, todayKey);
 
   // Title string depending on zoom
   const headerTitle = useMemo(() => {

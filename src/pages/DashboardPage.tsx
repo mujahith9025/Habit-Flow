@@ -29,6 +29,31 @@ export const DashboardPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
+  // Support native PWA launcher shortcuts (?action=new_habit, ?view=today)
+  React.useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get('action');
+      const view = params.get('view');
+
+      if (action === 'new_habit') {
+        setIsModalOpen(true);
+        setEditingHabit(null);
+      }
+      if (view === 'today' || view === 'daily') {
+        setActiveTab('daily');
+        setSelectedDate(new Date());
+      }
+
+      if (action || view) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } catch {
+      // Ignore in test or non-browser environments
+    }
+  }, []);
+
   const selectedMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
   const { formattedTitle } = formatMonthYear(selectedDate);
 

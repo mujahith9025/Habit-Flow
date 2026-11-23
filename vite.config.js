@@ -75,6 +75,34 @@ export default defineConfig({
                         purpose: 'any',
                     },
                 ],
+                shortcuts: [
+                    {
+                        name: "Today's Routine",
+                        short_name: "Today",
+                        description: "Jump straight to today's habits and rituals",
+                        url: "/?view=today",
+                        icons: [
+                            {
+                                src: "/icons/habitflow-v3-192.png",
+                                sizes: "192x192",
+                                type: "image/png",
+                            },
+                        ],
+                    },
+                    {
+                        name: "New Habit",
+                        short_name: "Add Habit",
+                        description: "Create a new daily habit or routine",
+                        url: "/?action=new_habit",
+                        icons: [
+                            {
+                                src: "/icons/habitflow-v3-192.png",
+                                sizes: "192x192",
+                                type: "image/png",
+                            },
+                        ],
+                    },
+                ],
             },
             workbox: {
                 skipWaiting: true,
@@ -162,8 +190,8 @@ export default defineConfig({
                         if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('dompurify')) {
                             return 'vendor-utils';
                         }
-                        if (id.includes('canvas-confetti') || id.includes('html2canvas')) {
-                            return 'vendor-canvas';
+                        if (id.includes('jspdf') || id.includes('jspdf-autotable') || id.includes('html2canvas')) {
+                            return 'vendor-pdf';
                         }
                     }
                 },
