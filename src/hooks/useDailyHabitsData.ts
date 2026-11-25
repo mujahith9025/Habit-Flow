@@ -13,6 +13,8 @@ import {
   atomicBatchUpdateHabits,
   atomicToggleEntry,
 } from '../lib/firebase';
+import { broadcastSync, subscribeToBroadcastSync } from '../utils/broadcastSync';
+import { enqueueOfflineMutation, flushOfflineMutations } from '../utils/offlineQueue';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import {
@@ -202,9 +204,69 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       }
     });
 
+    // 2. Zero-Latency Multi-Tab Sync (BroadcastChannel)
+    // Instantly reflects mutations in other open tabs on this device without network calls
+    const broadcastUnsub = subscribeToBroadcastSync((msg) => {
+      if (isCancelled) return;
+
+      if (msg.type === 'HABIT_ENTRY_TOGGLE') {
+        setEntriesByHabit((prev) => {
+          const habitMap = { ...(prev[msg.habitId] || {}) };
+          const prevEntry = habitMap[msg.dateKey] || {
+            date: msg.dateKey,
+            completed: false,
+            weekOfMonth: getWeekOfMonth(msg.dateKey),
+            monthKey: msg.dateKey.substring(0, 7),
+            updatedAt: new Date().toISOString(),
+          };
+          habitMap[msg.dateKey] = {
+            ...prevEntry,
+            completed: msg.completed,
+            ...(msg.currentValue !== undefined ? { currentValue: msg.currentValue } : {}),
+            ...(msg.timerSecondsElapsed !== undefined ? { timerSecondsElapsed: msg.timerSecondsElapsed } : {}),
+            updatedAt: new Date().toISOString(),
+          };
+          return {
+            ...prev,
+            [msg.habitId]: habitMap,
+          };
+        });
+      } else if (msg.type === 'HABIT_BATCH_TOGGLE') {
+        setEntriesByHabit((prev) => {
+          const next = { ...prev };
+          msg.updates.forEach((item) => {
+            const prevEntry = next[item.habitId]?.[msg.dateKey] || {
+              date: msg.dateKey,
+              completed: !item.completed,
+              weekOfMonth: getWeekOfMonth(msg.dateKey),
+              monthKey: msg.dateKey.substring(0, 7),
+              updatedAt: new Date().toISOString(),
+            };
+            next[item.habitId] = {
+              ...(next[item.habitId] || {}),
+              [msg.dateKey]: {
+                ...prevEntry,
+                completed: item.completed,
+                ...(item.currentValue !== undefined ? { currentValue: item.currentValue } : {}),
+                ...(item.timerSecondsElapsed !== undefined ? { timerSecondsElapsed: item.timerSecondsElapsed } : {}),
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          });
+          return next;
+        });
+      }
+    });
+
+    // 3. Flush any queued offline mutations when connectivity is verified
+    flushOfflineMutations().catch((err) =>
+      console.debug('[DailyHabits] Initial offline flush notice:', err)
+    );
+
     return () => {
       isCancelled = true;
       matrixUnsub();
+      broadcastUnsub();
       subcollectionUnsubs.forEach((unsub) => unsub());
     };
   }, [user?.uid, habitIdsKey, monthKey]);
@@ -343,24 +405,42 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
         },
       }));
 
+      // Broadcast immediately to all other open tabs (<1ms zero-network sync)
+      broadcastSync({
+        type: 'HABIT_ENTRY_TOGGLE',
+        habitId,
+        dateKey,
+        completed: nextCompleted,
+      });
+
       try {
         // 2. Persist to Firestore via Atomic Batch Write
         await atomicToggleEntry(user.uid, habitId, dateKey, nextCompleted);
       } catch (err) {
-        console.error('Failed to toggle habit entry. Rolling back:', err);
-        // 3. Rollback on error
-        setEntriesByHabit((prev) => {
-          const habitMap = { ...(prev[habitId] || {}) };
-          if (prevEntry) {
-            habitMap[dateKey] = prevEntry;
-          } else {
-            delete habitMap[dateKey];
-          }
-          return {
-            ...prev,
-            [habitId]: habitMap,
-          };
-        });
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          // If offline, queue in IndexedDB to automatically flush via Background Sync
+          enqueueOfflineMutation({
+            type: 'TOGGLE_ENTRY',
+            uid: user.uid,
+            dateKey,
+            payload: { habitId, completed: nextCompleted },
+          }).catch(() => {});
+        } else {
+          console.error('Failed to toggle habit entry. Rolling back:', err);
+          // 3. Rollback on error
+          setEntriesByHabit((prev) => {
+            const habitMap = { ...(prev[habitId] || {}) };
+            if (prevEntry) {
+              habitMap[dateKey] = prevEntry;
+            } else {
+              delete habitMap[dateKey];
+            }
+            return {
+              ...prev,
+              [habitId]: habitMap,
+            };
+          });
+        }
       }
     },
     [user?.uid]
@@ -401,16 +481,33 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
         return next;
       });
 
+      const batchItems = habitIdsToComplete.map((hId) => ({
+        habitId: hId,
+        completed: true,
+      }));
+
+      // Broadcast immediately to other open tabs
+      broadcastSync({
+        type: 'HABIT_BATCH_TOGGLE',
+        dateKey: todayDateKey,
+        updates: batchItems,
+      });
+
       // 2. Atomic Batch Commit (One single network roundtrip for all habits + monthly matrix)
       try {
-        const batchItems = habitIdsToComplete.map((hId) => ({
-          habitId: hId,
-          completed: true,
-        }));
         await atomicBatchUpdateHabits(user.uid, todayDateKey, batchItems);
       } catch (err) {
-        console.error('Failed to atomic batch complete habits for today:', err);
-        setEntriesByHabit(previousEntriesSnapshot);
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          enqueueOfflineMutation({
+            type: 'BATCH_TOGGLE',
+            uid: user.uid,
+            dateKey: todayDateKey,
+            payload: { updates: batchItems },
+          }).catch(() => {});
+        } else {
+          console.error('Failed to atomic batch complete habits for today:', err);
+          setEntriesByHabit(previousEntriesSnapshot);
+        }
       }
     },
     [user?.uid, todayDateKey]
@@ -451,16 +548,33 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
         return next;
       });
 
+      const batchItems = habitIdsToReset.map((hId) => ({
+        habitId: hId,
+        completed: false,
+      }));
+
+      // Broadcast immediately to other open tabs
+      broadcastSync({
+        type: 'HABIT_BATCH_TOGGLE',
+        dateKey: todayDateKey,
+        updates: batchItems,
+      });
+
       // 2. Atomic Batch Commit
       try {
-        const batchItems = habitIdsToReset.map((hId) => ({
-          habitId: hId,
-          completed: false,
-        }));
         await atomicBatchUpdateHabits(user.uid, todayDateKey, batchItems);
       } catch (err) {
-        console.error('Failed to atomic batch reset habits for today:', err);
-        setEntriesByHabit(previousEntriesSnapshot);
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          enqueueOfflineMutation({
+            type: 'BATCH_TOGGLE',
+            uid: user.uid,
+            dateKey: todayDateKey,
+            payload: { updates: batchItems },
+          }).catch(() => {});
+        } else {
+          console.error('Failed to atomic batch reset habits for today:', err);
+          setEntriesByHabit(previousEntriesSnapshot);
+        }
       }
     },
     [user?.uid, todayDateKey]
@@ -508,25 +622,49 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
         },
       }));
 
+      // Broadcast to other tabs
+      broadcastSync({
+        type: 'HABIT_ENTRY_TOGGLE',
+        habitId,
+        dateKey,
+        completed: isComplete,
+        currentValue: newValue,
+        timerSecondsElapsed,
+      });
+
       try {
         await atomicToggleEntry(user.uid, habitId, dateKey, isComplete, {
           currentValue: newValue,
           timerSecondsElapsed,
         });
       } catch (err) {
-        console.error('Failed to update habit numeric value:', err);
-        setEntriesByHabit((prev) => {
-          const habitMap = { ...(prev[habitId] || {}) };
-          if (prevEntry) {
-            habitMap[dateKey] = prevEntry;
-          } else {
-            delete habitMap[dateKey];
-          }
-          return {
-            ...prev,
-            [habitId]: habitMap,
-          };
-        });
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          enqueueOfflineMutation({
+            type: 'UPDATE_VALUE',
+            uid: user.uid,
+            dateKey,
+            payload: {
+              habitId,
+              completed: isComplete,
+              currentValue: newValue,
+              timerSecondsElapsed,
+            },
+          }).catch(() => {});
+        } else {
+          console.error('Failed to update habit numeric value:', err);
+          setEntriesByHabit((prev) => {
+            const habitMap = { ...(prev[habitId] || {}) };
+            if (prevEntry) {
+              habitMap[dateKey] = prevEntry;
+            } else {
+              delete habitMap[dateKey];
+            }
+            return {
+              ...prev,
+              [habitId]: habitMap,
+            };
+          });
+        }
       }
     },
     [user?.uid, dailyHabits]

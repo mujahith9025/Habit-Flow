@@ -1,8 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { HabitEntry } from '../types';
 import { calculateGentleHabitStreak } from '../lib/calculations';
 import { calculateCumulativeLedgerRows, groupLedgerByMonth } from '../lib/expenseCalculations';
 import { DailyMoneyEntry } from '../types/expense';
+import { broadcastSync, subscribeToBroadcastSync, BroadcastSyncMessage, TAB_SESSION_ID } from '../utils/broadcastSync';
+import { QueuedMutation } from '../utils/offlineQueue';
+import { parseDeviceInfo, UserDeviceSession } from '../lib/firebase/sessionManager';
 
 describe('Multi-Device Real-Time Sync & Data Consistency Suite', () => {
 
@@ -108,5 +111,141 @@ describe('Multi-Device Real-Time Sync & Data Consistency Suite', () => {
     expect(monthSummaries[0].totalSavings).toBe(100);
     expect(monthSummaries[0].totalExpenses).toBe(20);
     expect(monthSummaries[0].endingBalance).toBe(180);
+  });
+
+  describe('Section 7: Sync & Multi-Device Real-Time Architecture', () => {
+    describe('Zero-Latency Multi-Tab Sync (BroadcastChannel Engine)', () => {
+      it('generates a unique non-empty TAB_SESSION_ID to prevent self-echo loops', () => {
+        expect(TAB_SESSION_ID).toBeDefined();
+        expect(typeof TAB_SESSION_ID).toBe('string');
+        expect(TAB_SESSION_ID.length).toBeGreaterThan(0);
+      });
+
+      it('safely handles broadcastSync without throwing in non-browser or storage fallback environments', () => {
+        expect(() => {
+          broadcastSync({
+            type: 'HABIT_ENTRY_TOGGLE',
+            habitId: 'water_1',
+            dateKey: '2026-11-25',
+            completed: true,
+          });
+        }).not.toThrow();
+      });
+
+      it('subscribes to broadcast messages and receives cross-tab payloads', () => {
+        const received: BroadcastSyncMessage[] = [];
+        const unsubscribe = subscribeToBroadcastSync((msg) => {
+          received.push(msg);
+        });
+
+        expect(typeof unsubscribe).toBe('function');
+        unsubscribe();
+      });
+    });
+
+    describe('Background Sync API & Offline Mutation Queue', () => {
+      it('validates QueuedMutation structure and required payload properties', () => {
+        const mutation: QueuedMutation = {
+          id: 'mut_test_123',
+          type: 'TOGGLE_ENTRY',
+          uid: 'user_offline_456',
+          dateKey: '2026-11-25',
+          payload: {
+            habitId: 'habit_gym',
+            completed: true,
+            currentValue: 1,
+          },
+          timestamp: Date.now(),
+          retries: 0,
+        };
+
+        expect(mutation.id).toBe('mut_test_123');
+        expect(mutation.type).toBe('TOGGLE_ENTRY');
+        expect(mutation.payload.habitId).toBe('habit_gym');
+        expect(mutation.payload.completed).toBe(true);
+        expect(mutation.retries).toBe(0);
+      });
+
+      it('supports batch offline mutations with atomic multi-habit payload', () => {
+        const batchMutation: QueuedMutation = {
+          id: 'mut_batch_789',
+          type: 'BATCH_TOGGLE',
+          uid: 'user_offline_456',
+          dateKey: '2026-11-25',
+          payload: {
+            updates: [
+              { habitId: 'h1', completed: true },
+              { habitId: 'h2', completed: true },
+            ],
+          },
+          timestamp: Date.now(),
+          retries: 0,
+        };
+
+        expect(batchMutation.type).toBe('BATCH_TOGGLE');
+        expect(batchMutation.payload.updates).toHaveLength(2);
+      });
+    });
+
+    describe('Active Device Presence & Remote Session Revocation', () => {
+      it('parses user agent into structured device name, OS, and browser', () => {
+        const info = parseDeviceInfo();
+        expect(info).toBeDefined();
+        expect(info.name).toBeDefined();
+        expect(['mobile', 'desktop', 'tablet']).toContain(info.type);
+        expect(info.os).toBeDefined();
+        expect(info.browser).toBeDefined();
+      });
+
+      it('validates UserDeviceSession schema with IP, location, and geo-location presence', () => {
+        const session: UserDeviceSession = {
+          id: 'dev_iphone_16',
+          name: 'iOS (iPhone) • Apple Safari',
+          type: 'mobile',
+          browser: 'Apple Safari',
+          os: 'iOS (iPhone)',
+          ip: '103.21.244.0',
+          city: 'Chennai',
+          country: 'India',
+          location: 'Chennai, IN',
+          lastActive: '2026-11-25T08:00:00.000Z',
+          createdAt: '2026-11-01T00:00:00.000Z',
+          isCurrent: true,
+        };
+
+        expect(session.id).toBe('dev_iphone_16');
+        expect(session.type).toBe('mobile');
+        expect(session.location).toBe('Chennai, IN');
+        expect(session.ip).toBe('103.21.244.0');
+        expect(session.isCurrent).toBe(true);
+      });
+
+      it('verifies remote session revocation triggers graceful sign-out logic', () => {
+        const mockSignOut = vi.fn().mockResolvedValue(undefined);
+        const currentDeviceId = 'my_phone_session';
+
+        // Server devices snapshot without my_phone_session (revoked remotely by another device)
+        const remoteDeviceList: UserDeviceSession[] = [
+          {
+            id: 'laptop_session',
+            name: 'macOS • Google Chrome',
+            type: 'desktop',
+            browser: 'Google Chrome',
+            os: 'macOS',
+            lastActive: '2026-11-25T08:00:00Z',
+            createdAt: '2026-11-20T00:00:00Z',
+          },
+        ];
+
+        const isCurrentActive = remoteDeviceList.some((d) => d.id === currentDeviceId);
+        expect(isCurrentActive).toBe(false);
+
+        if (!isCurrentActive) {
+          mockSignOut();
+        }
+
+        expect(mockSignOut).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 });

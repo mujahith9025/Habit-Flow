@@ -147,14 +147,34 @@ export const DeviceManagerModal: React.FC<DeviceManagerModalProps> = ({ isOpen, 
                         <span className="font-habit-name text-xs sm:text-sm font-bold text-on-surface truncate">
                           {device.name}
                         </span>
-                        {isCurrent && (
-                          <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold font-stat-label">
+                        {isCurrent ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold font-stat-label">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                             THIS DEVICE
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-on-surface-variant font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
+                            SYNCED
                           </span>
                         )}
                       </div>
-                      <p className="font-body-text text-[11px] text-on-surface-variant truncate mt-0.5">
-                        {device.browser} • {formatLastActive(device.lastActive)}
+                      <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant truncate mt-0.5">
+                        <span>{device.browser}</span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-[13px] text-primary/70">location_on</span>
+                          {device.location || 'Local Device'}
+                        </span>
+                        {device.ip && (
+                          <>
+                            <span>•</span>
+                            <span className="font-mono text-[10px] opacity-75">{device.ip}</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-on-surface-variant/70 mt-0.5">
+                        {formatLastActive(device.lastActive)}
                       </p>
                     </div>
                   </div>

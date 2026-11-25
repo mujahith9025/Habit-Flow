@@ -7,12 +7,75 @@ export interface UserDeviceSession {
   type: 'mobile' | 'desktop' | 'tablet';
   browser: string;
   os: string;
+  ip?: string;
+  city?: string;
+  country?: string;
+  location?: string;
   lastActive: string;
   createdAt: string;
   isCurrent?: boolean;
 }
 
+export interface GeoLocationInfo {
+  ip?: string;
+  city?: string;
+  country?: string;
+  location?: string;
+}
+
 const DEVICE_ID_KEY = 'habitflow_device_uuid';
+const GEO_CACHE_KEY = 'habitflow_geo_info';
+
+/**
+ * Privacy-friendly, non-blocking Geo-location & IP lookup with session caching
+ */
+export async function fetchGeoLocationInfo(): Promise<GeoLocationInfo> {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const cached = sessionStorage.getItem(GEO_CACHE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch {
+    // Ignore storage issues
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2200);
+
+    const res = await fetch('https://ipapi.co/json/', {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      const location =
+        data.city && data.country_code
+          ? `${data.city}, ${data.country_code}`
+          : data.country_name || data.city || 'Online Device';
+
+      const info: GeoLocationInfo = {
+        ip: data.ip || undefined,
+        city: data.city || undefined,
+        country: data.country_name || data.country || undefined,
+        location,
+      };
+
+      try {
+        sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify(info));
+      } catch {}
+      return info;
+    }
+  } catch {
+    // Graceful offline fallback
+  }
+
+  return { location: 'Local Device' };
+}
 
 /**
  * Returns or creates a persistent unique ID for the current browser/device
@@ -88,6 +151,8 @@ export async function registerDeviceSession(uid: string): Promise<UserDeviceSess
   const deviceId = getOrCreateDeviceId();
   const info = parseDeviceInfo();
   const now = new Date().toISOString();
+  const fallbackGeo: GeoLocationInfo = { location: 'Local Device' };
+  const geo: GeoLocationInfo = await fetchGeoLocationInfo().catch(() => fallbackGeo);
 
   const sessionData: UserDeviceSession = {
     id: deviceId,
@@ -97,7 +162,12 @@ export async function registerDeviceSession(uid: string): Promise<UserDeviceSess
     os: info.os,
     lastActive: now,
     createdAt: now,
+    location: geo.location || 'Local Device',
   };
+
+  if (geo.ip) sessionData.ip = geo.ip;
+  if (geo.city) sessionData.city = geo.city;
+  if (geo.country) sessionData.country = geo.country;
 
   const devRef = getDeviceDocRef(uid, deviceId);
   await setDoc(devRef, sessionData, { merge: true });
