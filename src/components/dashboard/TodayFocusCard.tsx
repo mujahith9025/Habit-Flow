@@ -22,6 +22,8 @@ import { DailyHabitNoteModal } from './DailyHabitNoteModal';
 import { WeeklyReviewModal } from './WeeklyReviewModal';
 import { ZenTimerModal } from './ZenTimerModal';
 import { VacationPauseModal } from './VacationPauseModal';
+import { useVimNavigation } from '../../hooks/useVimNavigation';
+import { announce } from '../../utils/announcer';
 
 interface TodayFocusCardProps {
   habits: Habit[];
@@ -176,6 +178,24 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     return true;
   });
 
+  // Vim / Arrow Keyboard Navigation (j/k, Up/Down, Space/Enter, 1-9)
+  const isVimNavigationEnabled =
+    !isNoteModalOpen &&
+    !isTimerModalOpen &&
+    !isVacationModalOpen &&
+    !isWeeklyReviewOpen;
+
+  const { isFocused } = useVimNavigation({
+    totalItems: displayedHabits.length,
+    onToggleItem: (idx) => {
+      const targetHabit = displayedHabits[idx];
+      if (targetHabit) {
+        handleToggle(targetHabit.id);
+      }
+    },
+    isEnabled: isVimNavigationEnabled,
+  });
+
   // "Never Miss Twice" Grace Days check
   const protectedHabits = activeHabits.filter(
     (h) => habitMetricsMap[h.id]?.isShieldActive
@@ -184,26 +204,33 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
 
   const handleToggle = async (habitId: string) => {
     const isCurrentlyDone = isCompleted(habitId, todayDateKey);
+    const targetHabit = habits.find((h) => h.id === habitId);
+    const habitName = targetHabit?.name || 'Habit';
+    const currentStreak = habitMetricsMap[habitId]?.streakCount ?? 0;
 
     if (!isCurrentlyDone) {
       const hitsAllDone = completedCount + 1 === totalCount;
-      const currentStreak = habitMetricsMap[habitId]?.streakCount ?? 0;
+      const newStreak = currentStreak + 1;
 
       if (hitsAllDone) {
         triggerHaptic('ripple');
         playCelebrationChime();
+        announce(`Checked off ${habitName}! All habits completed for today! Streak: ${newStreak} days.`);
         setTimeout(() => {
           triggerMilestoneCelebration();
         }, 150);
       } else if (currentStreak > 0) {
         triggerHaptic('double');
         playStreakChime();
+        announce(`Checked off ${habitName}! Streak reached ${newStreak} days.`);
       } else {
         triggerHaptic('tick');
         playCheckChime();
+        announce(`Checked off ${habitName} for today.`);
       }
     } else {
       triggerHaptic('medium');
+      announce(`Unchecked ${habitName}.`);
     }
 
     await onToggleEntry(habitId, todayDateKey);
@@ -549,7 +576,7 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         ) : (
           <div className="space-y-2 max-h-[195px] overflow-y-auto scrollbar-thin pr-1">
-            {displayedHabits.map((habit) => {
+            {displayedHabits.map((habit, index) => {
               const done = isCompleted(habit.id, todayDateKey);
               const metrics = habitMetricsMap[habit.id];
               const streak = metrics?.streakCount ?? 0;
@@ -575,6 +602,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
                   isPaused={isPaused}
                   isShieldActive={isShieldActive}
                   hasNote={hasNote}
+                  isKeyboardFocused={isFocused(index)}
+                  keyboardShortcutNum={index < 9 ? index + 1 : undefined}
                   onToggle={() => handleToggle(habit.id)}
                   onOpenNote={() => handleOpenNote(habit)}
                   onUpdateValue={async (val) => {

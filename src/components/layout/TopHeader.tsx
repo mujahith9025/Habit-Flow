@@ -8,9 +8,13 @@ import { HabitFlowLogo } from '../ui/HabitFlowLogo';
 
 interface TopHeaderProps {
   isSidebarCollapsed?: boolean;
+  onOpenCommandPalette?: () => void;
 }
 
-export const TopHeader: React.FC<TopHeaderProps> = ({ isSidebarCollapsed = false }) => {
+export const TopHeader: React.FC<TopHeaderProps> = ({
+  isSidebarCollapsed = false,
+  onOpenCommandPalette,
+}) => {
   const { theme, isDark, isOled, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { isInstalled } = usePWAInstall();
@@ -105,6 +109,23 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ isSidebarCollapsed = false
 
         {/* Right: Actions & User Profile in the Right Corner */}
         <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Quick Command Palette Search Button (Cmd+K / Ctrl+K) */}
+          {onOpenCommandPalette && (
+            <button
+              type="button"
+              onClick={onOpenCommandPalette}
+              title="Search & Commands (Cmd+K / Ctrl+K)"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium text-on-surface-variant hover:text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border border-outline-variant/30 transition-all cursor-pointer active:scale-95 shadow-xs"
+              aria-label="Open Command Palette (Cmd + K)"
+            >
+              <span className="material-symbols-outlined text-[17px] text-primary">search</span>
+              <span className="hidden md:inline text-[11px]">Search</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-surface-container-highest/70 text-on-surface-variant">
+                ⌘K
+              </kbd>
+            </button>
+          )}
+
           {/* Real-Time Cloud Sync Verification Indicator */}
           <CloudSyncStatus variant="header" />
           {/* How to Install App / PWA Install Guide Link (Hidden if already installed) */}

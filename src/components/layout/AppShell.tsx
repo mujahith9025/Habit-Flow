@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { DesktopSidebar } from './DesktopSidebar';
 import { TopHeader } from './TopHeader';
 import { MobileBottomNav } from './MobileBottomNav';
 import { OfflineBanner } from '../ui/OfflineBanner';
 import { ExitToast } from '../ui/ExitToast';
+import { AriaLiveAnnouncer } from '../ui/AriaLiveAnnouncer';
+import { CommandPaletteModal } from '../ui/CommandPaletteModal';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 
 export const AppShell: React.FC = () => {
@@ -13,6 +15,20 @@ export const AppShell: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('habitflow_sidebar_collapsed') === 'true';
   });
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Global Command Palette shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleToggleSidebar = () => {
     setIsSidebarCollapsed((prev) => {
@@ -24,6 +40,15 @@ export const AppShell: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row antialiased selection:bg-primary-container selection:text-on-primary-container">
+      {/* Screen Reader Live Region Announcer (Polite & Assertive a11y) */}
+      <AriaLiveAnnouncer />
+
+      {/* Global Command Palette Modal (Cmd+K / Ctrl+K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
+
       {/* Back Button Exit Warning Toast */}
       <ExitToast show={showExitToast} />
 
@@ -39,7 +64,10 @@ export const AppShell: React.FC = () => {
       {/* Main Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300">
         {/* Sticky Top Header */}
-        <TopHeader isSidebarCollapsed={isSidebarCollapsed} />
+        <TopHeader
+          isSidebarCollapsed={isSidebarCollapsed}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        />
 
         {/* Dynamic Route Content */}
         <main className="flex-1 px-container-padding py-md sm:py-lg pb-28 md:pb-12 max-w-[1500px] mx-auto w-full transition-all duration-300">

@@ -12,6 +12,8 @@ interface SwipeableHabitItemProps {
   isPaused?: boolean;
   isShieldActive?: boolean;
   hasNote?: boolean;
+  isKeyboardFocused?: boolean;
+  keyboardShortcutNum?: number;
   onToggle: () => void;
   onOpenNote: () => void;
   onUpdateValue?: (newValue: number) => void;
@@ -28,6 +30,8 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
   isPaused = false,
   isShieldActive,
   hasNote = false,
+  isKeyboardFocused = false,
+  keyboardShortcutNum,
   onToggle,
   onOpenNote,
   onUpdateValue,
@@ -189,11 +193,19 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
+        role="checkbox"
+        aria-checked={done}
+        tabIndex={0}
+        aria-label={`${habit.name}, ${done ? 'completed' : 'incomplete'}, streak ${streak} days`}
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isSwiping ? 'none' : 'transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
-        className={`relative z-10 p-3 rounded-2xl border transition-colors duration-150 cursor-pointer active:scale-[0.99] ${
+        className={`relative z-10 p-3 rounded-2xl border transition-all duration-150 cursor-pointer active:scale-[0.99] ${
+          isKeyboardFocused
+            ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface dark:ring-offset-surface-container-lowest'
+            : ''
+        } ${
           done
             ? 'bg-surface-container-low/70 dark:bg-surface-container-low/40 oled:!bg-[#101114] border-outline-variant/30'
             : isPaused
@@ -239,6 +251,16 @@ export const SwipeableHabitItem: React.FC<SwipeableHabitItemProps> = ({
                 >
                   {habit.name}
                 </span>
+
+                {keyboardShortcutNum !== undefined && (
+                  <span
+                    aria-hidden="true"
+                    title={`Press ${keyboardShortcutNum} to toggle`}
+                    className="hidden sm:inline-flex items-center justify-center w-4 h-4 rounded text-[10px] font-mono font-bold bg-surface-container-high/80 dark:bg-surface-container-high/40 text-on-surface-variant border border-outline-variant/30 select-none"
+                  >
+                    {keyboardShortcutNum}
+                  </span>
+                )}
 
                 {/* Status Badges: Paused, Rest Day */}
                 {isPaused && (

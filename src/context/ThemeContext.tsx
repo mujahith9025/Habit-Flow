@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { announce } from '../utils/announcer';
 
 export type Theme = 'light' | 'dark' | 'oled';
 
@@ -73,14 +74,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleTheme = () => {
     setThemeState((prev) => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'oled';
-      return 'light';
+      const next = prev === 'light' ? 'dark' : prev === 'dark' ? 'oled' : 'light';
+      const themeLabel =
+        next === 'oled'
+          ? 'OLED Pure Obsidian'
+          : next === 'dark'
+          ? 'Japandi Dark'
+          : 'Warm Light';
+      announce(`Theme changed to ${themeLabel}`);
+      return next;
     });
   };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
+    const themeLabel =
+      newTheme === 'oled'
+        ? 'OLED Pure Obsidian'
+        : newTheme === 'dark'
+        ? 'Japandi Dark'
+        : 'Warm Light';
+    announce(`Theme changed to ${themeLabel}`);
   };
 
   const isDark = theme === 'dark' || theme === 'oled';
