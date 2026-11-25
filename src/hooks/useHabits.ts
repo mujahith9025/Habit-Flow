@@ -13,6 +13,12 @@ import {
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { Habit, HabitFrequency } from '../types';
+import {
+  isZeroKnowledgeEnabled,
+  getEffectivePassphrase,
+  encryptHabitData,
+  decryptHabitData,
+} from '../utils/crypto';
 
 export interface UseHabitsResult {
   habits: Habit[];
@@ -104,18 +110,27 @@ export function useHabits(
 
     const unsubscribe = onSnapshot(
       q,
-      (snapshot) => {
+      async (snapshot) => {
         const habitList: Habit[] = [];
         snapshot.forEach((docSnap) => {
           habitList.push(docSnap.data());
         });
 
+        // Decrypt habit data if zero-knowledge encrypted
+        const passphrase = getEffectivePassphrase(user.uid);
+        const processedHabits = await Promise.all(
+          habitList.map((h) => decryptHabitData(h, passphrase))
+        );
+
         try {
-          localStorage.setItem(`habitflow_cached_habits_${user.uid}`, JSON.stringify(habitList));
+          localStorage.setItem(
+            `habitflow_cached_habits_${user.uid}`,
+            JSON.stringify(processedHabits)
+          );
         } catch {}
 
         // Client-side filtering & sorting
-        let filtered = habitList;
+        let filtered = processedHabits;
         if (!includeArchived) {
           filtered = filtered.filter((h) => !h.archived);
         }
@@ -168,6 +183,12 @@ export function useHabits(
       excludedMonths?: string[];
     }): Promise<Habit> => {
       if (!user?.uid) throw new Error('User must be logged in to create a habit');
+      if (isZeroKnowledgeEnabled()) {
+        const passphrase = getEffectivePassphrase(user.uid);
+        const encrypted = await encryptHabitData(data, passphrase);
+        const created = await createHabitService(user.uid, encrypted);
+        return await decryptHabitData(created, passphrase);
+      }
       return await createHabitService(user.uid, data);
     },
     [user?.uid]
@@ -176,7 +197,13 @@ export function useHabits(
   const updateHabit = useCallback(
     async (habitId: string, updates: Partial<Omit<Habit, 'id' | 'createdAt'>>): Promise<void> => {
       if (!user?.uid) throw new Error('User must be logged in to update a habit');
-      await updateHabitService(user.uid, habitId, updates);
+      if (isZeroKnowledgeEnabled()) {
+        const passphrase = getEffectivePassphrase(user.uid);
+        const encryptedUpdates = await encryptHabitData(updates, passphrase);
+        await updateHabitService(user.uid, habitId, encryptedUpdates);
+      } else {
+        await updateHabitService(user.uid, habitId, updates);
+      }
     },
     [user?.uid]
   );

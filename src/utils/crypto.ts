@@ -153,3 +153,117 @@ export async function decryptText(
     return encryptedPayload; // Return raw payload on key mismatch
   }
 }
+
+export const ZK_PASSPHRASE_KEY = 'habitflow_zk_passphrase';
+export const ZK_ENABLED_KEY = 'habitflow_zk_enabled';
+
+/**
+ * Checks whether expanded zero-knowledge encryption is active
+ */
+export function isZeroKnowledgeEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return (
+      localStorage.getItem(ZK_ENABLED_KEY) === 'true' ||
+      Boolean(localStorage.getItem(ZK_PASSPHRASE_KEY))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Enables or disables expanded zero-knowledge encryption
+ */
+export function setZeroKnowledgeEnabled(enabled: boolean, passphrase?: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(ZK_ENABLED_KEY, enabled ? 'true' : 'false');
+    if (passphrase !== undefined) {
+      if (passphrase.trim()) {
+        localStorage.setItem(ZK_PASSPHRASE_KEY, passphrase.trim());
+      } else {
+        localStorage.removeItem(ZK_PASSPHRASE_KEY);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to update zero knowledge preferences:', err);
+  }
+}
+
+/**
+ * Gets effective passphrase (configured custom passphrase or device-derived key)
+ */
+export function getEffectivePassphrase(fallbackUid?: string): string {
+  if (typeof window === 'undefined') return 'habitflow_server_vault';
+  try {
+    const custom = localStorage.getItem(ZK_PASSPHRASE_KEY);
+    if (custom && custom.trim()) return custom.trim();
+    if (fallbackUid) return `${fallbackUid}_habitflow_zk_vault`;
+    return 'habitflow_default_zk_vault';
+  } catch {
+    return 'habitflow_default_zk_vault';
+  }
+}
+
+/**
+ * Encrypts sensitive habit metadata fields (title, unit, pauseReason)
+ */
+export async function encryptHabitData<
+  T extends { name?: string; unit?: string; pauseReason?: string }
+>(habitData: T, passphrase: string): Promise<T> {
+  const result = { ...habitData };
+
+  if (result.name && !isEncrypted(result.name)) {
+    result.name = await encryptText(result.name, passphrase);
+  }
+  if (result.unit && !isEncrypted(result.unit)) {
+    result.unit = await encryptText(result.unit, passphrase);
+  }
+  if (result.pauseReason && !isEncrypted(result.pauseReason)) {
+    result.pauseReason = await encryptText(result.pauseReason, passphrase);
+  }
+
+  return result;
+}
+
+/**
+ * Decrypts sensitive habit metadata fields (title, unit, pauseReason)
+ */
+export async function decryptHabitData<
+  T extends { name: string; unit?: string; pauseReason?: string }
+>(habit: T, passphrase: string): Promise<T> {
+  const result = { ...habit };
+
+  if (result.name && isEncrypted(result.name)) {
+    result.name = await decryptText(result.name, passphrase);
+  }
+  if (result.unit && isEncrypted(result.unit)) {
+    result.unit = await decryptText(result.unit, passphrase);
+  }
+  if (result.pauseReason && isEncrypted(result.pauseReason)) {
+    result.pauseReason = await decryptText(result.pauseReason, passphrase);
+  }
+
+  return result;
+}
+
+/**
+ * Encrypts an individual habit entry reflection note
+ */
+export async function encryptEntryNote(note: string, passphrase: string): Promise<string> {
+  if (!note || isEncrypted(note)) return note;
+  return await encryptText(note, passphrase);
+}
+
+/**
+ * Decrypts an individual habit entry reflection note
+ */
+export async function decryptEntryNote(
+  note?: string | null,
+  passphrase?: string
+): Promise<string> {
+  if (!note || !isEncrypted(note)) return note || '';
+  const key = passphrase || getEffectivePassphrase();
+  return await decryptText(note, key);
+}

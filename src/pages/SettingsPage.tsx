@@ -19,6 +19,8 @@ import { CloudSyncStatus } from '../components/ui/CloudSyncStatus';
 import { DeviceManagerModal } from '../components/settings/DeviceManagerModal';
 import { SecuritySettingsModal } from '../components/settings/SecuritySettingsModal';
 import { HabitFlowLogo } from '../components/ui/HabitFlowLogo';
+import { useAppLock } from '../context/AppLockContext';
+import { isZeroKnowledgeEnabled } from '../utils/crypto';
 
 export type SettingsGroupKey =
   | 'profile'
@@ -89,6 +91,16 @@ export const SettingsPage: React.FC = () => {
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isExportingFullBackup, setIsExportingFullBackup] = useState(false);
+
+  // App Lock & Biometrics
+  const {
+    isAppLockEnabled,
+    isBiometricsSupported,
+    hasPin,
+    autoLockMinutes,
+    privacyCurtainEnabled,
+    togglePrivacyCurtain,
+  } = useAppLock();
 
   // Sync profile display name
   useEffect(() => {
@@ -728,21 +740,141 @@ export const SettingsPage: React.FC = () => {
           </div>
         );
 
-      case 'security':
+      case 'security': {
+        const zkActive = isZeroKnowledgeEnabled();
         return (
           <div className="space-y-6 animate-fadeIn">
             <div>
-              <h3 className="font-section-header text-xl font-bold text-on-surface">Security & Sessions</h3>
+              <h3 className="font-section-header text-xl font-bold text-on-surface">Security & Privacy</h3>
               <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                Zero-knowledge encryption, PIN protections, and active device management
+                Zero-knowledge encryption, Touch ID / Face ID hardware lock, and privacy shielding
               </p>
             </div>
 
             <div className="bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 border border-outline-variant/20 shadow-soft space-y-3 divide-y divide-outline-variant/15">
-              {/* Active Devices */}
+              {/* Biometric App Lock & WebAuthn */}
               <div className="pt-1 flex items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-habit-name text-sm font-bold text-on-surface">Active Devices & Sessions</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-habit-name text-sm font-bold text-on-surface">
+                      Biometric App Lock
+                    </h4>
+                    <span
+                      className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
+                        isAppLockEnabled
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-surface-container-high text-on-surface-variant'
+                      }`}
+                    >
+                      {isAppLockEnabled ? 'Active' : 'Disabled'}
+                    </span>
+                  </div>
+                  <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                    {isBiometricsSupported
+                      ? `Touch ID, Face ID, or Windows Hello${hasPin ? ' (PIN ready)' : ''}`
+                      : hasPin
+                      ? 'Hardware-hashed PIN protection'
+                      : 'PIN or Biometric setup'}
+                    {isAppLockEnabled &&
+                      ` • Auto-lock: ${
+                        autoLockMinutes === 0
+                          ? 'Immediate'
+                          : autoLockMinutes > 0
+                          ? `${autoLockMinutes} mins`
+                          : 'Never'
+                      }`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setIsSecurityModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-full text-xs font-semibold bg-primary text-on-primary shadow-soft hover:bg-on-primary-fixed-variant transition-all shrink-0 cursor-pointer"
+                >
+                  Configure
+                </button>
+              </div>
+
+              {/* Mobile App Switcher Privacy Curtain */}
+              <div className="pt-3 flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-habit-name text-sm font-bold text-on-surface">
+                      App Switcher Privacy Curtain
+                    </h4>
+                    <span
+                      className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
+                        privacyCurtainEnabled
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-surface-container-high text-on-surface-variant'
+                      }`}
+                    >
+                      {privacyCurtainEnabled ? 'Enabled' : 'Off'}
+                    </span>
+                  </div>
+                  <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                    Blurs HabitFlow in phone multi-tasking view to prevent screenshot shoulder surfing
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    togglePrivacyCurtain(!privacyCurtainEnabled);
+                  }}
+                  className={`w-11 h-6 rounded-full transition-colors p-0.5 cursor-pointer shrink-0 ${
+                    privacyCurtainEnabled ? 'bg-primary' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                      privacyCurtainEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Zero Knowledge Encryption */}
+              <div className="pt-3 flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-habit-name text-sm font-bold text-on-surface">
+                      Expanded Zero-Knowledge Encryption
+                    </h4>
+                    <span
+                      className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
+                        zkActive
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-secondary-container/60 text-secondary'
+                      }`}
+                    >
+                      AES-GCM 256
+                    </span>
+                  </div>
+                  <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
+                    Client-side Web Crypto encryption for habit titles, metrics, and reflection notes
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setIsSecurityModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-full text-xs font-semibold bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/25 transition-all shrink-0 cursor-pointer"
+                >
+                  Manage
+                </button>
+              </div>
+
+              {/* Active Devices */}
+              <div className="pt-3 flex items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-habit-name text-sm font-bold text-on-surface">
+                    Active Devices & Sessions
+                  </h4>
                   <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
                     View active phone, tablet, and PC sessions with remote revocation
                   </p>
@@ -753,39 +885,15 @@ export const SettingsPage: React.FC = () => {
                     triggerHaptic('light');
                     setIsDeviceModalOpen(true);
                   }}
-                  className="px-4 py-2 rounded-full text-xs font-semibold bg-primary text-on-primary shadow-soft hover:bg-on-primary-fixed-variant transition-all shrink-0"
+                  className="px-4 py-2 rounded-full text-xs font-semibold bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/25 transition-all shrink-0 cursor-pointer"
                 >
-                  Manage
-                </button>
-              </div>
-
-              {/* Zero Knowledge Encryption */}
-              <div className="pt-3 flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-habit-name text-sm font-bold text-on-surface">Zero-Knowledge Cloud Encryption</h4>
-                    <span className="px-2 py-0.2 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
-                      AES-GCM 256
-                    </span>
-                  </div>
-                  <p className="font-body-text text-xs text-on-surface-variant mt-0.5">
-                    End-to-end passphrase encryption for personal reflections and notes
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setIsSecurityModalOpen(true);
-                  }}
-                  className="px-4 py-2 rounded-full text-xs font-semibold bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant/25 transition-all shrink-0"
-                >
-                  Security Key
+                  Sessions
                 </button>
               </div>
             </div>
           </div>
         );
+      }
 
       case 'about':
         return (

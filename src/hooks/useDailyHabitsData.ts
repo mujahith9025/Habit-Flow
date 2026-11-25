@@ -15,6 +15,13 @@ import {
 } from '../lib/firebase';
 import { broadcastSync, subscribeToBroadcastSync } from '../utils/broadcastSync';
 import { enqueueOfflineMutation, flushOfflineMutations } from '../utils/offlineQueue';
+import {
+  isZeroKnowledgeEnabled,
+  getEffectivePassphrase,
+  encryptEntryNote,
+  decryptEntryNote,
+  isEncrypted,
+} from '../utils/crypto';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import {
@@ -160,13 +167,18 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
 
           const unsub = onSnapshot(
             colRef,
-            (snap) => {
+            async (snap) => {
               if (isCancelled) return;
               const habitMap: HabitEntryMap = {};
-              snap.forEach((docSnap) => {
+              const passphrase = getEffectivePassphrase(user.uid);
+
+              for (const docSnap of snap.docs) {
                 const data = docSnap.data();
+                if (data.note && isEncrypted(data.note)) {
+                  data.note = await decryptEntryNote(data.note, passphrase);
+                }
                 habitMap[data.date] = data;
-              });
+              }
 
               setEntriesByHabit((prev) => {
                 const updated = {
@@ -372,7 +384,12 @@ export function useDailyHabitsData(selectedDate: Date, selectedCategory: string 
       }));
 
       try {
-        await saveHabitNoteService(user.uid, habitId, dateKey, note, mood, tags);
+        let noteToSave = note.trim();
+        if (noteToSave && isZeroKnowledgeEnabled()) {
+          const passphrase = getEffectivePassphrase(user.uid);
+          noteToSave = await encryptEntryNote(noteToSave, passphrase);
+        }
+        await saveHabitNoteService(user.uid, habitId, dateKey, noteToSave, mood, tags);
       } catch (err) {
         console.error('Failed to save habit note:', err);
       }
