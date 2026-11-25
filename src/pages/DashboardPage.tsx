@@ -209,7 +209,7 @@ export const DashboardPage: React.FC = () => {
   const userDisplayName = user?.name || user?.email?.split('@')[0] || '';
 
   return (
-    <div className="w-full max-w-[1040px] mx-auto space-y-6 pb-12">
+    <div className="w-full max-w-[1180px] mx-auto space-y-6 pb-12">
       {/* 1. Month / Year Navigation Subheader */}
       <div className="flex items-center justify-center w-full">
         <DateNavigator
@@ -219,19 +219,10 @@ export const DashboardPage: React.FC = () => {
         />
       </div>
 
-      {/* 2. Top Grid: Summary Card & Dynamic Today's Focus Action Checklist */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-lg w-full">
-        {/* Summary Card (5 columns on desktop) */}
-        <div className="lg:col-span-5 w-full">
-          <SummaryCard
-            metrics={metrics}
-            userName={userDisplayName}
-            className="h-full min-h-[220px]"
-          />
-        </div>
-
-        {/* Dynamic Today's Focus Card (7 columns on desktop) */}
-        <div className="lg:col-span-7 w-full">
+      {/* 2. Inspo Asymmetric Bento Grid: Lead Action Anchor + Orbit Gauge & Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full items-stretch">
+        {/* Lead Bento Tile: Dynamic Today's Focus Checklist (7 cols on lg, 8 cols on xl) */}
+        <div className="lg:col-span-7 xl:col-span-8 w-full flex flex-col">
           <TodayFocusCard
             habits={dailyHabits}
             habitMetricsMap={habitMetricsMap}
@@ -246,6 +237,15 @@ export const DashboardPage: React.FC = () => {
             onBatchResetToday={batchResetTodayHabits}
             onSaveNote={saveHabitNote}
             onAddNewHabit={handleOpenAddModal}
+            className="h-full min-h-[220px]"
+          />
+        </div>
+
+        {/* Supporting Bento Tile: Flow Summary & Radial Orbit Gauge (5 cols on lg, 4 cols on xl) */}
+        <div className="lg:col-span-5 xl:col-span-4 w-full flex flex-col">
+          <SummaryCard
+            metrics={metrics}
+            userName={userDisplayName}
             className="h-full min-h-[220px]"
           />
         </div>

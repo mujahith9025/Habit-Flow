@@ -59,7 +59,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, userName, cla
     <div
       className={`bg-surface-container-lowest dark:bg-surface-container-lowest shadow-soft border border-outline-variant/40 rounded-3xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${className}`}
     >
-      {/* Top Greeting & Friendly Whimsical Note */}
+      {/* Top Greeting & Friendly Whimsical Note with Editorial Scale Jump */}
       <div className="flex justify-between items-start mb-4 relative z-10">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high dark:bg-surface-container-high text-[11px] font-semibold text-on-surface-variant mb-1 -rotate-1 shadow-xs">
@@ -69,19 +69,19 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, userName, cla
           <h2 className="font-app-title text-xl sm:text-2xl font-extrabold text-on-surface tracking-tight">
             {greeting}, <span className="text-primary dark:text-primary">{displayName}</span> 👋
           </h2>
-          <p className="font-body-text text-xs sm:text-sm text-on-surface-variant">
-            Build what you love. One day at a time.
+          <p className="font-editorial italic text-xs sm:text-sm text-on-surface-variant">
+            Build what you love, one mindful day at a time.
           </p>
         </div>
 
-        {/* Gamified Streak & Milestone Badge */}
+        {/* Dual-Accent Gamified Streak & Milestone Badge (Terracotta Mindful Flame) */}
         <div className="flex flex-col items-end gap-1 shrink-0">
           <div
             title={`Current streak: ${streakCount} consecutive days. ${milestoneSnip}`}
-            className="flex items-center gap-1.5 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full border border-secondary/20 shadow-xs"
+            className="flex items-center gap-1.5 bg-[#A65A42]/15 text-[#A65A42] dark:text-[#ffb4a2] px-3 py-1 rounded-full border border-[#A65A42]/25 shadow-xs"
           >
             <span
-              className="material-symbols-outlined text-[16px] text-secondary"
+              className="material-symbols-outlined text-[16px] text-[#A65A42] dark:text-[#ffb4a2]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               local_fire_department
@@ -91,7 +91,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ metrics, userName, cla
             </span>
           </div>
 
-          <span className="text-[10px] font-stat-label text-on-surface-variant font-medium">
+          <span className="text-[10px] font-editorial italic text-on-surface-variant">
             {milestoneSnip}
           </span>
         </div>

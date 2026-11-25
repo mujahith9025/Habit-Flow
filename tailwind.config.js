@@ -88,6 +88,7 @@ export default {
         'habit-name': ['Manrope', 'sans-serif'],
         'body-text': ['Manrope', 'sans-serif'],
         'stat-label': ['Manrope', 'sans-serif'],
+        editorial: ['"Newsreader"', 'Georgia', 'serif'],
         sans: ['Manrope', 'sans-serif'],
       },
       fontSize: {

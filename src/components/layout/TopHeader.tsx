@@ -42,8 +42,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const screenMeta = getScreenMeta(location.pathname);
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/20 shadow-[0_1px_3px_rgba(24,25,27,0.03)] transition-colors">
-      <div className="flex items-center justify-between px-container-padding py-3 max-w-7xl mx-auto">
+    <header className="sticky top-0 z-30 w-full transition-all md:px-6 md:pt-3 md:pb-1 pointer-events-none">
+      <div className="flex items-center justify-between px-container-padding py-2.5 max-w-7xl mx-auto bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b md:border border-outline-variant/20 md:rounded-full md:shadow-soft transition-all pointer-events-auto">
         {/* Left: Responsive Brand / Active Screen Title */}
         <div className="flex items-center gap-3">
           {/* Mobile view (< md): Always show HabitFlow Brand & Logo since sidebar is hidden */}

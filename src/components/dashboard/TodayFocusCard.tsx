@@ -22,6 +22,7 @@ import { DailyHabitNoteModal } from './DailyHabitNoteModal';
 import { WeeklyReviewModal } from './WeeklyReviewModal';
 import { ZenTimerModal } from './ZenTimerModal';
 import { VacationPauseModal } from './VacationPauseModal';
+import { ZenBreathingCompletion } from '../ui/ZenBreathingCompletion';
 import { useVimNavigation } from '../../hooks/useVimNavigation';
 import { announce } from '../../utils/announcer';
 
@@ -551,29 +552,14 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
             )}
           </div>
         ) : filterMode === 'remaining' && displayedHabits.length === 0 ? (
-          <div className="py-6 text-center space-y-2 bg-surface-container-low/40 dark:bg-surface-container-low/20 rounded-2xl border border-outline-variant/20 p-4 animate-fadeIn">
-            <div className="w-10 h-10 rounded-full bg-secondary-container/40 text-secondary mx-auto flex items-center justify-center">
-              <span
-                className="material-symbols-outlined text-[20px]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                task_alt
-              </span>
-            </div>
-            <p className="font-section-header text-xs font-bold text-on-surface">
-              All tasks checked off for today!
-            </p>
-            <p className="font-body-text text-[11px] text-on-surface-variant max-w-xs mx-auto">
-              Every habit in {categoryName || 'this board'} is completed.
-            </p>
-            <button
-              type="button"
-              onClick={() => handleSetFilterMode('all')}
-              className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer pt-1"
-            >
-              <span>Show all completed habits ({totalCount})</span>
-            </button>
-          </div>
+          <ZenBreathingCompletion
+            completedCount={completedCount}
+            categoryName={categoryName}
+            onShowAllHabits={() => handleSetFilterMode('all')}
+            onOpenEveningReflection={
+              activeHabits.length > 0 ? () => handleOpenNote(activeHabits[0]) : undefined
+            }
+          />
         ) : (
           <div className="space-y-2 max-h-[195px] overflow-y-auto scrollbar-thin pr-1">
             {displayedHabits.map((habit, index) => {
