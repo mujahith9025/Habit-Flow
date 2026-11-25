@@ -78,13 +78,13 @@ export const DashboardPage: React.FC = () => {
   });
   const categories = Object.keys(categoryCounts).sort();
 
-  // Effective category supports 'all' (all boards) or specific selected category
+  // Effective category supports specific selected category or first available board
   const effectiveCategory =
-    !selectedCategory || selectedCategory === 'all'
-      ? 'all'
-      : categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
-        ? selectedCategory
-        : 'all';
+    selectedCategory && categories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
+      ? selectedCategory
+      : categories.length > 0
+        ? categories[0]
+        : 'General';
 
   // Live real-time dashboard summary metrics & daily habit data for Today's Focus Card
   const metrics = useDashboardMetrics(selectedMonthKey, effectiveCategory);
@@ -219,8 +219,17 @@ export const DashboardPage: React.FC = () => {
         />
       </div>
 
-      {/* 2. Inspo Asymmetric Bento Grid: Lead Action Anchor + Orbit Gauge & Metrics */}
+      {/* 2. Inspo Asymmetric Bento Grid: Greeting Section & Summary + Dynamic Today's Tasks Checklist */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full items-stretch">
+        {/* Supporting Bento Tile: Flow Summary & Radial Orbit Gauge (5 cols on lg, 4 cols on xl) */}
+        <div className="lg:col-span-5 xl:col-span-4 w-full flex flex-col">
+          <SummaryCard
+            metrics={metrics}
+            userName={userDisplayName}
+            className="h-full min-h-[220px]"
+          />
+        </div>
+
         {/* Lead Bento Tile: Dynamic Today's Focus Checklist (7 cols on lg, 8 cols on xl) */}
         <div className="lg:col-span-7 xl:col-span-8 w-full flex flex-col">
           <TodayFocusCard
@@ -237,15 +246,6 @@ export const DashboardPage: React.FC = () => {
             onBatchResetToday={batchResetTodayHabits}
             onSaveNote={saveHabitNote}
             onAddNewHabit={handleOpenAddModal}
-            className="h-full min-h-[220px]"
-          />
-        </div>
-
-        {/* Supporting Bento Tile: Flow Summary & Radial Orbit Gauge (5 cols on lg, 4 cols on xl) */}
-        <div className="lg:col-span-5 xl:col-span-4 w-full flex flex-col">
-          <SummaryCard
-            metrics={metrics}
-            userName={userDisplayName}
             className="h-full min-h-[220px]"
           />
         </div>

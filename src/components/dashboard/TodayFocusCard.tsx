@@ -86,14 +86,11 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
 
-  // Advanced state: Zen Timer, Vacation Pause, Tags, Rituals
+  // Advanced state: Zen Timer, Vacation Pause, Tags
   const [timerHabit, setTimerHabit] = useState<Habit | null>(null);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [selectedRitual, setSelectedRitual] = useState<
-    'all' | 'morning' | 'afternoon' | 'evening'
-  >('all');
   const [filterMode, setFilterMode] = useState<'all' | 'remaining'>(() => {
     return (
       (localStorage.getItem('habitflow_today_filter') as 'all' | 'remaining') ||
@@ -101,25 +98,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     );
   });
 
-  // Time-aware ritual slot detection
-  const currentHour = today.getHours();
-  const activeRitualSlot: 'morning' | 'afternoon' | 'evening' =
-    currentHour >= 5 && currentHour < 12
-      ? 'morning'
-      : currentHour >= 12 && currentHour < 17
-      ? 'afternoon'
-      : 'evening';
-
   const handleSetFilterMode = (mode: 'all' | 'remaining') => {
     setFilterMode(mode);
     localStorage.setItem('habitflow_today_filter', mode);
-    triggerHaptic('selection');
-  };
-
-  const handleSelectRitual = (
-    slot: 'all' | 'morning' | 'afternoon' | 'evening'
-  ) => {
-    setSelectedRitual(slot);
     triggerHaptic('selection');
   };
 
@@ -158,15 +139,8 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
 
-  // Filter by ritual bundle
-  const ritualFilteredHabits = activeHabits.filter((h) => {
-    if (selectedRitual === 'all') return true;
-    const slot = h.timeOfDay || 'anytime';
-    return slot === selectedRitual || slot === 'anytime';
-  });
-
   // Filter by tag
-  const tagFilteredHabits = ritualFilteredHabits.filter((h) => {
+  const tagFilteredHabits = activeHabits.filter((h) => {
     if (!selectedTag) return true;
     return h.tags?.includes(selectedTag);
   });
@@ -454,60 +428,9 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
-        {/* Time-Aware Ritual Bundles & Tags Filter Bar */}
-        {totalCount > 0 && (
+        {/* Custom Hashtags Filter Bar (if tags present) */}
+        {totalCount > 0 && allTags.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-2 mb-1">
-            {/* Rituals */}
-            {[
-              { id: 'all', label: 'All', icon: 'apps' },
-              { id: 'morning', label: 'Morning', icon: 'wb_sunny' },
-              { id: 'afternoon', label: 'Afternoon', icon: 'light_mode' },
-              { id: 'evening', label: 'Evening', icon: 'bedtime' },
-            ].map((slot) => {
-              const isSelected = selectedRitual === slot.id && !selectedTag;
-              const isCurrentTimeSlot = slot.id === activeRitualSlot;
-              const count = activeHabits.filter((h) => {
-                if (slot.id === 'all') return true;
-                const hSlot = h.timeOfDay || 'anytime';
-                return hSlot === slot.id || hSlot === 'anytime';
-              }).length;
-
-              if (slot.id !== 'all' && count === 0) return null;
-
-              return (
-                <button
-                  key={slot.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTag(null);
-                    handleSelectRitual(slot.id as any);
-                  }}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                    isSelected
-                      ? 'bg-primary text-on-primary font-bold shadow-xs'
-                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[13px]">{slot.icon}</span>
-                  <span>{slot.label}</span>
-                  <span
-                    className={`text-[10px] px-1 rounded-full ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-surface-variant/40'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                  {isCurrentTimeSlot && slot.id !== 'all' && (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"
-                      title="Active ritual right now"
-                    />
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Custom Hashtags Chips */}
             {allTags.map((tag) => {
               const isTagSelected = selectedTag === tag;
               return (
