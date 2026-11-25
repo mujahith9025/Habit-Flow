@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { onSnapshot, getEntriesCollectionRef } from '../lib/firebase';
+import {
+  onSnapshot,
+  getEntriesCollectionRef,
+  subscribeToMonthlyMatrix,
+  matrixDocToEntriesByHabit,
+} from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { useHabits } from './useHabits';
 import { DashboardMetrics, HabitEntryMap, isHabitActiveInMonth } from '../types';
@@ -32,7 +37,7 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
 
   const habitIdsKey = dailyHabits.map((h) => h.id).join(',');
 
-  // Subscribe to entries for all daily habits in the active month
+  // Subscribe to the single compact monthly matrix document in active month
   useEffect(() => {
     if (!user?.uid || dailyHabits.length === 0) {
       setEntriesByHabit({});
@@ -41,48 +46,64 @@ export function useDashboardMetrics(selectedMonthKey?: string, selectedCategory:
     }
 
     setEntriesLoading(true);
-    const unsubscribes: Array<() => void> = [];
-    let loadedSnapshotsCount = 0;
-    const totalHabits = dailyHabits.length;
+    let isCancelled = false;
+    const subcollectionUnsubs: Array<() => void> = [];
 
-    dailyHabits.forEach((habit) => {
-      const colRef = getEntriesCollectionRef(user.uid, habit.id);
+    const matrixUnsub = subscribeToMonthlyMatrix(user.uid, activeMonthKey, (matrixDoc) => {
+      if (isCancelled) return;
 
-      const unsub = onSnapshot(
-        colRef,
-        (snap) => {
-          const habitEntries: HabitEntryMap = {};
-          snap.forEach((docSnap) => {
-            const data = docSnap.data();
-            habitEntries[data.date] = data;
-          });
+      if (matrixDoc && matrixDoc.habits) {
+        const hydrated = matrixDocToEntriesByHabit(matrixDoc);
+        setEntriesByHabit(hydrated);
+        setEntriesLoading(false);
+      } else {
+        // Fallback for first-time / older accounts without generated matrix
+        let loadedSnapshotsCount = 0;
+        const totalHabits = dailyHabits.length;
 
-          setEntriesByHabit((prev) => ({
-            ...prev,
-            [habit.id]: habitEntries,
-          }));
+        dailyHabits.forEach((habit) => {
+          const colRef = getEntriesCollectionRef(user.uid, habit.id);
 
-          loadedSnapshotsCount++;
-          if (loadedSnapshotsCount >= totalHabits) {
-            setEntriesLoading(false);
-          }
-        },
-        (err) => {
-          console.warn(`Error listening to entries for habit ${habit.id}:`, err);
-          loadedSnapshotsCount++;
-          if (loadedSnapshotsCount >= totalHabits) {
-            setEntriesLoading(false);
-          }
-        }
-      );
+          const unsub = onSnapshot(
+            colRef,
+            (snap) => {
+              if (isCancelled) return;
+              const habitEntries: HabitEntryMap = {};
+              snap.forEach((docSnap) => {
+                const data = docSnap.data();
+                habitEntries[data.date] = data;
+              });
 
-      unsubscribes.push(unsub);
+              setEntriesByHabit((prev) => ({
+                ...prev,
+                [habit.id]: habitEntries,
+              }));
+
+              loadedSnapshotsCount++;
+              if (loadedSnapshotsCount >= totalHabits) {
+                setEntriesLoading(false);
+              }
+            },
+            (err) => {
+              console.warn(`Error listening to entries for habit ${habit.id}:`, err);
+              loadedSnapshotsCount++;
+              if (loadedSnapshotsCount >= totalHabits) {
+                setEntriesLoading(false);
+              }
+            }
+          );
+
+          subcollectionUnsubs.push(unsub);
+        });
+      }
     });
 
     return () => {
-      unsubscribes.forEach((unsub) => unsub());
+      isCancelled = true;
+      matrixUnsub();
+      subcollectionUnsubs.forEach((unsub) => unsub());
     };
-  }, [user?.uid, habitIdsKey]);
+  }, [user?.uid, habitIdsKey, activeMonthKey]);
 
   // Compute completed count today
   const totalDailyHabits = dailyHabits.length;

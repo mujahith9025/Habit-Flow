@@ -9,3 +9,4 @@ export * from './appCheck';
 export * from './backupService';
 export * from './sessionManager';
 export * from './accountDeletionService';
+export * from './monthlyMatrixService';

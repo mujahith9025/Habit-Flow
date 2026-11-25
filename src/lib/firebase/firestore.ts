@@ -33,7 +33,7 @@ import {
   DocumentSnapshot,
 } from 'firebase/firestore';
 import { app } from './config';
-import { Habit, HabitEntry, UserProfile, DailyMoneyEntry, ExpenseTrackerSettings } from '../../types';
+import { Habit, HabitEntry, UserProfile, DailyMoneyEntry, ExpenseTrackerSettings, MonthlyMatrixDocument } from '../../types';
 
 // Initialize Firestore with Multi-Tab IndexedDB Persistence for offline support
 let dbInstance: Firestore;
@@ -96,6 +96,19 @@ export const getExpenseSettingsDocRef = (
   uid: string
 ): DocumentReference<ExpenseTrackerSettings> => {
   return doc(db, 'users', uid, 'expense_settings', 'config') as DocumentReference<ExpenseTrackerSettings>;
+};
+
+export const getMonthlyMatricesCollectionRef = (
+  uid: string
+): CollectionReference<MonthlyMatrixDocument> => {
+  return collection(db, 'users', uid, 'monthlyMatrices') as CollectionReference<MonthlyMatrixDocument>;
+};
+
+export const getMonthlyMatrixDocRef = (
+  uid: string,
+  monthKey: string
+): DocumentReference<MonthlyMatrixDocument> => {
+  return doc(db, 'users', uid, 'monthlyMatrices', monthKey) as DocumentReference<MonthlyMatrixDocument>;
 };
 
 export {

@@ -140,3 +140,36 @@ export function isEntryCompleted(habit: Habit, entry?: HabitEntry): boolean {
 }
 
 export type HabitEntryMap = Record<string, HabitEntry>;
+
+/**
+ * Quantitative and qualitative value for a single day in a monthly matrix
+ */
+export interface MonthlyHabitDayValue {
+  v?: number; // currentValue (e.g. 2500 ml water)
+  t?: number; // timerSecondsElapsed (e.g. 900s)
+  n?: string; // quick note preview
+  m?: HabitMood; // mood reflection
+}
+
+/**
+ * Denormalized Monthly Habit Record
+ * Contains a 32-bit bitmask for daily completion (days 1-31)
+ * and optional day-specific values.
+ */
+export interface MonthlyHabitRecord {
+  bitmask: number;
+  values?: Record<string, MonthlyHabitDayValue>;
+}
+
+/**
+ * Denormalized Monthly Matrix Document
+ * Stored at: users/{uid}/monthlyMatrices/{monthKey}
+ * Replaces hundreds of individual subcollection document reads with 1 single document read.
+ */
+export interface MonthlyMatrixDocument {
+  monthKey: string; // "YYYY-MM"
+  version: number;
+  updatedAt: string;
+  habits: Record<string, MonthlyHabitRecord>;
+}
+

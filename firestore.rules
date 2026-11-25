@@ -31,6 +31,11 @@ service cloud.firestore {
         allow read, write: if isAuthenticated(userId);
       }
 
+      // 6. Denormalized Monthly Matrices (Compact Bitmask Scalability Layer)
+      match /monthlyMatrices/{monthKey} {
+        allow read, write: if isAuthenticated(userId);
+      }
+
       // Catch-all for any other nested subcollections under the authenticated user (e.g. backup, logs)
       match /{subcollection=**} {
         allow read, write: if isAuthenticated(userId);
