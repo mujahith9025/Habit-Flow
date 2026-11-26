@@ -63,6 +63,26 @@ export const HabitDetailPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ isExporting: boolean; percent: number; message: string } | null>(null);
+  const [densityMode, setDensityMode] = useState<'spacious' | 'compact'>(() => {
+    try {
+      return (localStorage.getItem('habitflow_report_density') as 'spacious' | 'compact') || 'spacious';
+    } catch {
+      return 'spacious';
+    }
+  });
+
+  const handleToggleDensityMode = () => {
+    triggerHaptic('selection');
+    setDensityMode((prev) => {
+      const next = prev === 'spacious' ? 'compact' : 'spacious';
+      try {
+        localStorage.setItem('habitflow_report_density', next);
+      } catch {
+        // Ignore
+      }
+      return next;
+    });
+  };
 
   const currentMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
   const { formattedTitle } = formatMonthYear(selectedDate);
@@ -392,7 +412,7 @@ export const HabitDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-fadeIn pb-12">
+    <div className={`max-w-5xl mx-auto ${densityMode === 'compact' ? 'space-y-4 pb-8' : 'space-y-6 pb-12'} animate-fadeIn`}>
       {/* 1. Streamlined Unified Header & Navigation Bar */}
       <HabitUnifiedHeader
         categories={categories}
@@ -411,6 +431,8 @@ export const HabitDetailPage: React.FC = () => {
         onResetToCurrentMonth={() => setSelectedDate(new Date())}
         onOpenCreateHabitModal={() => setIsCreateModalOpen(true)}
         onExportReport={handleExportReport}
+        densityMode={densityMode}
+        onToggleDensityMode={handleToggleDensityMode}
       />
 
       {/* 2. Inspo Hero Bento Ribbon: Executive Performance Pulse */}

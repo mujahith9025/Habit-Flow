@@ -18,7 +18,7 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
 
   return (
     <div
-      className={`bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 border border-outline-variant/30 shadow-soft space-y-5 transition-all ${className}`}
+      className={`japandi-card rounded-3xl p-5 sm:p-6 shadow-soft space-y-5 transition-all ${className}`}
     >
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
@@ -65,7 +65,7 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-stat-label text-xs font-bold">
+            <span className="px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-stat-label font-tnum text-xs font-bold">
               +{keystoneHabit.catalyticScore}% Catalytic Lift
             </span>
           </div>
@@ -96,7 +96,7 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
                   </span>
                 </div>
 
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#52995D]/20 text-[#2D5A34] dark:text-[#88C490] font-stat-label shrink-0">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#52995D]/20 text-[#2D5A34] dark:text-[#88C490] font-stat-label font-tnum shrink-0">
                   +{pair.synergyLiftPercent}% Lift
                 </span>
               </div>
@@ -107,15 +107,15 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
               </blockquote>
 
               {/* Bottom Stat Chips */}
-              <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-stat-label pt-1 border-t border-outline-variant/10">
+              <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-stat-label font-tnum pt-1 border-t border-outline-variant/10">
                 <span>
-                  Co-occurrence: <strong className="text-on-surface">{pair.coOccurrenceProbability}%</strong> of the time
+                  Co-occurrence: <strong className="text-on-surface font-tnum">{pair.coOccurrenceProbability}%</strong> of the time
                 </span>
                 <span>
-                  Base: <span className="text-on-surface-variant">{pair.baselineProbability}%</span>
+                  Base: <span className="text-on-surface-variant font-tnum">{pair.baselineProbability}%</span>
                 </span>
                 <span>
-                  <strong className="text-primary">{pair.daysBothDone}d</strong> stacked
+                  <strong className="text-primary font-tnum">{pair.daysBothDone}d</strong> stacked
                 </span>
               </div>
             </div>

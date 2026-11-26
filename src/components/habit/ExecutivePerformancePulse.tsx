@@ -228,7 +228,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
 
   return (
     <div
-      className={`bg-surface-container-lowest dark:bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-5 sm:p-6 shadow-soft relative overflow-hidden transition-all duration-300 ${className}`}
+      className={`japandi-card rounded-3xl p-5 sm:p-6 shadow-soft relative overflow-hidden transition-all duration-300 ${className}`}
     >
       {/* Subtle Botanical Aura Glow Accents (Japandi Inspo) */}
       <div className="absolute -right-16 -top-16 w-52 h-52 rounded-full bg-primary/5 dark:bg-primary/10 blur-3xl pointer-events-none" />
@@ -383,13 +383,13 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           </div>
 
           <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
+            <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
               {pulseData.rate}
               <span className="text-base font-semibold text-primary ml-0.5">%</span>
             </div>
             <p className="text-[11px] text-on-surface-variant font-body-text mt-0.5">
-              <span className="font-bold text-on-surface">{pulseData.completed}</span> of{' '}
-              <span className="font-bold text-on-surface">{pulseData.total}</span> checks logged
+              <span className="font-bold font-tnum text-on-surface">{pulseData.completed}</span> of{' '}
+              <span className="font-bold font-tnum text-on-surface">{pulseData.total}</span> checks logged
               {pulseData.delta !== null ? ` • vs ${prevMonthName}` : ''}
             </p>
           </div>
@@ -401,7 +401,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
             <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant">
               Peak Power Window
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container/40 text-on-secondary-container">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container/40 text-on-secondary-container font-tnum">
               <span>{pulseData.peakDayPercent}% Rate</span>
             </span>
           </div>
@@ -411,8 +411,8 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
               {pulseData.peakDayName}s
             </div>
             <p className="text-[11px] text-on-surface-variant font-body-text mt-0.5">
-              Weekday: <span className="font-bold text-on-surface">{pulseData.weekdayRate}%</span> • Weekend:{' '}
-              <span className="font-bold text-on-surface">{pulseData.weekendRate}%</span>
+              Weekday: <span className="font-bold font-tnum text-on-surface">{pulseData.weekdayRate}%</span> • Weekend:{' '}
+              <span className="font-bold font-tnum text-on-surface">{pulseData.weekendRate}%</span>
             </p>
           </div>
         </div>
@@ -424,23 +424,23 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
               Continuity & Momentum
             </span>
             {pulseData.shieldsCount > 0 ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#A65A42]/15 text-[#A65A42] dark:text-[#E8927C]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#A65A42]/15 text-[#A65A42] dark:text-[#E8927C] font-tnum">
                 <span>{pulseData.shieldsCount} Shield{pulseData.shieldsCount > 1 ? 's' : ''} 🛡️</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary dark:text-primary-fixed-dim">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary dark:text-primary-fixed-dim font-tnum">
                 <span>Best: {pulseData.longestStreak}d 🔥</span>
               </span>
             )}
           </div>
 
           <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
+            <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
               {pulseData.currentStreak}
               <span className="text-base font-semibold text-on-surface-variant ml-1">Days</span>
             </div>
             <p className="text-[11px] text-on-surface-variant font-body-text mt-0.5 truncate">
-              {pulseData.contextLead} • Best: <span className="font-bold text-on-surface">{pulseData.longestStreak}d</span>
+              {pulseData.contextLead} • Best: <span className="font-bold font-tnum text-on-surface">{pulseData.longestStreak}d</span>
             </p>
           </div>
         </div>

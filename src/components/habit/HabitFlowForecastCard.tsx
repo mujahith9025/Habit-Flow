@@ -27,7 +27,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
 
   return (
     <div
-      className={`bg-surface-container-lowest dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 border border-outline-variant/30 shadow-soft space-y-4 transition-all ${className}`}
+      className={`japandi-card rounded-3xl p-5 sm:p-6 shadow-soft space-y-4 transition-all ${className}`}
     >
       {/* 1. Header with Target Status Pill */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
@@ -51,12 +51,12 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
         {/* Status Badge */}
         <div className="self-start sm:self-auto">
           {is80TargetSecured ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490] border border-[#52995D]/30 shadow-2xs font-stat-label">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490] border border-[#52995D]/30 shadow-2xs font-stat-label font-tnum">
               <span className="material-symbols-outlined text-[15px]">verified</span>
               <span>80% Flow Target Secured ({projectedRatePercent}%)</span>
             </span>
           ) : isCurrentMonth && daysRemaining > 0 ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#D4A373]/20 text-[#8C5D30] dark:text-[#E2B788] border border-[#D4A373]/40 shadow-2xs font-stat-label">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#D4A373]/20 text-[#8C5D30] dark:text-[#E2B788] border border-[#D4A373]/40 shadow-2xs font-stat-label font-tnum">
               <span className="material-symbols-outlined text-[15px]">trending_up</span>
               <span>Target: {requiredDailyPaceFor80} checks/day</span>
             </span>
@@ -77,11 +77,11 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
           </span>
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
+              <span className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface">
                 {projectedRatePercent}%
               </span>
               <span
-                className={`text-xs font-bold font-stat-label ${
+                className={`text-xs font-bold font-stat-label font-tnum ${
                   target80Delta >= 0
                     ? 'text-[#2D5A34] dark:text-[#88C490]'
                     : 'text-[#A65A42] dark:text-[#E8927C]'
@@ -109,7 +109,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
             Current Daily Velocity
           </span>
           <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-primary dark:text-primary-fixed-dim">
+            <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-primary dark:text-primary-fixed-dim">
               {trailingDailyVelocity}
               <span className="text-xs font-normal text-on-surface-variant ml-1">checks/d</span>
             </div>
@@ -125,7 +125,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
             Pacing & Progress
           </span>
           <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
+            <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface">
               {completedToDate}
               <span className="text-xs font-normal text-on-surface-variant ml-1">
                 / {projectedTotalChecks} proj
@@ -147,7 +147,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
               <span className="material-symbols-outlined text-secondary text-[22px]">
                 shield
               </span>
-              <span className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface">
+              <span className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface">
                 {activeShieldsCount}
               </span>
               <span className="text-xs font-normal text-on-surface-variant">Active</span>

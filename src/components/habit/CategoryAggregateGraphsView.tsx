@@ -248,7 +248,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                       </h4>
                       {week.wowDelta !== null ? (
                         <span
-                          className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full ${
+                          className={`text-[9.5px] font-bold font-tnum px-1.5 py-0.2 rounded-full ${
                             week.wowDelta > 0
                               ? 'bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490]'
                               : week.wowDelta < 0
@@ -260,12 +260,12 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                           {week.wowDelta > 0 ? `+${week.wowDelta}% ↗` : week.wowDelta < 0 ? `${week.wowDelta}% ↘` : '0% ➔'}
                         </span>
                       ) : (
-                        <span className="text-[9.5px] font-medium px-1.5 py-0.2 rounded-full bg-surface-container-highest text-on-surface-variant">
+                        <span className="text-[9.5px] font-medium font-tnum px-1.5 py-0.2 rounded-full bg-surface-container-highest text-on-surface-variant">
                           Base
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] font-stat-label text-on-surface-variant block mt-0.5">
+                    <span className="text-[10px] font-stat-label font-tnum text-on-surface-variant block mt-0.5">
                       {week.weekCompletedChecks} of {week.totalPossibleInWeek} Checks Done
                     </span>
                   </div>

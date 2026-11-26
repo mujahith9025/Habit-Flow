@@ -18,6 +18,8 @@ interface HabitUnifiedHeaderProps {
   onResetToCurrentMonth: () => void;
   onOpenCreateHabitModal: () => void;
   onExportReport?: (format: 'pdf' | 'csv') => void;
+  densityMode?: 'spacious' | 'compact';
+  onToggleDensityMode?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -42,6 +44,8 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
   onResetToCurrentMonth,
   onOpenCreateHabitModal,
   onExportReport,
+  densityMode = 'spacious',
+  onToggleDensityMode,
 }) => {
   const [isBoardPickerOpen, setIsBoardPickerOpen] = useState(false);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -308,6 +312,21 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
               </div>
             )}
           </div>
+
+          {/* Layout Density Mode Toggle */}
+          {onToggleDensityMode && (
+            <button
+              type="button"
+              onClick={onToggleDensityMode}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all flex items-center gap-1 shrink-0 active:scale-95 border border-outline-variant/25 cursor-pointer shadow-2xs font-stat-label"
+              title={`Switch layout to ${densityMode === 'spacious' ? 'Compact View' : 'Spacious View'}`}
+            >
+              <span className="material-symbols-outlined text-[15px] text-primary">
+                {densityMode === 'spacious' ? 'density_small' : 'density_medium'}
+              </span>
+              <span className="hidden md:inline capitalize">{densityMode}</span>
+            </button>
+          )}
 
           {/* 1-Tap Export Report Dropdown Trigger */}
           {onExportReport && (
