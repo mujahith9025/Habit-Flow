@@ -11,6 +11,8 @@ import { HabitAllTimeAnalyticsCard } from '../components/habit/HabitAllTimeAnaly
 import { CategoryAggregateGraphsView } from '../components/habit/CategoryAggregateGraphsView';
 import { ExecutivePerformancePulse } from '../components/habit/ExecutivePerformancePulse';
 import { HabitEmotionalROIMatrix } from '../components/habit/HabitEmotionalROIMatrix';
+import { HabitFlowForecastCard } from '../components/habit/HabitFlowForecastCard';
+import { HabitSynergyMatrixCard } from '../components/habit/HabitSynergyMatrixCard';
 import { ShareableMilestoneModal } from '../components/habit/ShareableMilestoneModal';
 import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
@@ -21,6 +23,8 @@ import { HabitFlowLogo } from '../components/ui/HabitFlowLogo';
 import { isHabitActiveInMonth } from '../types';
 import { getCategoryIcon } from '../lib/calculations';
 import { exportToPDF, exportToExcel, ExportData } from '../utils/exportUtils';
+import { calculateFlowForecast } from '../utils/flowForecast';
+import { analyzeHabitSynergy } from '../utils/habitSynergy';
 import { triggerHaptic } from '../utils/haptics';
 
 const MONTH_NAMES = [
@@ -327,6 +331,19 @@ export const HabitDetailPage: React.FC = () => {
     entriesByHabit,
   ]);
 
+  const flowForecast = useMemo(() => {
+    return calculateFlowForecast(
+      habitsInCurrentCategory,
+      entriesByHabit,
+      daysInMonth,
+      selectedDate
+    );
+  }, [habitsInCurrentCategory, entriesByHabit, daysInMonth, selectedDate]);
+
+  const habitSynergy = useMemo(() => {
+    return analyzeHabitSynergy(habitsInCurrentCategory, entriesByHabit, daysInMonth);
+  }, [habitsInCurrentCategory, entriesByHabit, daysInMonth]);
+
   if (habitsLoading) {
     return (
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
@@ -410,7 +427,12 @@ export const HabitDetailPage: React.FC = () => {
         onOpenMilestoneCard={() => setIsMilestoneModalOpen(true)}
       />
 
-      {/* 3. Main Analytics Content Area */}
+      {/* 3. Predictive Flow Forecast & Pacing Intelligence (Aggregate View) */}
+      {selectedHabitId === 'all' && (
+        <HabitFlowForecastCard forecast={flowForecast} />
+      )}
+
+      {/* 4. Main Analytics Content Area */}
       {selectedHabitId === 'all' ? (
         /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
         <div className="space-y-6">
@@ -424,6 +446,9 @@ export const HabitDetailPage: React.FC = () => {
             selectedMonthTitle={formattedTitle}
             onCreateHabit={() => setIsCreateModalOpen(true)}
           />
+
+          {/* Habit Stacking & Synergy Engine (Atomic Habits Co-occurrence) */}
+          <HabitSynergyMatrixCard synergyReport={habitSynergy} />
 
           {/* Habit Emotional ROI Matrix (Mood + Consistency) */}
           <HabitEmotionalROIMatrix
