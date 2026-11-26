@@ -9,6 +9,7 @@ import { HabitWeeklyGraphsView } from '../components/habit/HabitWeeklyGraphsView
 import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
 import { HabitAllTimeAnalyticsCard } from '../components/habit/HabitAllTimeAnalyticsCard';
 import { CategoryAggregateGraphsView } from '../components/habit/CategoryAggregateGraphsView';
+import { ExecutivePerformancePulse } from '../components/habit/ExecutivePerformancePulse';
 import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
@@ -310,6 +311,19 @@ export const HabitDetailPage: React.FC = () => {
         onSelectYear={handleSelectYear}
         onResetToCurrentMonth={() => setSelectedDate(new Date())}
         onOpenCreateHabitModal={() => setIsCreateModalOpen(true)}
+        onExportReport={handleExportReport}
+      />
+
+      {/* 2. Inspo Hero Bento Ribbon: Executive Performance Pulse */}
+      <ExecutivePerformancePulse
+        selectedHabitId={selectedHabitId}
+        categoryName={currentCategory}
+        selectedDate={selectedDate}
+        formattedMonthTitle={formattedTitle}
+        habits={habitsInCurrentCategory}
+        habitMetricsMap={aggregateMetricsMap}
+        singleHabit={habit}
+        singleMetrics={singleMetrics}
         onExportReport={handleExportReport}
       />
 
