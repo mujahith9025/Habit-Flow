@@ -27,6 +27,7 @@ interface WeekData {
   completedCount: number;
   totalDays: number;
   completionPercent: number;
+  wowDelta?: number | null;
 }
 
 const WEEK_THEMES = [
@@ -102,6 +103,16 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
     };
   });
 
+  // Calculate Week-over-Week (WoW) Momentum
+  const weeksWithWoW = weeksData.map((week, idx) => {
+    const prevWeek = idx > 0 ? weeksData[idx - 1] : null;
+    const wowDelta = prevWeek ? Math.round((week.completionPercent - prevWeek.completionPercent) * 10) / 10 : null;
+    return {
+      ...week,
+      wowDelta,
+    };
+  });
+
   const monthPercent =
     daysInCurrentMonth > 0
       ? Math.round((totalMonthCompleted / daysInCurrentMonth) * 1000) / 10
@@ -148,7 +159,7 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
 
       {/* 2. Week-by-Week Segmented Bar Charts & Doughnut Gauges */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-3 overflow-x-auto pb-2 scrollbar-none [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] md:[mask-image:none]">
-        {weeksData.map((week) => {
+        {weeksWithWoW.map((week) => {
           const radius = 34;
           const circumference = 2 * Math.PI * radius; // ~213.6
           const strokeDashoffset =
@@ -159,21 +170,52 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
               key={week.weekNum}
               className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-3.5 sm:p-4 border border-outline-variant/15 flex flex-col justify-between space-y-4 hover:border-outline-variant/40 transition-all shadow-sm"
             >
-              {/* Week Title (Italicized Serif style matching reference sheet) */}
+              {/* Week Title with WoW Momentum Badge */}
               <div className="text-center">
-                <h4
-                  className="font-app-title text-base sm:text-lg font-bold tracking-tight capitalize"
-                  style={{ color: week.color }}
-                >
-                  {week.label}
-                </h4>
+                <div className="flex items-center justify-center gap-1.5">
+                  <h4
+                    className="font-app-title text-base sm:text-lg font-bold tracking-tight capitalize"
+                    style={{ color: week.color }}
+                  >
+                    {week.label}
+                  </h4>
+                  {week.wowDelta !== null ? (
+                    <span
+                      className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full ${
+                        week.wowDelta > 0
+                          ? 'bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490]'
+                          : week.wowDelta < 0
+                          ? 'bg-[#A65A42]/15 text-[#A65A42] dark:text-[#E8927C]'
+                          : 'bg-surface-container-highest text-on-surface-variant'
+                      }`}
+                      title={`Week-over-Week momentum vs Week ${week.weekNum - 1}`}
+                    >
+                      {week.wowDelta > 0 ? `+${week.wowDelta}% ↗` : week.wowDelta < 0 ? `${week.wowDelta}% ↘` : '0% ➔'}
+                    </span>
+                  ) : (
+                    <span className="text-[9.5px] font-medium px-1.5 py-0.2 rounded-full bg-surface-container-highest text-on-surface-variant">
+                      Base
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] font-stat-label text-on-surface-variant block mt-0.5">
                   {week.completedCount} of {week.totalDays} Days Done
                 </span>
               </div>
 
-              {/* Vertical Daily Histogram Bars */}
-              <div className="h-36 sm:h-40 flex items-end justify-center gap-1 sm:gap-1.5 pt-2 px-1 border-b border-outline-variant/15 pb-2">
+              {/* Vertical Daily Histogram Bars with 80% Flow Benchmark */}
+              <div className="h-36 sm:h-40 flex items-end justify-center gap-1 sm:gap-1.5 pt-2 px-1 border-b border-outline-variant/15 pb-2 relative">
+                {/* 80% Flow Benchmark Line */}
+                <div
+                  className="absolute inset-x-1 border-b border-dashed border-primary/35 pointer-events-none z-10 flex justify-end"
+                  style={{ bottom: '80%' }}
+                  title="80% Flow State Target Benchmark"
+                >
+                  <span className="text-[7.5px] font-stat-label font-bold text-primary/80 dark:text-primary-fixed-dim bg-surface-container-lowest/90 dark:bg-surface-container/90 px-1 rounded -translate-y-1.5 mr-0.5 shadow-2xs">
+                    80% Flow
+                  </span>
+                </div>
+
                 {week.days.map((day) => {
                   const done = day.isCompleted;
 
@@ -184,21 +226,29 @@ export const HabitWeeklyGraphsView: React.FC<HabitWeeklyGraphsViewProps> = ({
                       onClick={() => onToggleDate(day.dateKey)}
                       title={`Day ${day.dayNum} (${day.dateKey}): ${done ? 'Completed (Tap to uncheck)' : 'Incomplete (Tap to check)'}`}
                     >
+                      {/* Flow State Indicator Pip */}
+                      {done && (
+                        <span
+                          className="w-1.5 h-1.5 rounded-full bg-primary absolute -top-1.5 z-20 animate-pulse"
+                          title="Flow target active"
+                        />
+                      )}
+
                       {/* Interactive Tooltip on Hover */}
-                      <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
+                      <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
                         {done ? '100%' : '0%'}
                       </div>
 
-                      {/* Bar Fill */}
+                      {/* Bar Fill with Japandi Gradient */}
                       <div
                         className={`w-full max-w-[18px] rounded-t-md transition-all duration-300 ${
                           done
-                            ? 'shadow-sm group-hover:brightness-110'
+                            ? 'shadow-xs group-hover:brightness-110'
                             : 'bg-outline-variant/20 group-hover:bg-outline-variant/40'
                         } ${day.isToday ? 'ring-2 ring-primary ring-offset-1 dark:ring-offset-surface-container' : ''}`}
                         style={{
                           height: done ? '100%' : '14%',
-                          backgroundColor: done ? week.color : undefined,
+                          background: done ? `linear-gradient(to top, ${week.color}cc, ${week.color})` : undefined,
                         }}
                       />
 

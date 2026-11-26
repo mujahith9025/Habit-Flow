@@ -110,6 +110,15 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
         ? Math.round((weekCompletedChecks / totalPossibleInWeek) * 1000) / 10
         : 0;
 
+    const prevWeek = idx > 0 ? dailyStats.slice(weekRanges[idx - 1].start - 1, Math.min(weekRanges[idx - 1].end, totalDaysInMonth)) : null;
+    let prevWeekChecks = 0;
+    if (prevWeek) {
+      prevWeek.forEach((d) => { prevWeekChecks += d.completedInDay; });
+    }
+    const prevPossible = prevWeek ? totalHabits * prevWeek.length : 0;
+    const prevPercent = prevPossible > 0 ? Math.round((prevWeekChecks / prevPossible) * 1000) / 10 : null;
+    const wowDelta = prevPercent !== null ? Math.round((weekPercent - prevPercent) * 10) / 10 : null;
+
     return {
       weekNum: idx + 1,
       label: theme.name,
@@ -119,6 +128,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
       weekCompletedChecks,
       totalPossibleInWeek,
       weekPercent,
+      wowDelta,
     };
   });
 
@@ -227,43 +237,88 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
                   key={week.weekNum}
                   className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-3.5 sm:p-4 border border-outline-variant/15 flex flex-col justify-between space-y-4 hover:border-outline-variant/40 transition-all shadow-sm"
                 >
-                  {/* Week Header */}
+                  {/* Week Header with WoW Momentum Badge */}
                   <div className="text-center">
-                    <h4
-                      className="font-app-title text-base sm:text-lg font-bold tracking-tight capitalize"
-                      style={{ color: week.color }}
-                    >
-                      {week.label}
-                    </h4>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <h4
+                        className="font-app-title text-base sm:text-lg font-bold tracking-tight capitalize"
+                        style={{ color: week.color }}
+                      >
+                        {week.label}
+                      </h4>
+                      {week.wowDelta !== null ? (
+                        <span
+                          className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full ${
+                            week.wowDelta > 0
+                              ? 'bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490]'
+                              : week.wowDelta < 0
+                              ? 'bg-[#A65A42]/15 text-[#A65A42] dark:text-[#E8927C]'
+                              : 'bg-surface-container-highest text-on-surface-variant'
+                          }`}
+                          title={`Week-over-Week momentum vs Week ${week.weekNum - 1}`}
+                        >
+                          {week.wowDelta > 0 ? `+${week.wowDelta}% ↗` : week.wowDelta < 0 ? `${week.wowDelta}% ↘` : '0% ➔'}
+                        </span>
+                      ) : (
+                        <span className="text-[9.5px] font-medium px-1.5 py-0.2 rounded-full bg-surface-container-highest text-on-surface-variant">
+                          Base
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] font-stat-label text-on-surface-variant block mt-0.5">
                       {week.weekCompletedChecks} of {week.totalPossibleInWeek} Checks Done
                     </span>
                   </div>
 
-                  {/* Daily Histogram Bars in this Week */}
-                  <div className="h-32 sm:h-36 flex items-end justify-center gap-1 sm:gap-1.5 pt-2 px-1 border-b border-outline-variant/15 pb-2">
+                  {/* Daily Histogram Bars in this Week with 80% Flow Benchmark */}
+                  <div className="h-32 sm:h-36 flex items-end justify-center gap-1 sm:gap-1.5 pt-2 px-1 border-b border-outline-variant/15 pb-2 relative">
+                    {/* 80% Flow Benchmark Line */}
+                    <div
+                      className="absolute inset-x-1 border-b border-dashed border-primary/35 pointer-events-none z-10 flex justify-end"
+                      style={{ bottom: '80%' }}
+                      title="80% Flow State Target Benchmark"
+                    >
+                      <span className="text-[7.5px] font-stat-label font-bold text-primary/80 dark:text-primary-fixed-dim bg-surface-container-lowest/90 dark:bg-surface-container/90 px-1 rounded -translate-y-1.5 mr-0.5 shadow-2xs">
+                        80% Flow
+                      </span>
+                    </div>
+
                     {week.days.map((day) => {
+                      const meetsFlow = day.percent >= 80;
                       return (
                         <div
                           key={day.dateKey}
                           className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer select-none"
-                          title={`Day ${day.dayNum} (${day.dateKey}): ${day.completedInDay}/${day.totalHabits} habits (${day.percent}%)`}
+                          title={`Day ${day.dayNum} (${day.dateKey}): ${day.completedInDay}/${day.totalHabits} habits (${day.percent}%)${meetsFlow ? ' • 🌟 80%+ Flow State' : ''}`}
                         >
+                          {/* Flow State Indicator Pip */}
+                          {meetsFlow && (
+                            <span
+                              className="w-1.5 h-1.5 rounded-full bg-primary absolute -top-1.5 z-20 animate-pulse"
+                              title="80%+ Flow State Reached"
+                            />
+                          )}
+
                           {/* Tooltip */}
-                          <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
+                          <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 bg-surface-container-highest dark:bg-surface-container-lowest text-on-surface text-[9px] font-bold px-1.5 py-0.5 rounded shadow-soft whitespace-nowrap">
                             {day.completedInDay}/{day.totalHabits} ({day.percent}%)
                           </div>
 
-                          {/* Bar */}
+                          {/* Bar with Japandi Gradient & Flow Highlight */}
                           <div
                             className={`w-full max-w-[18px] rounded-t-md transition-all duration-300 ${
                               day.percent > 0
-                                ? 'shadow-sm group-hover:brightness-110'
+                                ? 'shadow-xs group-hover:brightness-110'
                                 : 'bg-outline-variant/20'
-                            } ${day.isToday ? 'ring-2 ring-primary ring-offset-1 dark:ring-offset-surface-container' : ''}`}
+                            } ${day.isToday ? 'ring-2 ring-primary ring-offset-1 dark:ring-offset-surface-container' : ''} ${
+                              meetsFlow ? 'ring-1 ring-primary/50' : ''
+                            }`}
                             style={{
                               height: day.percent > 0 ? `${Math.max(16, day.percent)}%` : '10%',
-                              backgroundColor: day.percent > 0 ? week.color : undefined,
+                              background:
+                                day.percent > 0
+                                  ? `linear-gradient(to top, ${week.color}cc, ${week.color})`
+                                  : undefined,
                             }}
                           />
 

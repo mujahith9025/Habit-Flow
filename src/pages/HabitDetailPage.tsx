@@ -10,6 +10,8 @@ import { HabitCalendarHeatmap } from '../components/habit/HabitCalendarHeatmap';
 import { HabitAllTimeAnalyticsCard } from '../components/habit/HabitAllTimeAnalyticsCard';
 import { CategoryAggregateGraphsView } from '../components/habit/CategoryAggregateGraphsView';
 import { ExecutivePerformancePulse } from '../components/habit/ExecutivePerformancePulse';
+import { HabitEmotionalROIMatrix } from '../components/habit/HabitEmotionalROIMatrix';
+import { ShareableMilestoneModal } from '../components/habit/ShareableMilestoneModal';
 import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
@@ -55,6 +57,7 @@ export const HabitDetailPage: React.FC = () => {
   const [activeAnalyticsView, setActiveAnalyticsView] = useState<'graphs' | 'calendar' | 'alltime'>('graphs');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
 
   const currentMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
   const { formattedTitle } = formatMonthYear(selectedDate);
@@ -120,6 +123,7 @@ export const HabitDetailPage: React.FC = () => {
   const {
     daysInMonth,
     habitMetricsMap: aggregateMetricsMap,
+    entriesByHabit,
     isCompleted: isAggregateCompleted,
     toggleHabitEntry: toggleAggregateEntry,
   } = useDailyHabitsData(selectedDate, currentCategory);
@@ -245,6 +249,78 @@ export const HabitDetailPage: React.FC = () => {
 
   const selectedMonthIdx = selectedDate.getMonth();
 
+  const milestoneStats = useMemo(() => {
+    const isSingle = selectedHabitId !== 'all' && habit != null;
+    if (isSingle && singleMetrics) {
+      const peakDay = singleMetrics.peakDayOfWeek?.day || 'Wednesday';
+      return {
+        completionRate: Math.round(singleMetrics.monthCompletionPercent || 0),
+        longestStreak: singleMetrics.longestStreak || singleMetrics.currentStreak || 0,
+        totalChecks: singleMetrics.monthCompletedDays || 0,
+        totalHabits: 1,
+        peakDayName: peakDay,
+      };
+    }
+
+    const habitKeys = Object.keys(aggregateMetricsMap);
+    if (habitKeys.length === 0) {
+      return {
+        completionRate: 0,
+        longestStreak: 0,
+        totalChecks: 0,
+        totalHabits: habitsInCurrentCategory.length,
+        peakDayName: 'Wednesday',
+      };
+    }
+
+    const totalRate = habitKeys.reduce((acc, hid) => acc + (aggregateMetricsMap[hid]?.monthProgressPercent || 0), 0);
+    const avgRate = Math.round(totalRate / habitKeys.length);
+    const maxStreak = Math.max(0, ...habitKeys.map((hid) => aggregateMetricsMap[hid]?.streakCount || 0));
+    const sumChecks = habitKeys.reduce((acc, hid) => acc + (aggregateMetricsMap[hid]?.completedCount || 0), 0);
+
+    const daySums: Record<string, number> = {
+      Sunday: 0,
+      Monday: 0,
+      Tuesday: 0,
+      Wednesday: 0,
+      Thursday: 0,
+      Friday: 0,
+      Saturday: 0,
+    };
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    daysInMonth.forEach((d) => {
+      const dObj = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), d.dayNum);
+      const dName = days[dObj.getDay()];
+      let dayCompleted = 0;
+      habitsInCurrentCategory.forEach((h) => {
+        if (entriesByHabit[h.id]?.[d.dateKey]?.completed) {
+          dayCompleted += 1;
+        }
+      });
+      daySums[dName] = (daySums[dName] || 0) + dayCompleted;
+    });
+
+    const sortedDays = Object.entries(daySums).sort((a, b) => b[1] - a[1]);
+    const peakDay = sortedDays.length > 0 && sortedDays[0][1] > 0 ? sortedDays[0][0] : 'Wednesday';
+
+    return {
+      completionRate: avgRate,
+      longestStreak: maxStreak,
+      totalChecks: sumChecks,
+      totalHabits: habitsInCurrentCategory.length,
+      peakDayName: peakDay,
+    };
+  }, [
+    selectedHabitId,
+    habit,
+    singleMetrics,
+    aggregateMetricsMap,
+    habitsInCurrentCategory,
+    daysInMonth,
+    selectedDate,
+    entriesByHabit,
+  ]);
+
   if (habitsLoading) {
     return (
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
@@ -325,21 +401,31 @@ export const HabitDetailPage: React.FC = () => {
         singleHabit={habit}
         singleMetrics={singleMetrics}
         onExportReport={handleExportReport}
+        onOpenMilestoneCard={() => setIsMilestoneModalOpen(true)}
       />
 
       {/* 3. Main Analytics Content Area */}
       {selectedHabitId === 'all' ? (
         /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
-        <CategoryAggregateGraphsView
-          categoryName={currentCategory}
-          habits={habitsInCurrentCategory}
-          daysInMonth={daysInMonth}
-          habitMetricsMap={aggregateMetricsMap}
-          isCompleted={isAggregateCompleted}
-          onToggleEntry={toggleAggregateEntry}
-          selectedMonthTitle={formattedTitle}
-          onCreateHabit={() => setIsCreateModalOpen(true)}
-        />
+        <div className="space-y-6">
+          <CategoryAggregateGraphsView
+            categoryName={currentCategory}
+            habits={habitsInCurrentCategory}
+            daysInMonth={daysInMonth}
+            habitMetricsMap={aggregateMetricsMap}
+            isCompleted={isAggregateCompleted}
+            onToggleEntry={toggleAggregateEntry}
+            selectedMonthTitle={formattedTitle}
+            onCreateHabit={() => setIsCreateModalOpen(true)}
+          />
+
+          {/* Habit Emotional ROI Matrix (Mood + Consistency) */}
+          <HabitEmotionalROIMatrix
+            habits={habitsInCurrentCategory}
+            entriesByHabit={entriesByHabit}
+            habitMetricsMap={aggregateMetricsMap}
+          />
+        </div>
       ) : (
         /* B. INDIVIDUAL HABIT DEEP DIVE VIEW */
         habit && (
@@ -519,6 +605,21 @@ export const HabitDetailPage: React.FC = () => {
         formattedMonthTitle={formattedTitle}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateHabit}
+      />
+
+      {/* Shareable Milestone Card Modal */}
+      <ShareableMilestoneModal
+        isOpen={isMilestoneModalOpen}
+        onClose={() => setIsMilestoneModalOpen(false)}
+        userName={user?.name || user?.email?.split('@')[0] || 'Mindful Builder'}
+        monthTitle={formattedTitle}
+        boardName={currentCategory}
+        completionRate={milestoneStats.completionRate}
+        longestStreak={milestoneStats.longestStreak}
+        totalChecks={milestoneStats.totalChecks}
+        totalHabits={milestoneStats.totalHabits}
+        peakDayName={milestoneStats.peakDayName}
+        onDownloadPDF={() => handleExportReport('pdf')}
       />
     </div>
   );

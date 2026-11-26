@@ -15,6 +15,7 @@ export interface ExecutivePerformancePulseProps {
   singleHabit?: Habit | null;
   singleMetrics?: HabitHistoryMetrics | null;
   onExportReport?: (format: 'pdf' | 'csv') => void;
+  onOpenMilestoneCard?: () => void;
   className?: string;
 }
 
@@ -28,6 +29,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
   singleHabit,
   singleMetrics,
   onExportReport,
+  onOpenMilestoneCard,
   className = '',
 }) => {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -297,6 +299,23 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
                   <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
                     Format
                   </div>
+                  {onOpenMilestoneCard && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsExportMenuOpen(false);
+                        onOpenMilestoneCard();
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-amber-500">stars</span>
+                      <div>
+                        <div className="font-bold">Milestone Card</div>
+                        <div className="text-[10px] text-on-surface-variant">Shareable summary card</div>
+                      </div>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => {

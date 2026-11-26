@@ -36,6 +36,8 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
     return (localStorage.getItem('habitflow_heatmap_zoom') as HeatmapZoomLevel) || defaultZoom;
   });
   const [hoveredCell, setHoveredCell] = useState<{ dateKey: string; completed: boolean } | null>(null);
+  const [filterState, setFilterState] = useState<'all' | 'completed' | 'missed'>('all');
+  const [showStreakHighway, setShowStreakHighway] = useState(true);
 
   const handleZoomChange = (newZoom: HeatmapZoomLevel) => {
     setZoom(newZoom);
@@ -159,6 +161,34 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
   // 4. YEAR IN PIXELS (Offloaded to background Web Worker for guaranteed 60/120 FPS UI)
   const { yearGrid, yearStats } = useAnalyticsWorker(year, completedDateKeys, todayKey);
 
+  // Longest streak highway in the year
+  const streakHighwaySet = useMemo(() => {
+    let longestChain: string[] = [];
+    let currentChain: string[] = [];
+
+    const allDaysInYear: { dateKey: string; completed: boolean }[] = [];
+    yearGrid.forEach((week) => {
+      week.forEach((cell) => {
+        if (cell && cell.isCurrentYear) {
+          allDaysInYear.push({ dateKey: cell.dateKey, completed: cell.completed });
+        }
+      });
+    });
+    allDaysInYear.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+
+    for (const d of allDaysInYear) {
+      if (d.completed) {
+        currentChain.push(d.dateKey);
+        if (currentChain.length > longestChain.length) {
+          longestChain = [...currentChain];
+        }
+      } else {
+        currentChain = [];
+      }
+    }
+    return new Set(longestChain);
+  }, [yearGrid]);
+
   // Title string depending on zoom
   const headerTitle = useMemo(() => {
     if (zoom === 'week') {
@@ -199,6 +229,26 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Streak Highway Highlight Toggle */}
+          {zoom === 'year' && streakHighwaySet.size > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('selection');
+                setShowStreakHighway((prev) => !prev);
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-stat-label transition-all cursor-pointer ${
+                showStreakHighway
+                  ? 'bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490] border border-[#52995D]/30 shadow-2xs'
+                  : 'bg-surface-container-low dark:bg-surface-container-high/30 text-on-surface-variant border border-outline-variant/20 hover:text-on-surface'
+              }`}
+              title="Toggle Longest Streak Highway Highlight"
+            >
+              <span className="material-symbols-outlined text-[15px]">route</span>
+              <span>Streak Highway ({streakHighwaySet.size}d)</span>
+            </button>
+          )}
+
           {/* Zoom Level Switcher Pills */}
           <div className="flex items-center bg-surface-container-low dark:bg-surface-container-high/30 p-1 rounded-full border border-outline-variant/20">
             {(['week', 'month', 'quarter', 'year'] as HeatmapZoomLevel[]).map((z) => (
@@ -380,6 +430,10 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
                         return <div key={`empty-${wIdx}-${dIdx}`} className="w-full aspect-square" />;
                       }
                       const { dateKey, completed, isToday, isCurrentYear } = cell;
+                      const isHighway = showStreakHighway && streakHighwaySet.has(dateKey);
+                      const isDimmed =
+                        (filterState === 'completed' && !completed) ||
+                        (filterState === 'missed' && completed);
 
                       return (
                         <div
@@ -396,11 +450,17 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
                           className={`w-full aspect-square rounded-[3px] transition-all cursor-pointer relative ${
                             !isCurrentYear
                               ? 'opacity-15 bg-outline-variant/20'
+                              : isDimmed
+                              ? 'opacity-15 bg-outline-variant/15 scale-90'
                               : completed
                               ? 'shadow-[0_0_4px_rgba(82,153,93,0.4)]'
                               : 'bg-outline-variant/20 dark:bg-outline-variant/15 hover:bg-outline-variant/35'
-                          } ${isToday ? 'ring-1.5 ring-secondary ring-offset-1' : ''}`}
-                          title={`${dateKey}: ${completed ? 'Done' : 'Empty'}`}
+                          } ${isToday ? 'ring-1.5 ring-secondary ring-offset-1' : ''} ${
+                            isHighway
+                              ? 'ring-2 ring-[#52995D] dark:ring-[#88C490] shadow-[0_0_8px_rgba(82,153,93,0.5)] z-10 scale-105'
+                              : ''
+                          }`}
+                          title={`${dateKey}: ${completed ? 'Done' : 'Empty'}${isHighway ? ' • 🌟 Streak Highway' : ''}`}
                         />
                       );
                     })}
@@ -410,7 +470,7 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
             </div>
           </div>
 
-          {/* Interactive Scrubbing Tooltip & Botanical Legend */}
+          {/* Interactive Scrubbing Tooltip & Density Filter Legend */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-outline-variant/15 text-xs">
             <div className="flex items-center gap-2">
               <span className="text-on-surface-variant font-medium">Scrubbing:</span>
@@ -421,20 +481,66 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
                   <span className={hoveredCell.completed ? 'text-primary font-bold' : 'text-on-surface-variant'}>
                     ({hoveredCell.completed ? 'Completed' : 'Missed'})
                   </span>
+                  {showStreakHighway && streakHighwaySet.has(hoveredCell.dateKey) && (
+                    <span className="text-[10px] font-bold text-[#2D5A34] dark:text-[#88C490] bg-[#52995D]/15 px-1.5 py-0.2 rounded-full">
+                      Streak Highway 🔥
+                    </span>
+                  )}
                 </span>
               ) : (
                 <span className="text-on-surface-variant italic">Hover or tap any pixel</span>
               )}
             </div>
 
-            {/* Botanical Intensity Legend */}
-            <div className="flex items-center gap-1.5 self-end sm:self-auto">
-              <span className="text-[10px] text-on-surface-variant uppercase font-bold">Less</span>
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-outline-variant/20" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-[#88C490] opacity-40" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-[#52995D] opacity-75" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-[#2D5A34]" />
-              <span className="text-[10px] text-on-surface-variant uppercase font-bold">More</span>
+            {/* Interactive Density / Status Filter Legend */}
+            <div className="flex items-center gap-1.5 self-end sm:self-auto flex-wrap">
+              <span className="text-[10px] text-on-surface-variant uppercase font-bold mr-0.5">Filter:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setFilterState('all');
+                }}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  filterState === 'all'
+                    ? 'bg-primary text-on-primary shadow-2xs'
+                    : 'bg-surface-container-high/60 text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                All ({yearStats.totalDays})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setFilterState(filterState === 'completed' ? 'all' : 'completed');
+                }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  filterState === 'completed'
+                    ? 'bg-[#2D5A34] text-white shadow-2xs'
+                    : 'bg-surface-container-high/60 text-on-surface-variant hover:text-on-surface'
+                }`}
+                title="Filter completed pixels"
+              >
+                <span className="w-2 h-2 rounded-[2px] bg-[#2D5A34]" />
+                <span>Done ({yearStats.activeDays})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setFilterState(filterState === 'missed' ? 'all' : 'missed');
+                }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  filterState === 'missed'
+                    ? 'bg-[#A65A42] text-white shadow-2xs'
+                    : 'bg-surface-container-high/60 text-on-surface-variant hover:text-on-surface'
+                }`}
+                title="Filter missed pixels"
+              >
+                <span className="w-2 h-2 rounded-[2px] bg-outline-variant/40" />
+                <span>Missed ({Math.max(0, yearStats.totalDays - yearStats.activeDays)})</span>
+              </button>
             </div>
           </div>
         </div>
