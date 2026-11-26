@@ -20,6 +20,8 @@ interface HabitUnifiedHeaderProps {
   onExportReport?: (format: 'pdf' | 'csv') => void;
   densityMode?: 'spacious' | 'compact';
   onToggleDensityMode?: () => void;
+  isMonthPickerOpen?: boolean;
+  onToggleMonthPicker?: (open?: boolean) => void;
 }
 
 const MONTH_NAMES = [
@@ -46,10 +48,24 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
   onExportReport,
   densityMode = 'spacious',
   onToggleDensityMode,
+  isMonthPickerOpen: controlledMonthPickerOpen,
+  onToggleMonthPicker,
 }) => {
   const [isBoardPickerOpen, setIsBoardPickerOpen] = useState(false);
-  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [internalMonthPickerOpen, setInternalMonthPickerOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+
+  const isMonthPickerOpen =
+    controlledMonthPickerOpen !== undefined ? controlledMonthPickerOpen : internalMonthPickerOpen;
+
+  const handleToggleMonthPicker = (targetState?: boolean) => {
+    const nextState = targetState !== undefined ? targetState : !isMonthPickerOpen;
+    if (onToggleMonthPicker) {
+      onToggleMonthPicker(nextState);
+    } else {
+      setInternalMonthPickerOpen(nextState);
+    }
+  };
 
   const boardPickerRef = useRef<HTMLDivElement>(null);
   const monthPickerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +84,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
         setIsBoardPickerOpen(false);
       }
       if (monthPickerRef.current && !monthPickerRef.current.contains(target)) {
-        setIsMonthPickerOpen(false);
+        handleToggleMonthPicker(false);
       }
       if (exportPickerRef.current && !exportPickerRef.current.contains(target)) {
         setIsExportMenuOpen(false);
@@ -90,7 +106,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
               type="button"
               onClick={() => {
                 setIsBoardPickerOpen((prev) => !prev);
-                setIsMonthPickerOpen(false);
+                handleToggleMonthPicker(false);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-container-low dark:bg-surface-container-high/60 hover:bg-surface-container-high text-on-surface border border-outline-variant/25 transition-all active:scale-95 shadow-2xs cursor-pointer"
               title="Select Tracker Board"
@@ -223,7 +239,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
             <button
               type="button"
               onClick={() => {
-                setIsMonthPickerOpen((prev) => !prev);
+                handleToggleMonthPicker();
                 setIsBoardPickerOpen(false);
               }}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface font-stat-label text-xs font-bold transition-colors border border-outline-variant/20 active:scale-95 cursor-pointer"
@@ -294,7 +310,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
                         type="button"
                         onClick={() => {
                           onSelectMonthIndex(idx);
-                          setIsMonthPickerOpen(false);
+                          handleToggleMonthPicker(false);
                         }}
                         className={`py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                           isSelected
@@ -335,7 +351,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
                 type="button"
                 onClick={() => {
                   setIsExportMenuOpen((prev) => !prev);
-                  setIsMonthPickerOpen(false);
+                  handleToggleMonthPicker(false);
                   setIsBoardPickerOpen(false);
                 }}
                 className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all flex items-center gap-1 shrink-0 active:scale-95 border border-outline-variant/25 cursor-pointer shadow-2xs"

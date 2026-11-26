@@ -15,6 +15,11 @@ import { HabitFlowForecastCard } from '../components/habit/HabitFlowForecastCard
 import { HabitSynergyMatrixCard } from '../components/habit/HabitSynergyMatrixCard';
 import { ShareableMilestoneModal } from '../components/habit/ShareableMilestoneModal';
 import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
+import { HabitStickyMiniHud } from '../components/habit/HabitStickyMiniHud';
+import { HabitSectionQuickJumpTabs, SectionTabItem } from '../components/habit/HabitSectionQuickJumpTabs';
+import { HabitTargetSimulatorCard } from '../components/habit/HabitTargetSimulatorCard';
+import { HabitShortcutsHelpModal } from '../components/habit/HabitShortcutsHelpModal';
+import { useReportShortcutsAndGestures } from '../hooks/useReportShortcutsAndGestures';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
 import { formatMonthYear } from '../components/dashboard/DateNavigator';
 import { Button } from '../components/ui/Button';
@@ -70,6 +75,10 @@ export const HabitDetailPage: React.FC = () => {
       return 'spacious';
     }
   });
+  const [isMiniHudVisible, setIsMiniHudVisible] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState('overview');
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [isMonthPickerControlledOpen, setIsMonthPickerControlledOpen] = useState(false);
 
   const handleToggleDensityMode = () => {
     triggerHaptic('selection');
@@ -168,6 +177,24 @@ export const HabitDetailPage: React.FC = () => {
     }
   };
 
+  const categoryHabitIds = useMemo(() => {
+    return ['all', ...habitsInCurrentCategory.map((h) => h.id)];
+  }, [habitsInCurrentCategory]);
+
+  const handleNextHabit = () => {
+    if (categoryHabitIds.length <= 1) return;
+    const currentIndex = categoryHabitIds.indexOf(selectedHabitId);
+    const nextIndex = (currentIndex + 1) % categoryHabitIds.length;
+    handleSelectHabit(categoryHabitIds[nextIndex]);
+  };
+
+  const handlePrevHabit = () => {
+    if (categoryHabitIds.length <= 1) return;
+    const currentIndex = categoryHabitIds.indexOf(selectedHabitId);
+    const prevIndex = (currentIndex - 1 + categoryHabitIds.length) % categoryHabitIds.length;
+    handleSelectHabit(categoryHabitIds[prevIndex]);
+  };
+
   const handleMonthChange = (offset: number) => {
     setSelectedDate((prev) => {
       return new Date(prev.getFullYear(), prev.getMonth() + offset, 1);
@@ -185,6 +212,82 @@ export const HabitDetailPage: React.FC = () => {
       return new Date(prev.getFullYear() + offset, prev.getMonth(), 1);
     });
   };
+
+  // Sections list for Quick-Jump Navigation Tabs
+  const aggregateSections: SectionTabItem[] = useMemo(
+    () => [
+      { id: 'overview', label: 'Overview', icon: 'dashboard' },
+      { id: 'simulator', label: 'What-If Simulator', icon: 'tune' },
+      { id: 'forecast', label: 'Pacing Forecast', icon: 'trending_up' },
+      { id: 'momentum', label: 'Momentum Graphs', icon: 'bar_chart' },
+      { id: 'synergy', label: 'Habit Synergy', icon: 'hub' },
+      { id: 'emotional-roi', label: 'Emotional ROI', icon: 'mood' },
+    ],
+    []
+  );
+
+  const singleHabitSections: SectionTabItem[] = useMemo(
+    () => [
+      { id: 'overview', label: 'Habit Overview', icon: 'dashboard' },
+      { id: 'simulator', label: 'What-If Simulator', icon: 'tune' },
+      { id: 'stats', label: '30-Day Metrics', icon: 'timeline' },
+      { id: 'momentum', label: 'Weekly Graphs', icon: 'bar_chart' },
+      { id: 'heatmap', label: 'Year Heatmap', icon: 'grain' },
+      { id: 'alltime', label: 'All-Time', icon: 'all_inclusive' },
+    ],
+    []
+  );
+
+  const currentSections = selectedHabitId === 'all' ? aggregateSections : singleHabitSections;
+
+  const handleSelectSection = (sectionId: string) => {
+    setActiveSectionId(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -75;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
+  // Scroll listener for sticky mini-HUD visibility and active section highlighting
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setIsMiniHudVisible(scrollY > 220);
+
+      const sectionsToTrack =
+        selectedHabitId === 'all'
+          ? ['overview', 'simulator', 'forecast', 'momentum', 'synergy', 'emotional-roi']
+          : ['overview', 'simulator', 'stats', 'momentum', 'heatmap', 'alltime'];
+
+      for (let i = sectionsToTrack.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionsToTrack[i]);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 160) {
+            setActiveSectionId(sectionsToTrack[i]);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [selectedHabitId]);
+
+  // Hook for desktop hotkeys ([, ], M, P, ?) and mobile touch swipe between months
+  useReportShortcutsAndGestures({
+    onNextHabit: handleNextHabit,
+    onPrevHabit: handlePrevHabit,
+    onOpenMonthPicker: () => setIsMonthPickerControlledOpen((prev) => !prev),
+    onExportPDF: () => handleExportReport('pdf'),
+    onToggleShortcutsModal: () => setIsShortcutsModalOpen((prev) => !prev),
+    onSwipeLeft: () => handleMonthChange(1),
+    onSwipeRight: () => handleMonthChange(-1),
+    enabled: true,
+  });
 
   const handleExportReport = async (format: 'pdf' | 'csv') => {
     triggerHaptic('selection');
@@ -413,6 +516,20 @@ export const HabitDetailPage: React.FC = () => {
 
   return (
     <div className={`max-w-5xl mx-auto ${densityMode === 'compact' ? 'space-y-4 pb-8' : 'space-y-6 pb-12'} animate-fadeIn`}>
+      {/* 0. Floating Sticky Mini-HUD (Collapses into slim pill on scroll) */}
+      <HabitStickyMiniHud
+        isVisible={isMiniHudVisible}
+        boardName={currentCategory}
+        boardIcon={getCategoryIcon(currentCategory)}
+        selectedMonthTitle={formattedTitle}
+        completionRate={milestoneStats.completionRate}
+        isSingleHabit={selectedHabitId !== 'all'}
+        habitName={habit?.name}
+        onExportPDF={() => handleExportReport('pdf')}
+        onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onToggleShortcutsModal={() => setIsShortcutsModalOpen(true)}
+      />
+
       {/* 1. Streamlined Unified Header & Navigation Bar */}
       <HabitUnifiedHeader
         categories={categories}
@@ -433,51 +550,89 @@ export const HabitDetailPage: React.FC = () => {
         onExportReport={handleExportReport}
         densityMode={densityMode}
         onToggleDensityMode={handleToggleDensityMode}
+        isMonthPickerOpen={isMonthPickerControlledOpen}
+        onToggleMonthPicker={(open) => setIsMonthPickerControlledOpen(open ?? !isMonthPickerControlledOpen)}
+      />
+
+      {/* Quick-Jump Section Anchor Navigation Tabs */}
+      <HabitSectionQuickJumpTabs
+        activeSectionId={activeSectionId}
+        sections={currentSections}
+        onSelectSection={handleSelectSection}
       />
 
       {/* 2. Inspo Hero Bento Ribbon: Executive Performance Pulse */}
-      <ExecutivePerformancePulse
-        selectedHabitId={selectedHabitId}
-        categoryName={currentCategory}
-        selectedDate={selectedDate}
-        formattedMonthTitle={formattedTitle}
-        habits={habitsInCurrentCategory}
-        habitMetricsMap={aggregateMetricsMap}
-        singleHabit={habit}
-        singleMetrics={singleMetrics}
-        onExportReport={handleExportReport}
-        onOpenMilestoneCard={() => setIsMilestoneModalOpen(true)}
-      />
+      <div id="overview" className="scroll-mt-20">
+        <ExecutivePerformancePulse
+          selectedHabitId={selectedHabitId}
+          categoryName={currentCategory}
+          selectedDate={selectedDate}
+          formattedMonthTitle={formattedTitle}
+          habits={habitsInCurrentCategory}
+          habitMetricsMap={aggregateMetricsMap}
+          singleHabit={habit}
+          singleMetrics={singleMetrics}
+          onExportReport={handleExportReport}
+          onOpenMilestoneCard={() => setIsMilestoneModalOpen(true)}
+        />
+      </div>
 
-      {/* 3. Predictive Flow Forecast & Pacing Intelligence (Aggregate View) */}
+      {/* 3. Interactive "What-If" Habit Target Simulator */}
+      <div id="simulator" className="scroll-mt-20">
+        <HabitTargetSimulatorCard
+          totalDays={daysInMonth.length}
+          daysElapsed={
+            selectedDate.getFullYear() === new Date().getFullYear() &&
+            selectedDate.getMonth() === new Date().getMonth()
+              ? new Date().getDate()
+              : selectedDate < new Date()
+              ? daysInMonth.length
+              : 0
+          }
+          completedChecks={milestoneStats.totalChecks}
+          totalHabitCount={selectedHabitId !== 'all' ? 1 : habitsInCurrentCategory.length}
+          currentStreak={milestoneStats.longestStreak}
+          selectedMonthTitle={formattedTitle}
+        />
+      </div>
+
+      {/* 4. Predictive Flow Forecast & Pacing Intelligence (Aggregate View) */}
       {selectedHabitId === 'all' && (
-        <HabitFlowForecastCard forecast={flowForecast} />
+        <div id="forecast" className="scroll-mt-20">
+          <HabitFlowForecastCard forecast={flowForecast} />
+        </div>
       )}
 
-      {/* 4. Main Analytics Content Area */}
+      {/* 5. Main Analytics Content Area */}
       {selectedHabitId === 'all' ? (
         /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
         <div className="space-y-6">
-          <CategoryAggregateGraphsView
-            categoryName={currentCategory}
-            habits={habitsInCurrentCategory}
-            daysInMonth={daysInMonth}
-            habitMetricsMap={aggregateMetricsMap}
-            isCompleted={isAggregateCompleted}
-            onToggleEntry={toggleAggregateEntry}
-            selectedMonthTitle={formattedTitle}
-            onCreateHabit={() => setIsCreateModalOpen(true)}
-          />
+          <div id="momentum" className="scroll-mt-20">
+            <CategoryAggregateGraphsView
+              categoryName={currentCategory}
+              habits={habitsInCurrentCategory}
+              daysInMonth={daysInMonth}
+              habitMetricsMap={aggregateMetricsMap}
+              isCompleted={isAggregateCompleted}
+              onToggleEntry={toggleAggregateEntry}
+              selectedMonthTitle={formattedTitle}
+              onCreateHabit={() => setIsCreateModalOpen(true)}
+            />
+          </div>
 
           {/* Habit Stacking & Synergy Engine (Atomic Habits Co-occurrence) */}
-          <HabitSynergyMatrixCard synergyReport={habitSynergy} />
+          <div id="synergy" className="scroll-mt-20">
+            <HabitSynergyMatrixCard synergyReport={habitSynergy} />
+          </div>
 
           {/* Habit Emotional ROI Matrix (Mood + Consistency) */}
-          <HabitEmotionalROIMatrix
-            habits={habitsInCurrentCategory}
-            entriesByHabit={entriesByHabit}
-            habitMetricsMap={aggregateMetricsMap}
-          />
+          <div id="emotional-roi" className="scroll-mt-20">
+            <HabitEmotionalROIMatrix
+              habits={habitsInCurrentCategory}
+              entriesByHabit={entriesByHabit}
+              habitMetricsMap={aggregateMetricsMap}
+            />
+          </div>
         </div>
       ) : (
         /* B. INDIVIDUAL HABIT DEEP DIVE VIEW */
@@ -539,13 +694,15 @@ export const HabitDetailPage: React.FC = () => {
             </div>
 
             {/* Metrics Summary Grid for the selected habit with 30-Day Momentum Sparkline */}
-            <HabitStatsGrid
-              metrics={singleMetrics}
-              selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
-              habitColor={habit.color || '#2D5A34'}
-              isCompleted={isSingleCompleted}
-              selectedDate={selectedDate}
-            />
+            <div id="stats" className="scroll-mt-20">
+              <HabitStatsGrid
+                metrics={singleMetrics}
+                selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
+                habitColor={habit.color || '#2D5A34'}
+                isCompleted={isSingleCompleted}
+                selectedDate={selectedDate}
+              />
+            </div>
 
             {/* Graph / Calendar / All-Time View Switcher Tabs */}
             <div className="flex items-center justify-between px-1">
@@ -590,7 +747,7 @@ export const HabitDetailPage: React.FC = () => {
 
             {/* Individual Habit Visualization based on selected view */}
             {activeAnalyticsView === 'graphs' && (
-              <div className="space-y-6">
+              <div id="momentum" className="space-y-6 scroll-mt-20">
                 <HabitWeeklyGraphsView
                   currentDate={selectedDate}
                   onChangeMonth={handleMonthChange}
@@ -609,7 +766,7 @@ export const HabitDetailPage: React.FC = () => {
             )}
 
             {activeAnalyticsView === 'calendar' && (
-              <div className="space-y-6">
+              <div id="heatmap" className="space-y-6 scroll-mt-20">
                 <HabitCalendarHeatmap
                   currentDate={selectedDate}
                   onChangeMonth={handleMonthChange}
@@ -627,11 +784,13 @@ export const HabitDetailPage: React.FC = () => {
             )}
 
             {activeAnalyticsView === 'alltime' && (
-              <HabitAllTimeAnalyticsCard
-                habitName={habit.name}
-                habitColor={habit.color}
-                metrics={singleMetrics}
-              />
+              <div id="alltime" className="scroll-mt-20">
+                <HabitAllTimeAnalyticsCard
+                  habitName={habit.name}
+                  habitColor={habit.color}
+                  metrics={singleMetrics}
+                />
+              </div>
             )}
           </div>
         )
@@ -673,6 +832,12 @@ export const HabitDetailPage: React.FC = () => {
         totalHabits={milestoneStats.totalHabits}
         peakDayName={milestoneStats.peakDayName}
         onDownloadPDF={() => handleExportReport('pdf')}
+      />
+
+      {/* Keyboard Shortcuts Cheat-Sheet Modal */}
+      <HabitShortcutsHelpModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
 
       {/* Floating Botanical PDF Export Progress Toast */}
