@@ -1,5 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { YearGridWorkerInput, YearGridWorkerResult } from '../workers/analyticsWorker';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  YearGridWorkerInput,
+  YearGridWorkerResult,
+  SparklineWorkerResult,
+  catmullRomToSvgPath,
+} from '../workers/analyticsWorker';
+import { getCachedSparkline, setCachedSparkline } from '../utils/analyticsCache';
 
 export interface YearGridOutput {
   yearGrid: Array<Array<{
@@ -13,11 +19,22 @@ export interface YearGridOutput {
     totalDays: number;
     percentage: number;
     longestStreak: number;
+    streakHighwayKeys: string[];
   };
   isComputing: boolean;
 }
 
-function computeSynchronously(
+export interface SparklineOutput {
+  completedCount: number;
+  ratePercent: number;
+  delta: number;
+  momentum: 'rising' | 'slowing' | 'steady';
+  sparkPoints: number[];
+  smoothLinePath: string;
+  smoothAreaPath: string;
+}
+
+function computeYearSynchronously(
   year: number,
   completedDateKeys: string[],
   todayKey: string
@@ -39,6 +56,8 @@ function computeSynchronously(
   let activeDaysCount = 0;
   let currentStreak = 0;
   let longestStreak = 0;
+  let longestChain: string[] = [];
+  let currentChain: string[] = [];
 
   const runningDate = new Date(startDate);
   runningDate.setDate(runningDate.getDate() - startDayOfWeek);
@@ -63,9 +82,14 @@ function computeSynchronously(
         if (completed) {
           activeDaysCount++;
           currentStreak++;
-          if (currentStreak > longestStreak) longestStreak = currentStreak;
+          currentChain.push(dateKey);
+          if (currentStreak > longestStreak) {
+            longestStreak = currentStreak;
+            longestChain = [...currentChain];
+          }
         } else {
           currentStreak = 0;
+          currentChain = [];
         }
       }
 
@@ -88,7 +112,55 @@ function computeSynchronously(
       totalDays: totalDaysInYear,
       percentage: Math.round((activeDaysCount / totalDaysInYear) * 100),
       longestStreak,
+      streakHighwayKeys: longestChain,
     },
+  };
+}
+
+export function computeSmoothSparklineSync(
+  days: Array<{ dateKey: string; completed: boolean }>,
+  width = 300,
+  height = 44
+): SparklineOutput {
+  const completedCount = days.filter((d) => d.completed).length;
+  const totalDays = Math.max(days.length, 1);
+  const ratePercent = Math.round((completedCount / totalDays) * 100);
+
+  const mid = Math.floor(days.length / 2);
+  const firstHalfDone = days.slice(0, mid).filter((d) => d.completed).length;
+  const secondHalfDone = days.slice(mid).filter((d) => d.completed).length;
+  const delta = secondHalfDone - firstHalfDone;
+
+  let momentum: 'rising' | 'slowing' | 'steady' = 'steady';
+  if (delta >= 2) momentum = 'rising';
+  else if (delta <= -2) momentum = 'slowing';
+
+  const sparkPoints: number[] = [];
+  for (let i = 0; i < days.length; i++) {
+    const windowStart = Math.max(0, i - 4);
+    const windowSlice = days.slice(windowStart, i + 1);
+    const windowDone = windowSlice.filter((d) => d.completed).length;
+    const pct = Math.round((windowDone / windowSlice.length) * 100);
+    sparkPoints.push(pct);
+  }
+
+  const pointsCoord: Array<[number, number]> = sparkPoints.map((pct, idx) => {
+    const x = (idx / Math.max(days.length - 1, 1)) * width;
+    const y = (height - 4) - (pct / 100) * (height - 8);
+    return [x, y];
+  });
+
+  const smoothLinePath = catmullRomToSvgPath(pointsCoord, 0.25);
+  const smoothAreaPath = `${smoothLinePath} L ${width},${height} L 0,${height} Z`;
+
+  return {
+    completedCount,
+    ratePercent,
+    delta,
+    momentum,
+    sparkPoints,
+    smoothLinePath,
+    smoothAreaPath,
   };
 }
 
@@ -98,7 +170,7 @@ export function useAnalyticsWorker(
   todayKey: string
 ): YearGridOutput {
   const [data, setData] = useState<YearGridOutput>(() => {
-    const initial = computeSynchronously(year, completedDateKeys, todayKey);
+    const initial = computeYearSynchronously(year, completedDateKeys, todayKey);
     return { ...initial, isComputing: false };
   });
 
@@ -107,7 +179,7 @@ export function useAnalyticsWorker(
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof Worker === 'undefined') {
-      const result = computeSynchronously(year, completedDateKeys, todayKey);
+      const result = computeYearSynchronously(year, completedDateKeys, todayKey);
       setData({ ...result, isComputing: false });
       return;
     }
@@ -119,7 +191,7 @@ export function useAnalyticsWorker(
           { type: 'module' }
         );
 
-        workerRef.current.onmessage = (event: MessageEvent<YearGridWorkerResult>) => {
+        workerRef.current.onmessage = (event: MessageEvent<YearGridWorkerResult | SparklineWorkerResult>) => {
           if (event.data && event.data.type === 'YEAR_GRID_RESULT') {
             if (event.data.id === currentReqId.current) {
               setData({
@@ -132,8 +204,7 @@ export function useAnalyticsWorker(
         };
 
         workerRef.current.onerror = () => {
-          // If worker fails, fallback to sync calculation
-          const fallback = computeSynchronously(year, completedDateKeys, todayKey);
+          const fallback = computeYearSynchronously(year, completedDateKeys, todayKey);
           setData({ ...fallback, isComputing: false });
         };
       }
@@ -151,14 +222,9 @@ export function useAnalyticsWorker(
 
       workerRef.current.postMessage(input);
     } catch {
-      // In case worker instantiation throws
-      const fallback = computeSynchronously(year, completedDateKeys, todayKey);
+      const fallback = computeYearSynchronously(year, completedDateKeys, todayKey);
       setData({ ...fallback, isComputing: false });
     }
-
-    return () => {
-      // Worker remains alive for subsequent requests
-    };
   }, [year, completedDateKeys, todayKey]);
 
   useEffect(() => {
@@ -171,4 +237,24 @@ export function useAnalyticsWorker(
   }, []);
 
   return data;
+}
+
+/**
+ * Hook for generating high-performance smooth Catmull-Rom sparklines with memory caching
+ */
+export function useSmoothSparkline(
+  habitId: string,
+  days: Array<{ dateKey: string; label: string; completed: boolean }>,
+  baseDateKey: string,
+  width = 300,
+  height = 44
+): SparklineOutput {
+  return useMemo(() => {
+    const cached = getCachedSparkline<SparklineOutput>(habitId, baseDateKey);
+    if (cached) return cached;
+
+    const computed = computeSmoothSparklineSync(days, width, height);
+    setCachedSparkline(habitId, baseDateKey, computed);
+    return computed;
+  }, [habitId, days, baseDateKey, width, height]);
 }

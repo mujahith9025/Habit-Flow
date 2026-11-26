@@ -5,12 +5,21 @@ import { ExportData } from './exportUtils';
  * Bundled separately from main app so jsPDF (390 KB) and jspdf-autotable (60 KB)
  * are only downloaded when user taps "Export PDF".
  */
-export async function exportToPDF(data: ExportData): Promise<void> {
+export async function exportToPDF(
+  data: ExportData,
+  onProgress?: (progress: number, message: string) => void
+): Promise<void> {
+  onProgress?.(15, 'Loading PDF rendering engine...');
+  await new Promise((r) => setTimeout(r, 0));
+
   const [{ default: jsPDF }, autoTableModule] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
   ]);
   const autoTable = autoTableModule.default || autoTableModule;
+
+  onProgress?.(35, 'Compiling executive KPIs & streaks...');
+  await new Promise((r) => setTimeout(r, 0));
 
   const {
     profile,
@@ -157,6 +166,9 @@ export async function exportToPDF(data: ExportData): Promise<void> {
   });
 
   // 4. In-Depth Habit-by-Habit Performance Matrix
+  onProgress?.(60, 'Generating master habit performance matrix...');
+  await new Promise((r) => setTimeout(r, 0));
+
   const afterCategoryY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY || 110;
 
   doc.setTextColor(30, 41, 59);
@@ -349,7 +361,12 @@ export async function exportToPDF(data: ExportData): Promise<void> {
   }
 
   // 7. Save & Download
+  onProgress?.(95, 'Finalizing & saving document...');
+  await new Promise((r) => setTimeout(r, 0));
+
   const sanitizedName = userName.toLowerCase().replace(/[^a-z0-9]/g, '_');
   const dateStamp = new Date().toISOString().split('T')[0];
   doc.save(`habitflow_executive_report_${sanitizedName}_${dateStamp}.pdf`);
+
+  onProgress?.(100, 'Report downloaded successfully!');
 }

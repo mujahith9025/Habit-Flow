@@ -58,6 +58,7 @@ export const HabitDetailPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ isExporting: boolean; percent: number; message: string } | null>(null);
 
   const currentMonthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
   const { formattedTitle } = formatMonthYear(selectedDate);
@@ -170,12 +171,17 @@ export const HabitDetailPage: React.FC = () => {
     };
     try {
       if (format === 'pdf') {
-        await exportToPDF(exportData);
+        setExportProgress({ isExporting: true, percent: 10, message: 'Initiating report engine...' });
+        await exportToPDF(exportData, (percent, message) => {
+          setExportProgress({ isExporting: true, percent, message });
+        });
+        setTimeout(() => setExportProgress(null), 2500);
       } else {
         exportToExcel(exportData);
       }
     } catch (err) {
       console.error('Failed to export report:', err);
+      setExportProgress(null);
     }
   };
 
@@ -621,6 +627,36 @@ export const HabitDetailPage: React.FC = () => {
         peakDayName={milestoneStats.peakDayName}
         onDownloadPDF={() => handleExportReport('pdf')}
       />
+
+      {/* Floating Botanical PDF Export Progress Toast */}
+      {exportProgress && (
+        <div className="fixed bottom-6 right-6 z-50 animate-slideUp">
+          <div className="bg-surface-container-highest/95 dark:bg-surface-container/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-outline-variant/30 shadow-elevation-3 flex items-center gap-3.5 max-w-sm">
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+              {exportProgress.percent === 100 ? (
+                <span className="material-symbols-outlined text-[18px]">check</span>
+              ) : (
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+            <div className="space-y-1 min-w-[170px]">
+              <div className="flex items-center justify-between text-xs font-bold text-on-surface">
+                <span>Executive PDF</span>
+                <span className="font-mono text-primary">{exportProgress.percent}%</span>
+              </div>
+              <div className="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-300"
+                  style={{ width: `${exportProgress.percent}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-on-surface-variant truncate">
+                {exportProgress.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

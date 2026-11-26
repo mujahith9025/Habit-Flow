@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { HabitHistoryMetrics } from '../../hooks/useSingleHabitHistory';
+import { useSmoothSparkline } from '../../hooks/useAnalyticsWorker';
 
 interface HabitStatsGridProps {
   metrics: HabitHistoryMetrics;
@@ -30,63 +31,30 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
 
   const trackedDaysTotal = totalTrackedDays || daysSinceCreation || 1;
 
-  // Compute 30-Day rolling completion sparkline & momentum
-  const trendData = useMemo(() => {
-    const base = selectedDate ? new Date(selectedDate) : new Date();
-    const days: { dateKey: string; label: string; completed: boolean }[] = [];
+  // Compute 30-Day base days list
+  const baseDate = selectedDate ? new Date(selectedDate) : new Date();
+  const baseDateKey = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
 
+  const daysList = useMemo(() => {
+    const list: { dateKey: string; label: string; completed: boolean }[] = [];
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(base);
+      const d = new Date(baseDate);
       d.setDate(d.getDate() - i);
       const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const completed = isCompleted ? isCompleted(dateKey) : false;
       const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      days.push({ dateKey, label, completed });
+      list.push({ dateKey, label, completed });
     }
+    return list;
+  }, [baseDateKey, isCompleted]);
 
-    const completedCount = days.filter((d) => d.completed).length;
-    const ratePercent = Math.round((completedCount / 30) * 100);
+  // Compute smooth Catmull-Rom cubic bezier sparkline via cached worker pipeline
+  const trendData = useSmoothSparkline(habitColor, daysList, baseDateKey, 300, 44);
 
-    // Momentum calculation: first 15 days vs last 15 days
-    const firstHalfDone = days.slice(0, 15).filter((d) => d.completed).length;
-    const secondHalfDone = days.slice(15).filter((d) => d.completed).length;
-    const delta = secondHalfDone - firstHalfDone;
-
-    let momentum: 'rising' | 'slowing' | 'steady' = 'steady';
-    if (delta >= 2) momentum = 'rising';
-    else if (delta <= -2) momentum = 'slowing';
-
-    // Calculate rolling 5-day completion percentage for SVG sparkline curve
-    const sparkPoints: number[] = [];
-    for (let i = 0; i < days.length; i++) {
-      const windowStart = Math.max(0, i - 4);
-      const windowSlice = days.slice(windowStart, i + 1);
-      const windowDone = windowSlice.filter((d) => d.completed).length;
-      const pct = Math.round((windowDone / windowSlice.length) * 100);
-      sparkPoints.push(pct);
-    }
-
-    return {
-      days,
-      completedCount,
-      ratePercent,
-      delta,
-      momentum,
-      sparkPoints,
-    };
-  }, [selectedDate, isCompleted]);
-
-  // Construct SVG sparkline path
   const svgWidth = 300;
   const svgHeight = 44;
-  const pointsCoord = trendData.sparkPoints.map((pct, idx) => {
-    const x = (idx / 29) * svgWidth;
-    // Invert y: 100% -> y=4, 0% -> y=40
-    const y = 40 - (pct / 100) * 36;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-  const linePath = `M ${pointsCoord.join(' L ')}`;
-  const areaPath = `M 0,44 L ${pointsCoord.join(' L ')} L ${svgWidth},44 Z`;
+  const linePath = trendData.smoothLinePath;
+  const areaPath = trendData.smoothAreaPath;
 
   return (
     <div className="space-y-3.5">
@@ -341,7 +309,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             className="gap-0.5 sm:gap-1 pt-1.5"
             style={{ display: 'grid', gridTemplateColumns: 'repeat(30, minmax(0, 1fr))' }}
           >
-            {trendData.days.map((day) => (
+            {daysList.map((day) => (
               <div
                 key={day.dateKey}
                 title={`${day.label}: ${day.completed ? 'Completed' : 'Pending'}`}

@@ -161,33 +161,10 @@ export const YearInPixelsHeatmap: React.FC<YearInPixelsHeatmapProps> = ({
   // 4. YEAR IN PIXELS (Offloaded to background Web Worker for guaranteed 60/120 FPS UI)
   const { yearGrid, yearStats } = useAnalyticsWorker(year, completedDateKeys, todayKey);
 
-  // Longest streak highway in the year
+  // Longest streak highway in the year (pre-computed by background Web Worker)
   const streakHighwaySet = useMemo(() => {
-    let longestChain: string[] = [];
-    let currentChain: string[] = [];
-
-    const allDaysInYear: { dateKey: string; completed: boolean }[] = [];
-    yearGrid.forEach((week) => {
-      week.forEach((cell) => {
-        if (cell && cell.isCurrentYear) {
-          allDaysInYear.push({ dateKey: cell.dateKey, completed: cell.completed });
-        }
-      });
-    });
-    allDaysInYear.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-
-    for (const d of allDaysInYear) {
-      if (d.completed) {
-        currentChain.push(d.dateKey);
-        if (currentChain.length > longestChain.length) {
-          longestChain = [...currentChain];
-        }
-      } else {
-        currentChain = [];
-      }
-    }
-    return new Set(longestChain);
-  }, [yearGrid]);
+    return new Set(yearStats.streakHighwayKeys || []);
+  }, [yearStats.streakHighwayKeys]);
 
   // Title string depending on zoom
   const headerTitle = useMemo(() => {

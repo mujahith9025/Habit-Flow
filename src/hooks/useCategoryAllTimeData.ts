@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { onSnapshot, getEntriesCollectionRef } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { Habit, HabitEntryMap } from '../types';
@@ -129,237 +129,243 @@ export function useCategoryAllTimeData(habits: Habit[]): UseCategoryAllTimeDataR
     };
   }, [user?.uid, habitIdsKey]);
 
-  const today = new Date();
-  let totalCategoryCompletions = 0;
-  let totalNotesInBoard = 0;
-  const categoryDayCounts: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-  const monthlyCategoryCompletionsMap: Record<string, number> = {};
+  const computedData = useMemo(() => {
+    const today = new Date();
+    let totalCategoryCompletions = 0;
+    let totalNotesInBoard = 0;
+    const categoryDayCounts: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    const monthlyCategoryCompletionsMap: Record<string, number> = {};
 
-  // Find earliest entry date across the entire category
-  let earliestCategoryDate: Date = today;
+    // Find earliest entry date across the entire category
+    let earliestCategoryDate: Date = today;
 
-  habits.forEach((habit) => {
-    const entries = entriesByHabit[habit.id] || {};
-    if (habit.createdAt) {
-      const cDate = new Date(habit.createdAt);
-      if (!isNaN(cDate.getTime()) && cDate < earliestCategoryDate) {
-        earliestCategoryDate = cDate;
+    habits.forEach((habit) => {
+      const entries = entriesByHabit[habit.id] || {};
+      if (habit.createdAt) {
+        const cDate = new Date(habit.createdAt);
+        if (!isNaN(cDate.getTime()) && cDate < earliestCategoryDate) {
+          earliestCategoryDate = cDate;
+        }
       }
-    }
 
-    Object.keys(entries).forEach((dateKey) => {
-      if (dateKey.length === 10) {
-        const [y, m, d] = dateKey.split('-').map(Number);
-        if (y && m && d) {
-          const eDate = new Date(y, m - 1, d);
-          if (eDate < earliestCategoryDate) {
-            earliestCategoryDate = eDate;
+      Object.keys(entries).forEach((dateKey) => {
+        if (dateKey.length === 10) {
+          const [y, m, d] = dateKey.split('-').map(Number);
+          if (y && m && d) {
+            const eDate = new Date(y, m - 1, d);
+            if (eDate < earliestCategoryDate) {
+              earliestCategoryDate = eDate;
+            }
           }
         }
-      }
+      });
     });
-  });
 
-  const totalCategoryDays = Math.max(
-    1,
-    Math.ceil((today.getTime() - earliestCategoryDate.getTime()) / (1000 * 3600 * 24)) + 1
-  );
+    const totalCategoryDays = Math.max(
+      1,
+      Math.ceil((today.getTime() - earliestCategoryDate.getTime()) / (1000 * 3600 * 24)) + 1
+    );
 
-  // Calculate statistics for each individual habit
-  const habitStatsList: CategoryHabitAllTimeStat[] = habits.map((habit) => {
-    const entries = entriesByHabit[habit.id] || {};
-    let totalCompletions = 0;
-    let totalNotes = 0;
-    const monthCountsMap: Record<string, number> = {};
+    // Calculate statistics for each individual habit
+    const habitStatsList: CategoryHabitAllTimeStat[] = habits.map((habit) => {
+      const entries = entriesByHabit[habit.id] || {};
+      let totalCompletions = 0;
+      let totalNotes = 0;
+      const monthCountsMap: Record<string, number> = {};
 
-    Object.values(entries).forEach((entry) => {
-      if (entry.note || entry.mood || (entry.tags && entry.tags.length > 0)) {
-        totalNotes++;
-        totalNotesInBoard++;
-      }
-
-      if (entry.completed) {
-        totalCompletions++;
-        totalCategoryCompletions++;
-
-        const mKey = entry.monthKey || entry.date.substring(0, 7);
-        monthCountsMap[mKey] = (monthCountsMap[mKey] || 0) + 1;
-        monthlyCategoryCompletionsMap[mKey] = (monthlyCategoryCompletionsMap[mKey] || 0) + 1;
-
-        const [y, m, d] = entry.date.split('-').map(Number);
-        if (y && m && d) {
-          const entryDate = new Date(y, m - 1, d);
-          const dIdx = entryDate.getDay();
-          categoryDayCounts[dIdx] = (categoryDayCounts[dIdx] || 0) + 1;
+      Object.values(entries).forEach((entry) => {
+        if (entry.note || entry.mood || (entry.tags && entry.tags.length > 0)) {
+          totalNotes++;
+          totalNotesInBoard++;
         }
-      }
+
+        if (entry.completed) {
+          totalCompletions++;
+          totalCategoryCompletions++;
+
+          const mKey = entry.monthKey || entry.date.substring(0, 7);
+          monthCountsMap[mKey] = (monthCountsMap[mKey] || 0) + 1;
+          monthlyCategoryCompletionsMap[mKey] = (monthlyCategoryCompletionsMap[mKey] || 0) + 1;
+
+          const [y, m, d] = entry.date.split('-').map(Number);
+          if (y && m && d) {
+            const entryDate = new Date(y, m - 1, d);
+            const dIdx = entryDate.getDay();
+            categoryDayCounts[dIdx] = (categoryDayCounts[dIdx] || 0) + 1;
+          }
+        }
+      });
+
+      // Individual habit total tracked days (custom to this habit's creation/start)
+      const totalTrackedDays = calculateHabitTotalTrackedDays(habit, entries, today);
+      const allTimeRate = totalTrackedDays > 0 ? Math.min(100, Math.round((totalCompletions / totalTrackedDays) * 100)) : 0;
+
+      const currentStreak = calculateSingleHabitStreak(entries, today, true);
+      const longestStreak = calculateLongestStreak(entries);
+
+      // Find Best Month for this habit
+      let bestMonthTitle: string | undefined = undefined;
+      let bestMonthPercent: number | undefined = undefined;
+      let highestPct = -1;
+
+      Object.entries(monthCountsMap).forEach(([mKey, count]) => {
+        const [y, m] = mKey.split('-').map(Number);
+        const daysInM = new Date(y, m, 0).getDate();
+        const pct = daysInM > 0 ? Math.min(100, Math.round((count / daysInM) * 100)) : 0;
+        if (pct > highestPct && count > 0) {
+          highestPct = pct;
+          bestMonthTitle = `${MONTH_NAMES_SHORT[m - 1]} ${y}`;
+          bestMonthPercent = pct;
+        }
+      });
+
+      return {
+        habit,
+        totalCompletions,
+        totalTrackedDays,
+        longestStreak,
+        currentStreak,
+        allTimeRate,
+        daysSinceCreation: totalTrackedDays,
+        totalNotes,
+        bestMonthTitle,
+        bestMonthPercent,
+      };
     });
 
-    // Individual habit total tracked days (custom to this habit's creation/start)
-    const totalTrackedDays = calculateHabitTotalTrackedDays(habit, entries, today);
-    const allTimeRate = totalTrackedDays > 0 ? Math.min(100, Math.round((totalCompletions / totalTrackedDays) * 100)) : 0;
-
-    const currentStreak = calculateSingleHabitStreak(entries, today, true);
-    const longestStreak = calculateLongestStreak(entries);
-
-    // Find Best Month for this habit
-    let bestMonthTitle: string | undefined = undefined;
-    let bestMonthPercent: number | undefined = undefined;
-    let highestPct = -1;
-
-    Object.entries(monthCountsMap).forEach(([mKey, count]) => {
-      const [y, m] = mKey.split('-').map(Number);
-      const daysInM = new Date(y, m, 0).getDate();
-      const pct = daysInM > 0 ? Math.min(100, Math.round((count / daysInM) * 100)) : 0;
-      if (pct > highestPct && count > 0) {
-        highestPct = pct;
-        bestMonthTitle = `${MONTH_NAMES_SHORT[m - 1]} ${y}`;
-        bestMonthPercent = pct;
+    // Sort habitStatsList descending by allTimeRate, then totalCompletions
+    habitStatsList.sort((a, b) => {
+      if (a.totalCompletions === 0 && b.totalCompletions > 0) return 1;
+      if (b.totalCompletions === 0 && a.totalCompletions > 0) return -1;
+      if (b.allTimeRate !== a.allTimeRate) {
+        return b.allTimeRate - a.allTimeRate;
       }
+      return b.totalCompletions - a.totalCompletions;
     });
 
-    return {
-      habit,
-      totalCompletions,
-      totalTrackedDays,
-      longestStreak,
-      currentStreak,
-      allTimeRate,
-      daysSinceCreation: totalTrackedDays,
-      totalNotes,
-      bestMonthTitle,
-      bestMonthPercent,
-    };
-  });
+    // Crown the #1 Top Habit in this category
+    const topHabit = habitStatsList.length > 0 && habitStatsList[0].totalCompletions > 0 ? habitStatsList[0] : null;
 
-  // Sort habitStatsList descending by allTimeRate, then totalCompletions
-  habitStatsList.sort((a, b) => {
-    if (a.totalCompletions === 0 && b.totalCompletions > 0) return 1;
-    if (b.totalCompletions === 0 && a.totalCompletions > 0) return -1;
-    if (b.allTimeRate !== a.allTimeRate) {
-      return b.allTimeRate - a.allTimeRate;
-    }
-    return b.totalCompletions - a.totalCompletions;
-  });
+    const totalCategoryPossibleChecks = habitStatsList.reduce((acc, curr) => acc + curr.totalTrackedDays, 0);
 
-  // Crown the #1 Top Habit in this category
-  const topHabit = habitStatsList.length > 0 && habitStatsList[0].totalCompletions > 0 ? habitStatsList[0] : null;
-
-  const totalCategoryPossibleChecks = habitStatsList.reduce((acc, curr) => acc + curr.totalTrackedDays, 0);
-
-  const overallConsistencyPercent =
-    habitStatsList.length > 0
-      ? Math.round(
-          habitStatsList.reduce((acc, curr) => acc + curr.allTimeRate, 0) / habitStatsList.length
-        )
-      : 0;
-
-  // 1. Calculate each habit's DayOfWeek occurrences and check-ins
-  const dayCompletedSum: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-  const dayTotalDaysSum: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-
-  habits.forEach((h) => {
-    const entries = entriesByHabit[h.id] || {};
-    const habitDow = calculateHabitDayOfWeekStats(h, entries, today);
-    habitDow.dayStats.forEach((s) => {
-      dayCompletedSum[s.dayIndex] = (dayCompletedSum[s.dayIndex] || 0) + s.completedCount;
-      dayTotalDaysSum[s.dayIndex] = (dayTotalDaysSum[s.dayIndex] || 0) + s.totalDays;
-    });
-  });
-
-  // Day of week distribution for category with total days and true consistency percentage
-  const categoryDayOfWeekStats: CategoryDayOfWeekStat[] = DAYS_OF_WEEK.map(({ day, shortLabel, dayIndex }) => {
-    const count = dayCompletedSum[dayIndex] || 0;
-    const totalDays = Math.max(1, Math.max(dayTotalDaysSum[dayIndex] || 0, count));
-    const percent = totalDays > 0 ? Math.min(100, Math.round((count / totalDays) * 100)) : 0;
-
-    return {
-      day,
-      shortLabel,
-      count,
-      totalDays,
-      percent,
-      dayIndex,
-    };
-  });
-
-  // Calculate Peak & Lowest Days + Weekday/Weekend split
-  let peakDay: CategoryDayOfWeekStat | null = null;
-  let lowestDay: CategoryDayOfWeekStat | null = null;
-  let weekdayChecks = 0;
-  let weekendChecks = 0;
-
-  const activeDays = categoryDayOfWeekStats.filter((d) => d.count > 0);
-  if (activeDays.length > 0) {
-    peakDay = activeDays.reduce((max, d) => {
-      if (d.percent !== max.percent) {
-        return d.percent > max.percent ? d : max;
-      }
-      return d.count > max.count ? d : max;
-    }, activeDays[0]);
-
-    lowestDay = categoryDayOfWeekStats.reduce((min, d) => {
-      if (d.percent !== min.percent) {
-        return d.percent < min.percent ? d : min;
-      }
-      return d.count < min.count ? d : min;
-    }, categoryDayOfWeekStats[0]);
-  }
-
-  categoryDayOfWeekStats.forEach((d) => {
-    if (d.dayIndex >= 1 && d.dayIndex <= 5) {
-      weekdayChecks += d.count;
-    } else {
-      weekendChecks += d.count;
-    }
-  });
-
-  const totalWeekdayPossible = categoryDayOfWeekStats
-    .filter((d) => d.dayIndex >= 1 && d.dayIndex <= 5)
-    .reduce((sum, d) => sum + d.totalDays, 0);
-  const totalWeekendPossible = categoryDayOfWeekStats
-    .filter((d) => d.dayIndex === 0 || d.dayIndex === 6)
-    .reduce((sum, d) => sum + d.totalDays, 0);
-
-  const weekdayPercent = totalWeekdayPossible > 0 ? Math.min(100, Math.round((weekdayChecks / totalWeekdayPossible) * 100)) : 0;
-  const weekendPercent = totalWeekendPossible > 0 ? Math.min(100, Math.round((weekendChecks / totalWeekendPossible) * 100)) : 0;
-
-  // Monthly trend for category
-  const sortedMonthKeys = Object.keys(monthlyCategoryCompletionsMap).sort();
-  const monthlyCategoryTrend: CategoryMonthlyTrend[] = sortedMonthKeys.map((mKey) => {
-    const [y, m] = mKey.split('-').map(Number);
-    const mDays = new Date(y, m, 0).getDate();
-    const count = monthlyCategoryCompletionsMap[mKey] || 0;
-    const totalPossibleInMonth = habits.length * mDays;
-    const avgPct =
-      totalPossibleInMonth > 0
-        ? Math.min(100, Math.round((count / totalPossibleInMonth) * 100))
+    const overallConsistencyPercent =
+      habitStatsList.length > 0
+        ? Math.round(
+            habitStatsList.reduce((acc, curr) => acc + curr.allTimeRate, 0) / habitStatsList.length
+          )
         : 0;
 
+    // 1. Calculate each habit's DayOfWeek occurrences and check-ins
+    const dayCompletedSum: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    const dayTotalDaysSum: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+    habits.forEach((h) => {
+      const entries = entriesByHabit[h.id] || {};
+      const habitDow = calculateHabitDayOfWeekStats(h, entries, today);
+      habitDow.dayStats.forEach((s) => {
+        dayCompletedSum[s.dayIndex] = (dayCompletedSum[s.dayIndex] || 0) + s.completedCount;
+        dayTotalDaysSum[s.dayIndex] = (dayTotalDaysSum[s.dayIndex] || 0) + s.totalDays;
+      });
+    });
+
+    // Day of week distribution for category with total days and true consistency percentage
+    const categoryDayOfWeekStats: CategoryDayOfWeekStat[] = DAYS_OF_WEEK.map(({ day, shortLabel, dayIndex }) => {
+      const count = dayCompletedSum[dayIndex] || 0;
+      const totalDays = Math.max(1, Math.max(dayTotalDaysSum[dayIndex] || 0, count));
+      const percent = totalDays > 0 ? Math.min(100, Math.round((count / totalDays) * 100)) : 0;
+
+      return {
+        day,
+        shortLabel,
+        count,
+        totalDays,
+        percent,
+        dayIndex,
+      };
+    });
+
+    // Calculate Peak & Lowest Days + Weekday/Weekend split
+    let peakDay: CategoryDayOfWeekStat | null = null;
+    let lowestDay: CategoryDayOfWeekStat | null = null;
+    let weekdayChecks = 0;
+    let weekendChecks = 0;
+
+    const activeDays = categoryDayOfWeekStats.filter((d) => d.count > 0);
+    if (activeDays.length > 0) {
+      peakDay = activeDays.reduce((max, d) => {
+        if (d.percent !== max.percent) {
+          return d.percent > max.percent ? d : max;
+        }
+        return d.count > max.count ? d : max;
+      }, activeDays[0]);
+
+      lowestDay = categoryDayOfWeekStats.reduce((min, d) => {
+        if (d.percent !== min.percent) {
+          return d.percent < min.percent ? d : min;
+        }
+        return d.count < min.count ? d : min;
+      }, categoryDayOfWeekStats[0]);
+    }
+
+    categoryDayOfWeekStats.forEach((d) => {
+      if (d.dayIndex >= 1 && d.dayIndex <= 5) {
+        weekdayChecks += d.count;
+      } else {
+        weekendChecks += d.count;
+      }
+    });
+
+    const totalWeekdayPossible = categoryDayOfWeekStats
+      .filter((d) => d.dayIndex >= 1 && d.dayIndex <= 5)
+      .reduce((sum, d) => sum + d.totalDays, 0);
+    const totalWeekendPossible = categoryDayOfWeekStats
+      .filter((d) => d.dayIndex === 0 || d.dayIndex === 6)
+      .reduce((sum, d) => sum + d.totalDays, 0);
+
+    const weekdayPercent = totalWeekdayPossible > 0 ? Math.min(100, Math.round((weekdayChecks / totalWeekdayPossible) * 100)) : 0;
+    const weekendPercent = totalWeekendPossible > 0 ? Math.min(100, Math.round((weekendChecks / totalWeekendPossible) * 100)) : 0;
+
+    // Monthly trend for category
+    const sortedMonthKeys = Object.keys(monthlyCategoryCompletionsMap).sort();
+    const monthlyCategoryTrend: CategoryMonthlyTrend[] = sortedMonthKeys.map((mKey) => {
+      const [y, m] = mKey.split('-').map(Number);
+      const mDays = new Date(y, m, 0).getDate();
+      const count = monthlyCategoryCompletionsMap[mKey] || 0;
+      const totalPossibleInMonth = habits.length * mDays;
+      const avgPct =
+        totalPossibleInMonth > 0
+          ? Math.min(100, Math.round((count / totalPossibleInMonth) * 100))
+          : 0;
+
+      return {
+        monthKey: mKey,
+        monthTitle: `${MONTH_NAMES_SHORT[m - 1]} ${y}`,
+        totalCompletions: count,
+        averagePercent: avgPct,
+      };
+    });
+
     return {
-      monthKey: mKey,
-      monthTitle: `${MONTH_NAMES_SHORT[m - 1]} ${y}`,
-      totalCompletions: count,
-      averagePercent: avgPct,
+      totalCategoryCompletions,
+      totalCategoryPossibleChecks,
+      overallConsistencyPercent,
+      totalCategoryDays,
+      topHabit,
+      habitStatsList,
+      categoryDayOfWeekStats,
+      peakDay,
+      lowestDay,
+      weekdayChecks,
+      weekendChecks,
+      weekdayPercent,
+      weekendPercent,
+      monthlyCategoryTrend,
+      totalNotesInBoard,
     };
-  });
+  }, [habits, entriesByHabit]);
 
   return {
-    totalCategoryCompletions,
-    totalCategoryPossibleChecks,
-    overallConsistencyPercent,
-    totalCategoryDays,
-    topHabit,
-    habitStatsList,
-    categoryDayOfWeekStats,
-    peakDay,
-    lowestDay,
-    weekdayChecks,
-    weekendChecks,
-    weekdayPercent,
-    weekendPercent,
-    monthlyCategoryTrend,
-    totalNotesInBoard,
+    ...computedData,
     loading,
   };
 }

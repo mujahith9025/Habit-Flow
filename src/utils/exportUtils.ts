@@ -23,10 +23,14 @@ export interface ExportData {
 /**
  * Dynamic Proxy for Executive PDF Document Exporter
  * Keeps jsPDF completely isolated in its own async chunk.
+ * Supports optional progress callback for fluid non-blocking UI state.
  */
-export async function exportToPDF(data: ExportData): Promise<void> {
+export async function exportToPDF(
+  data: ExportData,
+  onProgress?: (progress: number, statusText: string) => void
+): Promise<void> {
   const { exportToPDF: lazyExport } = await import('./pdfExport');
-  return lazyExport(data);
+  return lazyExport(data, onProgress);
 }
 
 /**
