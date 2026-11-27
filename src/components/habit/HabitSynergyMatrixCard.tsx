@@ -1,5 +1,6 @@
 import React from 'react';
 import { HabitSynergyReport } from '../../utils/habitSynergy';
+import { AnalyticalHelpTooltip } from '../ui/AnalyticalHelpTooltip';
 
 interface HabitSynergyMatrixCardProps {
   synergyReport: HabitSynergyReport;
@@ -30,8 +31,12 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
             >
               hub
             </span>
-            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
+            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center">
               Habit Synergy & Stacking Engine
+              <AnalyticalHelpTooltip
+                term="Habit Stacking Synergy"
+                explanation="Calculates the conditional probability that completing habit A naturally triggers you to complete habit B."
+              />
             </h3>
           </div>
           <p className="font-body-text text-xs text-on-surface-variant">

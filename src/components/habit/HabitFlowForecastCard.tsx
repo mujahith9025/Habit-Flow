@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlowForecastResult } from '../../utils/flowForecast';
+import { AnalyticalHelpTooltip } from '../ui/AnalyticalHelpTooltip';
 
 interface HabitFlowForecastCardProps {
   forecast: FlowForecastResult;
@@ -39,8 +40,12 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
             >
               speed
             </span>
-            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
+            <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center">
               Flow Forecast & Pacing Intelligence
+              <AnalyticalHelpTooltip
+                term="Flow Pacing"
+                explanation="Calculated from your rolling 7-day velocity to forecast your month-end completion percentage against the 80% Flow benchmark."
+              />
             </h3>
           </div>
           <p className="font-body-text text-xs text-on-surface-variant">
@@ -105,8 +110,12 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
 
         {/* Cell 2: Trailing Daily Velocity */}
         <div className="p-4 rounded-2xl bg-surface-container-low/70 dark:bg-surface-container-high/30 border border-outline-variant/15 flex flex-col justify-between space-y-2">
-          <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
+          <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold flex items-center">
             Current Daily Velocity
+            <AnalyticalHelpTooltip
+              term="Daily Velocity"
+              explanation="The average number of habit checks you have completed per day over the trailing 7 days."
+            />
           </span>
           <div>
             <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-primary dark:text-primary-fixed-dim">

@@ -20,6 +20,9 @@ import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitStickyMiniHud } from '../components/habit/HabitStickyMiniHud';
 import { HabitSectionQuickJumpTabs, SectionTabItem } from '../components/habit/HabitSectionQuickJumpTabs';
 import { HabitTargetSimulatorCard } from '../components/habit/HabitTargetSimulatorCard';
+import { HabitPlainEnglishStoryView } from '../components/habit/HabitPlainEnglishStoryView';
+import { generatePlainEnglishStory } from '../utils/plainEnglishStory';
+import { HabitAriaLiveNarrative } from '../components/habit/HabitAriaLiveNarrative';
 import { HabitShortcutsHelpModal } from '../components/habit/HabitShortcutsHelpModal';
 import { useReportShortcutsAndGestures } from '../hooks/useReportShortcutsAndGestures';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
@@ -82,6 +85,50 @@ export const HabitDetailPage: React.FC = () => {
   const [activeSectionId, setActiveSectionId] = useState('overview');
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isMonthPickerControlledOpen, setIsMonthPickerControlledOpen] = useState(false);
+
+  // "Plain English Story" Mode (Executive TL;DR) vs Deep Analytics
+  const [reportMode, setReportMode] = useState<'analytics' | 'story'>(() => {
+    try {
+      return (localStorage.getItem('habitflow_report_view_mode') as 'analytics' | 'story') || 'analytics';
+    } catch {
+      return 'analytics';
+    }
+  });
+
+  // Colorblind-Safe Palette Mode (Protanopia / Deuteranopia a11y)
+  const [isColorblindSafe, setIsColorblindSafe] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('habitflow_colorblind_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleReportMode = () => {
+    triggerHaptic('selection');
+    setReportMode((prev) => {
+      const next = prev === 'analytics' ? 'story' : 'analytics';
+      try {
+        localStorage.setItem('habitflow_report_view_mode', next);
+      } catch {
+        // Ignore
+      }
+      return next;
+    });
+  };
+
+  const handleToggleColorblindMode = () => {
+    triggerHaptic('selection');
+    setIsColorblindSafe((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('habitflow_colorblind_mode', String(next));
+      } catch {
+        // Ignore
+      }
+      return next;
+    });
+  };
 
   const handleToggleDensityMode = () => {
     triggerHaptic('selection');
@@ -532,6 +579,25 @@ export const HabitDetailPage: React.FC = () => {
     }
   }, [currentMonthKey, selectedDate, laurelHabit]);
 
+  // Plain English Story Narrative for Cognitive Simplicity
+  const plainEnglishStory = useMemo(() => {
+    return generatePlainEnglishStory(
+      habitsInCurrentCategory,
+      aggregateMetricsMap,
+      entriesByHabit,
+      daysInMonth,
+      selectedDate,
+      currentCategory
+    );
+  }, [
+    habitsInCurrentCategory,
+    aggregateMetricsMap,
+    entriesByHabit,
+    daysInMonth,
+    selectedDate,
+    currentCategory,
+  ]);
+
   if (habitsLoading) {
     return (
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
@@ -580,7 +646,23 @@ export const HabitDetailPage: React.FC = () => {
   }
 
   return (
-    <div className={`max-w-5xl mx-auto ${densityMode === 'compact' ? 'space-y-4 pb-8' : 'space-y-6 pb-12'} animate-fadeIn`}>
+    <div
+      className={`max-w-5xl mx-auto ${
+        densityMode === 'compact' ? 'space-y-4 pb-8' : 'space-y-6 pb-12'
+      } ${isColorblindSafe ? 'colorblind-safe' : ''} animate-fadeIn`}
+    >
+      {/* Screen Reader (ARIA Live) Graph Narrative */}
+      <HabitAriaLiveNarrative
+        monthTitle={formattedTitle}
+        categoryName={currentCategory}
+        completionRate={milestoneStats.completionRate}
+        totalChecks={milestoneStats.totalChecks}
+        longestStreak={milestoneStats.longestStreak}
+        peakDayName={milestoneStats.peakDayName}
+        isSingleHabit={selectedHabitId !== 'all'}
+        habitName={habit?.name}
+      />
+
       {/* 0. Floating Sticky Mini-HUD (Collapses into slim pill on scroll) */}
       <HabitStickyMiniHud
         isVisible={isMiniHudVisible}
@@ -617,13 +699,10 @@ export const HabitDetailPage: React.FC = () => {
         onToggleDensityMode={handleToggleDensityMode}
         isMonthPickerOpen={isMonthPickerControlledOpen}
         onToggleMonthPicker={(open) => setIsMonthPickerControlledOpen(open ?? !isMonthPickerControlledOpen)}
-      />
-
-      {/* Quick-Jump Section Anchor Navigation Tabs */}
-      <HabitSectionQuickJumpTabs
-        activeSectionId={activeSectionId}
-        sections={currentSections}
-        onSelectSection={handleSelectSection}
+        storyMode={reportMode === 'story'}
+        onToggleStoryMode={handleToggleReportMode}
+        isColorblindSafe={isColorblindSafe}
+        onToggleColorblindMode={handleToggleColorblindMode}
       />
 
       {/* 2. Inspo Hero Bento Ribbon: Executive Performance Pulse */}
@@ -643,227 +722,245 @@ export const HabitDetailPage: React.FC = () => {
         />
       </div>
 
-      {/* 3. Interactive "What-If" Habit Target Simulator */}
-      <div id="simulator" className="scroll-mt-20">
-        <HabitTargetSimulatorCard
-          totalDays={daysInMonth.length}
-          daysElapsed={
-            selectedDate.getFullYear() === new Date().getFullYear() &&
-            selectedDate.getMonth() === new Date().getMonth()
-              ? new Date().getDate()
-              : selectedDate < new Date()
-              ? daysInMonth.length
-              : 0
-          }
-          completedChecks={milestoneStats.totalChecks}
-          totalHabitCount={selectedHabitId !== 'all' ? 1 : habitsInCurrentCategory.length}
-          currentStreak={milestoneStats.longestStreak}
-          selectedMonthTitle={formattedTitle}
+      {/* Mode Switch: "Plain English Story" View vs "Deep Analytics" Views */}
+      {reportMode === 'story' ? (
+        <HabitPlainEnglishStoryView
+          story={plainEnglishStory}
+          onSwitchToAnalytics={() => setReportMode('analytics')}
+          onOpenMilestoneCard={() => setIsMilestoneModalOpen(true)}
         />
-      </div>
-
-      {/* 4. Predictive Flow Forecast & Pacing Intelligence (Aggregate View) */}
-      {selectedHabitId === 'all' && (
-        <div id="forecast" className="scroll-mt-20">
-          <HabitFlowForecastCard forecast={flowForecast} />
-        </div>
-      )}
-
-      {/* 5. Main Analytics Content Area */}
-      {selectedHabitId === 'all' ? (
-        /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
-        <div className="space-y-6">
-          <div id="momentum" className="scroll-mt-20">
-            <CategoryAggregateGraphsView
-              categoryName={currentCategory}
-              habits={habitsInCurrentCategory}
-              daysInMonth={daysInMonth}
-              habitMetricsMap={aggregateMetricsMap}
-              isCompleted={isAggregateCompleted}
-              onToggleEntry={toggleAggregateEntry}
-              selectedMonthTitle={formattedTitle}
-              onCreateHabit={() => setIsCreateModalOpen(true)}
-            />
-          </div>
-
-          {/* Habit Stacking & Synergy Engine (Atomic Habits Co-occurrence) */}
-          <div id="synergy" className="scroll-mt-20">
-            <HabitSynergyMatrixCard synergyReport={habitSynergy} />
-          </div>
-
-          {/* Habit Emotional ROI Matrix & Mindful Reflection Word Cloud */}
-          <div id="emotional-roi" className="space-y-6 scroll-mt-20">
-            <HabitEmotionalROIMatrix
-              habits={habitsInCurrentCategory}
-              entriesByHabit={entriesByHabit}
-              habitMetricsMap={aggregateMetricsMap}
-            />
-            <HabitEmotionalAuraCloud
-              entriesByHabit={entriesByHabit}
-              selectedMonthTitle={formattedTitle}
-            />
-          </div>
-        </div>
       ) : (
-        /* B. INDIVIDUAL HABIT DEEP DIVE VIEW */
-        habit && (
-          <div className="space-y-6">
-            {/* Habit Header Banner */}
-            <div className="bg-surface-container-lowest dark:bg-surface-container-lowest p-5 sm:p-6 rounded-3xl border border-outline-variant/30 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
-                    {habit.name}
-                  </h1>
-                  {habit.category && (
-                    <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
-                      {habit.category}
-                    </span>
-                  )}
-                  <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-stat-label">
-                    {habit.frequency || 'daily'}
-                  </span>
-                </div>
-                <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
-                  Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
-                </p>
-              </div>
+        <>
+          {/* Quick-Jump Section Anchor Navigation Tabs */}
+          <HabitSectionQuickJumpTabs
+            activeSectionId={activeSectionId}
+            sections={currentSections}
+            onSelectSection={handleSelectSection}
+          />
 
-              {/* Right: Actions */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-full"
-                >
-                  <span className="material-symbols-outlined text-[18px]">edit</span>
-                  <span>Edit</span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDelete}
-                  className="text-error hover:bg-error-container/20 px-3 rounded-full"
-                  title="Delete Habit Permanently"
-                >
-                  <span className="material-symbols-outlined text-[18px]">delete</span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleArchive}
-                  className="text-on-surface-variant hover:bg-surface-container-high px-2.5 rounded-full"
-                  title="Archive Habit"
-                >
-                  <span className="material-symbols-outlined text-[18px]">archive</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Metrics Summary Grid for the selected habit with 30-Day Momentum Sparkline */}
-            <div id="stats" className="scroll-mt-20">
-              <HabitStatsGrid
-                metrics={singleMetrics}
-                selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
-                habitColor={habit.color || '#2D5A34'}
-                isCompleted={isSingleCompleted}
-                selectedDate={selectedDate}
-              />
-            </div>
-
-            {/* Graph / Calendar / All-Time View Switcher Tabs */}
-            <div className="flex items-center justify-between px-1">
-              <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low dark:bg-surface-container-low p-1 rounded-full border border-outline-variant/30 shadow-sm">
-                <button
-                  onClick={() => setActiveAnalyticsView('graphs')}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    activeAnalyticsView === 'graphs'
-                      ? 'bg-primary text-on-primary shadow-soft'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">bar_chart</span>
-                  <span>Weekly Graphs</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveAnalyticsView('calendar')}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    activeAnalyticsView === 'calendar'
-                      ? 'bg-primary text-on-primary shadow-soft'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">grain</span>
-                  <span>Year-in-Pixels Heatmap</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveAnalyticsView('alltime')}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    activeAnalyticsView === 'alltime'
-                      ? 'bg-primary text-on-primary shadow-soft'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">all_inclusive</span>
-                  <span>All-Time Analytics</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Individual Habit Visualization based on selected view */}
-            {activeAnalyticsView === 'graphs' && (
-              <div id="momentum" className="space-y-6 scroll-mt-20">
-                <HabitWeeklyGraphsView
-                  currentDate={selectedDate}
-                  onChangeMonth={handleMonthChange}
-                  isCompleted={isSingleCompleted}
-                  onToggleDate={toggleSingleEntry}
-                  habitName={habit.name}
-                  habitFrequency={habit.frequency}
-                  goalCount={habit.goalCount}
-                />
-                <HabitAllTimeAnalyticsCard
-                  habitName={habit.name}
-                  habitColor={habit.color}
-                  metrics={singleMetrics}
-                />
-              </div>
-            )}
-
-            {activeAnalyticsView === 'calendar' && (
-              <div id="heatmap" className="space-y-6 scroll-mt-20">
-                <HabitCalendarHeatmap
-                  currentDate={selectedDate}
-                  onChangeMonth={handleMonthChange}
-                  isCompleted={isSingleCompleted}
-                  onToggleDate={toggleSingleEntry}
-                  habitColor={habit.color || '#2D5A34'}
-                  habitName={habit.name}
-                />
-                <HabitAllTimeAnalyticsCard
-                  habitName={habit.name}
-                  habitColor={habit.color}
-                  metrics={singleMetrics}
-                />
-              </div>
-            )}
-
-            {activeAnalyticsView === 'alltime' && (
-              <div id="alltime" className="scroll-mt-20">
-                <HabitAllTimeAnalyticsCard
-                  habitName={habit.name}
-                  habitColor={habit.color}
-                  metrics={singleMetrics}
-                />
-              </div>
-            )}
+          {/* 3. Interactive "What-If" Habit Target Simulator */}
+          <div id="simulator" className="scroll-mt-20">
+            <HabitTargetSimulatorCard
+              totalDays={daysInMonth.length}
+              daysElapsed={
+                selectedDate.getFullYear() === new Date().getFullYear() &&
+                selectedDate.getMonth() === new Date().getMonth()
+                  ? new Date().getDate()
+                  : selectedDate < new Date()
+                  ? daysInMonth.length
+                  : 0
+              }
+              completedChecks={milestoneStats.totalChecks}
+              totalHabitCount={selectedHabitId !== 'all' ? 1 : habitsInCurrentCategory.length}
+              currentStreak={milestoneStats.longestStreak}
+              selectedMonthTitle={formattedTitle}
+            />
           </div>
-        )
+
+          {/* 4. Predictive Flow Forecast & Pacing Intelligence (Aggregate View) */}
+          {selectedHabitId === 'all' && (
+            <div id="forecast" className="scroll-mt-20">
+              <HabitFlowForecastCard forecast={flowForecast} />
+            </div>
+          )}
+
+          {/* 5. Main Analytics Content Area */}
+          {selectedHabitId === 'all' ? (
+            /* A. AGGREGATE ALL HABITS VIEW (Daily, Weekly, Monthly graphs for ALL habits under this title) */
+            <div className="space-y-6">
+              <div id="momentum" className="scroll-mt-20">
+                <CategoryAggregateGraphsView
+                  categoryName={currentCategory}
+                  habits={habitsInCurrentCategory}
+                  daysInMonth={daysInMonth}
+                  habitMetricsMap={aggregateMetricsMap}
+                  isCompleted={isAggregateCompleted}
+                  onToggleEntry={toggleAggregateEntry}
+                  selectedMonthTitle={formattedTitle}
+                  onCreateHabit={() => setIsCreateModalOpen(true)}
+                />
+              </div>
+
+              {/* Habit Stacking & Synergy Engine (Atomic Habits Co-occurrence) */}
+              <div id="synergy" className="scroll-mt-20">
+                <HabitSynergyMatrixCard synergyReport={habitSynergy} />
+              </div>
+
+              {/* Habit Emotional ROI Matrix & Mindful Reflection Word Cloud */}
+              <div id="emotional-roi" className="space-y-6 scroll-mt-20">
+                <HabitEmotionalROIMatrix
+                  habits={habitsInCurrentCategory}
+                  entriesByHabit={entriesByHabit}
+                  habitMetricsMap={aggregateMetricsMap}
+                />
+                <HabitEmotionalAuraCloud
+                  entriesByHabit={entriesByHabit}
+                  selectedMonthTitle={formattedTitle}
+                />
+              </div>
+            </div>
+          ) : (
+            /* B. INDIVIDUAL HABIT DEEP DIVE VIEW */
+            habit && (
+              <div className="space-y-6">
+                {/* Habit Header Banner */}
+                <div className="bg-surface-container-lowest dark:bg-surface-container-lowest p-5 sm:p-6 rounded-3xl border border-outline-variant/30 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h1 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+                        {habit.name}
+                      </h1>
+                      {habit.category && (
+                        <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-stat-label">
+                          {habit.category}
+                        </span>
+                      )}
+                      <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-stat-label">
+                        {habit.frequency || 'daily'}
+                      </span>
+                    </div>
+                    <p className="font-body-text text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                      Goal: {habit.goalCount || 1} time{(habit.goalCount || 1) > 1 ? 's' : ''} per {habit.frequency === 'weekly' ? 'week' : habit.frequency === 'monthly' ? 'month' : 'day'}
+                    </p>
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditModalOpen(true)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-full"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                      <span>Edit</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDelete}
+                      className="text-error hover:bg-error-container/20 px-3 rounded-full"
+                      title="Delete Habit Permanently"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleArchive}
+                      className="text-on-surface-variant hover:bg-surface-container-high px-2.5 rounded-full"
+                      title="Archive Habit"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">archive</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Metrics Summary Grid for the selected habit with 30-Day Momentum Sparkline */}
+                <div id="stats" className="scroll-mt-20">
+                  <HabitStatsGrid
+                    metrics={singleMetrics}
+                    selectedMonthTitle={MONTH_NAMES[selectedMonthIdx]}
+                    habitColor={habit.color || '#2D5A34'}
+                    isCompleted={isSingleCompleted}
+                    selectedDate={selectedDate}
+                  />
+                </div>
+
+                {/* Graph / Calendar / All-Time View Switcher Tabs */}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low dark:bg-surface-container-low p-1 rounded-full border border-outline-variant/30 shadow-sm">
+                    <button
+                      onClick={() => setActiveAnalyticsView('graphs')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        activeAnalyticsView === 'graphs'
+                          ? 'bg-primary text-on-primary shadow-soft'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">bar_chart</span>
+                      <span>Weekly Graphs</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveAnalyticsView('calendar')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        activeAnalyticsView === 'calendar'
+                          ? 'bg-primary text-on-primary shadow-soft'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">grain</span>
+                      <span>Year-in-Pixels Heatmap</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveAnalyticsView('alltime')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        activeAnalyticsView === 'alltime'
+                          ? 'bg-primary text-on-primary shadow-soft'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">all_inclusive</span>
+                      <span>All-Time Analytics</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Individual Habit Visualization based on selected view */}
+                {activeAnalyticsView === 'graphs' && (
+                  <div id="momentum" className="space-y-6 scroll-mt-20">
+                    <HabitWeeklyGraphsView
+                      currentDate={selectedDate}
+                      onChangeMonth={handleMonthChange}
+                      isCompleted={isSingleCompleted}
+                      onToggleDate={toggleSingleEntry}
+                      habitName={habit.name}
+                      habitFrequency={habit.frequency}
+                      goalCount={habit.goalCount}
+                    />
+                    <HabitAllTimeAnalyticsCard
+                      habitName={habit.name}
+                      habitColor={habit.color}
+                      metrics={singleMetrics}
+                    />
+                  </div>
+                )}
+
+                {activeAnalyticsView === 'calendar' && (
+                  <div id="heatmap" className="space-y-6 scroll-mt-20">
+                    <HabitCalendarHeatmap
+                      currentDate={selectedDate}
+                      onChangeMonth={handleMonthChange}
+                      isCompleted={isSingleCompleted}
+                      onToggleDate={toggleSingleEntry}
+                      habitColor={habit.color || '#2D5A34'}
+                      habitName={habit.name}
+                    />
+                    <HabitAllTimeAnalyticsCard
+                      habitName={habit.name}
+                      habitColor={habit.color}
+                      metrics={singleMetrics}
+                    />
+                  </div>
+                )}
+
+                {activeAnalyticsView === 'alltime' && (
+                  <div id="alltime" className="scroll-mt-20">
+                    <HabitAllTimeAnalyticsCard
+                      habitName={habit.name}
+                      habitColor={habit.color}
+                      metrics={singleMetrics}
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          )}
+        </>
       )}
 
       {/* Edit Habit Modal */}

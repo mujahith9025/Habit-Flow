@@ -5,6 +5,7 @@ import { HabitHistoryMetrics } from '../../hooks/useSingleHabitHistory';
 import { useCategoryAllTimeData } from '../../hooks/useCategoryAllTimeData';
 import { triggerHaptic } from '../../utils/haptics';
 import { BotanicalGrowthRankBadge } from './BotanicalGrowthRankBadge';
+import { AnalyticalHelpTooltip } from '../ui/AnalyticalHelpTooltip';
 
 export interface ExecutivePerformancePulseProps {
   selectedHabitId: string;
@@ -383,8 +384,12 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
         {/* Tile 1: Monthly Flow Rate & Period Lift */}
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant">
+            <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
               Monthly Consistency
+              <AnalyticalHelpTooltip
+                term="80% Flow State"
+                explanation="Behavioral scientists found that reaching 80% consistency is the optimal threshold for permanent habit automaticity without burnout or guilt."
+              />
             </span>
 
             {/* Period-over-Period Lift Pill */}
@@ -424,8 +429,12 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
         {/* Tile 2: Peak Power Window */}
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant">
+            <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
               Peak Power Window
+              <AnalyticalHelpTooltip
+                term="Peak Energy Day"
+                explanation="The day of the week when your habit execution rate statistically reaches its highest probability."
+              />
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container/40 text-on-secondary-container font-tnum">
               <span>{pulseData.peakDayPercent}% Rate</span>
@@ -446,8 +455,12 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
         {/* Tile 3: Continuity & Unbroken Flow */}
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant">
+            <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
               Continuity & Momentum
+              <AnalyticalHelpTooltip
+                term="Streak Momentum"
+                explanation="Tracks unbroken consecutive days of execution. Never missing twice prevents neural decay."
+              />
             </span>
             {pulseData.shieldsCount > 0 ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#A65A42]/15 text-[#A65A42] dark:text-[#E8927C] font-tnum">

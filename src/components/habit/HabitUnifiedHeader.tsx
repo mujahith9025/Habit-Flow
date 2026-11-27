@@ -22,6 +22,10 @@ interface HabitUnifiedHeaderProps {
   onToggleDensityMode?: () => void;
   isMonthPickerOpen?: boolean;
   onToggleMonthPicker?: (open?: boolean) => void;
+  storyMode?: boolean;
+  onToggleStoryMode?: () => void;
+  isColorblindSafe?: boolean;
+  onToggleColorblindMode?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -50,6 +54,10 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
   onToggleDensityMode,
   isMonthPickerOpen: controlledMonthPickerOpen,
   onToggleMonthPicker,
+  storyMode = false,
+  onToggleStoryMode,
+  isColorblindSafe = false,
+  onToggleColorblindMode,
 }) => {
   const [isBoardPickerOpen, setIsBoardPickerOpen] = useState(false);
   const [internalMonthPickerOpen, setInternalMonthPickerOpen] = useState(false);
@@ -328,6 +336,45 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
               </div>
             )}
           </div>
+
+          {/* Plain English Story Mode Toggle */}
+          {onToggleStoryMode && (
+            <button
+              type="button"
+              onClick={onToggleStoryMode}
+              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 shrink-0 active:scale-95 border cursor-pointer shadow-2xs font-stat-label ${
+                storyMode
+                  ? 'bg-primary text-on-primary border-primary font-bold shadow-xs'
+                  : 'text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border-outline-variant/25'
+              }`}
+              title={`Switch to ${storyMode ? 'Deep Analytics Charts' : 'Plain English Story Mode'}`}
+            >
+              <span className="material-symbols-outlined text-[15px]">
+                {storyMode ? 'auto_stories' : 'bar_chart'}
+              </span>
+              <span className="hidden md:inline">{storyMode ? 'Story View' : 'Analytics'}</span>
+            </button>
+          )}
+
+          {/* Colorblind-Safe Palette Toggle */}
+          {onToggleColorblindMode && (
+            <button
+              type="button"
+              onClick={onToggleColorblindMode}
+              className={`p-1.5 sm:px-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 shrink-0 active:scale-95 border cursor-pointer shadow-2xs font-stat-label ${
+                isColorblindSafe
+                  ? 'bg-blue-600 text-white border-blue-500 font-bold'
+                  : 'text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border-outline-variant/25'
+              }`}
+              title={`Toggle Protanopia / Deuteranopia accessible color palette (Currently ${isColorblindSafe ? 'Active' : 'Standard'})`}
+              aria-pressed={isColorblindSafe}
+            >
+              <span className="material-symbols-outlined text-[15px]">
+                {isColorblindSafe ? 'palette' : 'contrast'}
+              </span>
+              <span className="hidden lg:inline">{isColorblindSafe ? 'a11y' : 'Palette'}</span>
+            </button>
+          )}
 
           {/* Layout Density Mode Toggle */}
           {onToggleDensityMode && (

@@ -360,3 +360,57 @@ html.oled .japandi-card {
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow: none !important;
 }
+
+/* ========================================================= */
+/* COLORBLIND-SAFE PALETTE (Protanopia / Deuteranopia a11y) */
+/* Replaces Red/Green with High-Contrast Cobalt & Warm Amber  */
+/* ========================================================= */
+.colorblind-safe {
+  --color-secondary: #2563eb !important;
+  --color-secondary-container: #dbeafe !important;
+  --color-on-secondary-container: #1e40af !important;
+  --color-tertiary: #d97706 !important;
+  --color-tertiary-container: #fef3c7 !important;
+  --color-on-tertiary-container: #92400e !important;
+}
+
+html.dark .colorblind-safe,
+.colorblind-safe.dark,
+[data-theme="dark"] .colorblind-safe,
+[data-theme="oled"] .colorblind-safe {
+  --color-secondary: #60a5fa !important;
+  --color-secondary-container: #1e3a8a !important;
+  --color-on-secondary-container: #bfdbfe !important;
+  --color-tertiary: #fbbf24 !important;
+  --color-tertiary-container: #78350f !important;
+  --color-on-tertiary-container: #fef3c7 !important;
+}
+
+.colorblind-safe .bg-emerald-500,
+.colorblind-safe .bg-emerald-600 {
+  background-color: #2563eb !important;
+}
+.colorblind-safe .text-emerald-700,
+.colorblind-safe .text-emerald-600 {
+  color: #2563eb !important;
+}
+html.dark .colorblind-safe .text-emerald-300,
+html.dark .colorblind-safe .text-emerald-400 {
+  color: #60a5fa !important;
+}
+.colorblind-safe .border-emerald-500,
+.colorblind-safe .border-emerald-600 {
+  border-color: #2563eb !important;
+}
+.colorblind-safe .bg-rose-500,
+.colorblind-safe .bg-rose-600 {
+  background-color: #d97706 !important;
+}
+.colorblind-safe .text-rose-600,
+.colorblind-safe .text-rose-700 {
+  color: #d97706 !important;
+}
+html.dark .colorblind-safe .text-rose-300,
+html.dark .colorblind-safe .text-rose-400 {
+  color: #fbbf24 !important;
+}
