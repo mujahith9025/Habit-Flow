@@ -103,140 +103,83 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
   }, []);
 
   return (
-    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl border border-outline-variant/15 shadow-soft p-2.5 sm:p-3 relative transition-all">
-      {/* Consolidated Responsive Single Control Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-        {/* Left Section: Board Selector Dropdown + Divider + Habit Chips */}
-        <div className="flex items-center gap-2 py-0.5 flex-1 min-w-0">
-          {/* 1. Compact Board Selector Trigger */}
-          <div ref={boardPickerRef} className="relative shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setIsBoardPickerOpen((prev) => !prev);
-                handleToggleMonthPicker(false);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-container-low dark:bg-surface-container-high/60 hover:bg-surface-container-high text-on-surface border border-outline-variant/25 transition-all active:scale-95 shadow-2xs cursor-pointer"
-              title="Select Tracker Board"
-            >
-              <span className="text-[14px]">{getCategoryIcon(currentCategory)}</span>
-              <span className="font-habit-name font-bold max-w-[100px] sm:max-w-[130px] truncate">
-                {currentCategory}
-              </span>
-              <span className="px-1.5 py-0.2 rounded-full text-[9.5px] font-bold bg-surface-container-highest text-on-surface-variant">
-                {categoryHabitsMap[currentCategory]?.length || 0}
-              </span>
-              <span className="material-symbols-outlined text-[15px] text-on-surface-variant">
-                {isBoardPickerOpen ? 'expand_less' : 'expand_more'}
-              </span>
-            </button>
+    <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl border border-outline-variant/20 shadow-soft p-3 sm:p-4 space-y-3 relative transition-all">
+      {/* Tier 1: Master Controls (Board Selector + Month Navigator + Actions) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Left: Tracker Board Selector */}
+        <div ref={boardPickerRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setIsBoardPickerOpen((prev) => !prev);
+              handleToggleMonthPicker(false);
+            }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-surface-container-low dark:bg-surface-container-high/60 hover:bg-surface-container-high text-on-surface border border-outline-variant/25 transition-all active:scale-95 shadow-2xs cursor-pointer"
+            title="Select Tracker Board"
+          >
+            <span className="text-[15px]">{getCategoryIcon(currentCategory)}</span>
+            <span className="font-habit-name font-bold max-w-[120px] sm:max-w-[160px] truncate">
+              {currentCategory}
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface-container-highest text-on-surface-variant font-tnum">
+              {categoryHabitsMap[currentCategory]?.length || 0}
+            </span>
+            <span className="material-symbols-outlined text-[16px] text-on-surface-variant">
+              {isBoardPickerOpen ? 'expand_less' : 'expand_more'}
+            </span>
+          </button>
 
-            {/* Board Selector Popover */}
-            {isBoardPickerOpen && (
-              <div className="absolute top-10 left-0 z-50 w-56 bg-surface-container-lowest dark:bg-surface-container-high rounded-xl shadow-xl border border-outline-variant/20 p-1.5 space-y-1 animate-scaleUp">
-                <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
-                  Tracker Boards
-                </div>
-                {categories.map((cat) => {
-                  const isSelected = currentCategory.toLowerCase() === cat.toLowerCase();
-                  const count = categoryHabitsMap[cat]?.length || 0;
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => {
-                        onSelectCategory(cat);
-                        setIsBoardPickerOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+          {/* Board Selector Popover */}
+          {isBoardPickerOpen && (
+            <div className="absolute top-11 left-0 z-50 w-56 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-xl border border-outline-variant/20 p-2 space-y-1 animate-scaleUp">
+              <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
+                Tracker Boards
+              </div>
+              {categories.map((cat) => {
+                const isSelected = currentCategory.toLowerCase() === cat.toLowerCase();
+                const count = categoryHabitsMap[cat]?.length || 0;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => {
+                      onSelectCategory(cat);
+                      setIsBoardPickerOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary text-on-primary font-bold shadow-xs'
+                        : 'text-on-surface hover:bg-surface-container'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span>{getCategoryIcon(cat)}</span>
+                      <span className="truncate">{cat}</span>
+                    </div>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-bold font-tnum ${
                         isSelected
-                          ? 'bg-primary text-on-primary font-bold shadow-xs'
-                          : 'text-on-surface hover:bg-surface-container'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-surface-container-highest text-on-surface-variant'
                       }`}
                     >
-                      <div className="flex items-center gap-2 truncate">
-                        <span>{getCategoryIcon(cat)}</span>
-                        <span className="truncate">{cat}</span>
-                      </div>
-                      <span
-                        className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-bold ${
-                          isSelected
-                            ? 'bg-white/20 text-white'
-                            : 'bg-surface-container-highest text-on-surface-variant'
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Vertical Separator */}
-          <div className="hidden sm:block h-5 w-px bg-outline-variant/30 shrink-0" />
-
-          {/* 2. Habit Selector Chips (All Habits + Individual Habits) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 flex-1 min-w-0">
-            {/* Aggregate All Habits Pill */}
-            <button
-              type="button"
-              onClick={() => onSelectHabit('all')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
-                selectedHabitId === 'all'
-                  ? 'bg-primary text-on-primary shadow-soft font-bold scale-[1.01]'
-                  : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {selectedHabitId === 'all' ? 'equalizer' : 'bar_chart'}
-              </span>
-              <span>All Habits</span>
-              <span
-                className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-bold ${
-                  selectedHabitId === 'all'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-surface-container-highest text-on-surface-variant'
-                }`}
-              >
-                {habitsInCurrentCategory.length}
-              </span>
-            </button>
-
-            {/* Individual Habit Chips */}
-            {habitsInCurrentCategory.map((h) => {
-              const isSelected = selectedHabitId === h.id;
-              return (
-                <button
-                  key={h.id}
-                  type="button"
-                  onClick={() => onSelectHabit(h.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
-                    isSelected
-                      ? 'bg-secondary text-on-secondary shadow-soft font-bold scale-[1.01]'
-                      : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
-                  }`}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: h.color || '#2D5A34' }}
-                  />
-                  <span className="truncate max-w-[110px] sm:max-w-[150px]">{h.name}</span>
-                </button>
-              );
-            })}
-          </div>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Right Section: Compact Month Stepper + Add Habit CTA */}
-        <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
+        {/* Right: Month Stepper + Utility Buttons + New Habit */}
+        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap justify-between sm:justify-end">
           {/* Month Stepper Controller */}
-          <div ref={monthPickerRef} className="flex items-center gap-1.5 relative">
+          <div ref={monthPickerRef} className="flex items-center gap-1 relative shrink-0">
             <button
               type="button"
               onClick={() => onMonthChange(-1)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors active:scale-90 cursor-pointer"
+              className="w-8 h-8 rounded-xl flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors active:scale-90 cursor-pointer"
               title="Previous Month"
               aria-label="Previous Month"
             >
@@ -250,7 +193,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
                 handleToggleMonthPicker();
                 setIsBoardPickerOpen(false);
               }}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface font-stat-label text-xs font-bold transition-colors border border-outline-variant/20 active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface font-stat-label text-xs font-bold transition-colors border border-outline-variant/20 active:scale-95 cursor-pointer"
               title="Click to select specific month"
             >
               <span
@@ -268,7 +211,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
             <button
               type="button"
               onClick={() => onMonthChange(1)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors active:scale-90 cursor-pointer"
+              className="w-8 h-8 rounded-xl flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high text-on-surface transition-colors active:scale-90 cursor-pointer"
               title="Next Month"
               aria-label="Next Month"
             >
@@ -279,7 +222,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
               <button
                 type="button"
                 onClick={onResetToCurrentMonth}
-                className="text-[10px] font-stat-label font-bold text-primary hover:underline px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors ml-0.5 cursor-pointer"
+                className="text-[10px] font-stat-label font-bold text-primary hover:underline px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors ml-0.5 cursor-pointer"
               >
                 Today
               </button>
@@ -287,7 +230,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
 
             {/* Quick Month Dropdown Picker */}
             {isMonthPickerOpen && (
-              <div className="absolute top-10 right-0 z-50 w-64 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-2xl border border-outline-variant/20 p-3 space-y-2.5 animate-scaleUp">
+              <div className="absolute top-11 right-0 z-50 w-64 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-2xl border border-outline-variant/20 p-3 space-y-2.5 animate-scaleUp">
                 <div className="flex items-center justify-between px-1">
                   <button
                     type="button"
@@ -337,129 +280,180 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
             )}
           </div>
 
-          {/* Plain English Story Mode Toggle */}
-          {onToggleStoryMode && (
-            <button
-              type="button"
-              onClick={onToggleStoryMode}
-              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 shrink-0 active:scale-95 border cursor-pointer shadow-2xs font-stat-label ${
-                storyMode
-                  ? 'bg-primary text-on-primary border-primary font-bold shadow-xs'
-                  : 'text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border-outline-variant/25'
-              }`}
-              title={`Switch to ${storyMode ? 'Deep Analytics Charts' : 'Plain English Story Mode'}`}
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {storyMode ? 'auto_stories' : 'bar_chart'}
-              </span>
-              <span className="hidden md:inline">{storyMode ? 'Story View' : 'Analytics'}</span>
-            </button>
-          )}
-
-          {/* Colorblind-Safe Palette Toggle */}
-          {onToggleColorblindMode && (
-            <button
-              type="button"
-              onClick={onToggleColorblindMode}
-              className={`p-1.5 sm:px-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 shrink-0 active:scale-95 border cursor-pointer shadow-2xs font-stat-label ${
-                isColorblindSafe
-                  ? 'bg-blue-600 text-white border-blue-500 font-bold'
-                  : 'text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border-outline-variant/25'
-              }`}
-              title={`Toggle Protanopia / Deuteranopia accessible color palette (Currently ${isColorblindSafe ? 'Active' : 'Standard'})`}
-              aria-pressed={isColorblindSafe}
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {isColorblindSafe ? 'palette' : 'contrast'}
-              </span>
-              <span className="hidden lg:inline">{isColorblindSafe ? 'a11y' : 'Palette'}</span>
-            </button>
-          )}
-
-          {/* Layout Density Mode Toggle */}
-          {onToggleDensityMode && (
-            <button
-              type="button"
-              onClick={onToggleDensityMode}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all flex items-center gap-1 shrink-0 active:scale-95 border border-outline-variant/25 cursor-pointer shadow-2xs font-stat-label"
-              title={`Switch layout to ${densityMode === 'spacious' ? 'Compact View' : 'Spacious View'}`}
-            >
-              <span className="material-symbols-outlined text-[15px] text-primary">
-                {densityMode === 'spacious' ? 'density_small' : 'density_medium'}
-              </span>
-              <span className="hidden md:inline capitalize">{densityMode}</span>
-            </button>
-          )}
-
-          {/* 1-Tap Export Report Dropdown Trigger */}
-          {onExportReport && (
-            <div ref={exportPickerRef} className="relative">
+          {/* Symmetrical Utility Icon Cluster */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Story Mode Toggle */}
+            {onToggleStoryMode && (
               <button
                 type="button"
-                onClick={() => {
-                  setIsExportMenuOpen((prev) => !prev);
-                  handleToggleMonthPicker(false);
-                  setIsBoardPickerOpen(false);
-                }}
-                className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all flex items-center gap-1 shrink-0 active:scale-95 border border-outline-variant/25 cursor-pointer shadow-2xs"
-                title="Export Monthly Performance Report (PDF / CSV)"
+                onClick={onToggleStoryMode}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold transition-all active:scale-90 border cursor-pointer shadow-2xs ${
+                  storyMode
+                    ? 'bg-primary text-on-primary border-primary shadow-xs'
+                    : 'text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border-outline-variant/25'
+                }`}
+                title={`Switch to ${storyMode ? 'Analytics View' : 'Story View'}`}
               >
-                <span className="material-symbols-outlined text-[15px] text-primary">download</span>
-                <span className="hidden sm:inline">Export</span>
-                <span className="material-symbols-outlined text-[13px] text-on-surface-variant">
-                  {isExportMenuOpen ? 'expand_less' : 'expand_more'}
+                <span className="material-symbols-outlined text-[16px]">
+                  {storyMode ? 'auto_stories' : 'bar_chart'}
                 </span>
               </button>
+            )}
 
-              {/* Export Popover Menu */}
-              {isExportMenuOpen && (
-                <div className="absolute top-10 right-0 z-50 w-48 bg-surface-container-lowest dark:bg-surface-container-high rounded-xl shadow-xl border border-outline-variant/20 p-1.5 space-y-1 animate-scaleUp">
-                  <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
-                    Download Report
+            {/* Colorblind Palette Toggle */}
+            {onToggleColorblindMode && (
+              <button
+                type="button"
+                onClick={onToggleColorblindMode}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold transition-all active:scale-90 border cursor-pointer shadow-2xs ${
+                  isColorblindSafe
+                    ? 'bg-blue-600 text-white border-blue-500 font-bold'
+                    : 'text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border-outline-variant/25'
+                }`}
+                title={`Toggle Colorblind Palette (${isColorblindSafe ? 'Active' : 'Standard'})`}
+                aria-pressed={isColorblindSafe}
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  {isColorblindSafe ? 'palette' : 'contrast'}
+                </span>
+              </button>
+            )}
+
+            {/* Layout Density Mode Toggle */}
+            {onToggleDensityMode && (
+              <button
+                type="button"
+                onClick={onToggleDensityMode}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all active:scale-90 border border-outline-variant/25 cursor-pointer shadow-2xs"
+                title={`Layout: ${densityMode === 'spacious' ? 'Spacious (Click for Compact)' : 'Compact (Click for Spacious)'}`}
+              >
+                <span className="material-symbols-outlined text-[16px] text-primary">
+                  {densityMode === 'spacious' ? 'density_small' : 'density_medium'}
+                </span>
+              </button>
+            )}
+
+            {/* Export Report Dropdown Trigger */}
+            {onExportReport && (
+              <div ref={exportPickerRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsExportMenuOpen((prev) => !prev);
+                    handleToggleMonthPicker(false);
+                    setIsBoardPickerOpen(false);
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high transition-all active:scale-95 border border-outline-variant/25 cursor-pointer shadow-2xs"
+                  title="Export Monthly Report (PDF / CSV)"
+                >
+                  <span className="material-symbols-outlined text-[15px] text-primary">download</span>
+                  <span className="hidden xs:inline">Export</span>
+                  <span className="material-symbols-outlined text-[13px] text-on-surface-variant">
+                    {isExportMenuOpen ? 'expand_less' : 'expand_more'}
+                  </span>
+                </button>
+
+                {/* Export Popover Menu */}
+                {isExportMenuOpen && (
+                  <div className="absolute top-11 right-0 z-50 w-48 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-xl border border-outline-variant/20 p-2 space-y-1 animate-scaleUp">
+                    <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
+                      Download Report
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsExportMenuOpen(false);
+                        onExportReport('pdf');
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-red-500">picture_as_pdf</span>
+                      <div>
+                        <div className="font-semibold text-xs leading-none">PDF Report</div>
+                        <span className="text-[10px] text-on-surface-variant">Printable summary</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsExportMenuOpen(false);
+                        onExportReport('csv');
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-emerald-600">table_chart</span>
+                      <div>
+                        <div className="font-semibold text-xs leading-none">CSV Spreadsheet</div>
+                        <span className="text-[10px] text-on-surface-variant">Tabular metrics</span>
+                      </div>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      onExportReport('pdf');
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-red-500">picture_as_pdf</span>
-                    <div>
-                      <div className="font-semibold text-xs leading-none">PDF Report</div>
-                      <span className="text-[10px] text-on-surface-variant">Executive summary</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      onExportReport('csv');
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-emerald-600">table_chart</span>
-                    <div>
-                      <div className="font-semibold text-xs leading-none">CSV Spreadsheet</div>
-                      <span className="text-[10px] text-on-surface-variant">Excel / Numbers data</span>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {/* New Habit Action Button */}
-          <button
-            type="button"
-            onClick={onOpenCreateHabitModal}
-            className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-all flex items-center gap-1 shrink-0 active:scale-95 shadow-xs border border-primary/20 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[15px]">add</span>
-            <span className="hidden xs:inline">New Habit</span>
-          </button>
+            {/* New Habit Action Button */}
+            <button
+              type="button"
+              onClick={onOpenCreateHabitModal}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-all flex items-center gap-1 shrink-0 active:scale-95 shadow-xs border border-primary/20 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[15px]">add</span>
+              <span className="hidden xs:inline">New Habit</span>
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Tier 2: Dedicated Habit Filter Strip with Subtle Overflow Gradient */}
+      <div className="pt-2 border-t border-outline-variant/15 flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+        {/* Aggregate All Habits Pill */}
+        <button
+          type="button"
+          onClick={() => onSelectHabit('all')}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
+            selectedHabitId === 'all'
+              ? 'bg-primary text-on-primary shadow-soft font-bold scale-[1.01]'
+              : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[15px]">
+            {selectedHabitId === 'all' ? 'equalizer' : 'bar_chart'}
+          </span>
+          <span>All Habits</span>
+          <span
+            className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-bold font-tnum ${
+              selectedHabitId === 'all'
+                ? 'bg-white/20 text-white'
+                : 'bg-surface-container-highest text-on-surface-variant'
+            }`}
+          >
+            {habitsInCurrentCategory.length}
+          </span>
+        </button>
+
+        {/* Individual Habit Chips */}
+        {habitsInCurrentCategory.map((h) => {
+          const isSelected = selectedHabitId === h.id;
+          return (
+            <button
+              key={h.id}
+              type="button"
+              onClick={() => onSelectHabit(h.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
+                isSelected
+                  ? 'bg-secondary text-on-secondary shadow-soft font-bold scale-[1.01]'
+                  : 'bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface hover:bg-surface-container-high border border-outline-variant/20'
+              }`}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: h.color || '#2D5A34' }}
+              />
+              <span className="truncate max-w-[120px] sm:max-w-[180px]">{h.name}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

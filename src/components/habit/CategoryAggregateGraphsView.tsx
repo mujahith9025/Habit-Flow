@@ -225,7 +225,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3.5 overflow-x-auto pb-2">
+          <div className="flex overflow-x-auto snap-x snap-mandatory lg:grid lg:grid-cols-5 gap-3.5 pb-2 scrollbar-none">
             {weeksData.map((week) => {
               const radius = 34;
               const circumference = 2 * Math.PI * radius; // ~213.6
@@ -235,7 +235,7 @@ export const CategoryAggregateGraphsView: React.FC<CategoryAggregateGraphsViewPr
               return (
                 <div
                   key={week.weekNum}
-                  className="bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-2xl p-3.5 sm:p-4 border border-outline-variant/15 flex flex-col justify-between space-y-4 hover:border-outline-variant/40 transition-all shadow-sm"
+                  className="w-[85vw] sm:w-[45vw] lg:w-auto shrink-0 snap-center bg-surface-container-low/60 dark:bg-surface-container-high/30 rounded-3xl p-4 border border-outline-variant/15 flex flex-col justify-between space-y-4 hover:border-outline-variant/40 transition-all shadow-sm"
                 >
                   {/* Week Header with WoW Momentum Badge */}
                   <div className="text-center">

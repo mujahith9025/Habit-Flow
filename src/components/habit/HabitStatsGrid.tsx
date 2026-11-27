@@ -59,10 +59,10 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
 
   return (
     <div className="space-y-3.5">
-      {/* 1. Primary Metrics Grid (6 KPI Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
+      {/* 1. Primary Metrics Grid (Balanced 3x2 KPI Grid) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
         {/* 1. Current Streak */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between min-h-[115px]">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
               Current Streak
@@ -77,7 +77,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+            <div className="font-app-title font-tnum text-xl sm:text-2xl font-bold text-on-surface">
               {currentStreak}
               <span className="text-xs font-normal text-on-surface-variant ml-1">days</span>
             </div>
@@ -88,7 +88,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
 
         {/* 2. Longest Streak Ever */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between min-h-[115px]">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
               Best Streak
@@ -103,7 +103,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+            <div className="font-app-title font-tnum text-xl sm:text-2xl font-bold text-on-surface">
               {longestStreak}
               <span className="text-xs font-normal text-on-surface-variant ml-1">days</span>
             </div>
@@ -114,7 +114,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
 
         {/* 3. Selected Month Completion % */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between min-h-[115px]">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
               {selectedMonthTitle ? `${selectedMonthTitle}` : 'Month Rate'}
@@ -130,12 +130,12 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
           </div>
           <div className="mt-2.5">
             <div className="flex items-baseline justify-between">
-              <div className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+              <div className="font-app-title font-tnum text-xl sm:text-2xl font-bold text-on-surface">
                 {monthCompletionPercent}
                 <span className="text-xs font-normal text-on-surface-variant ml-0.5">%</span>
               </div>
               {daysInMonth > 0 && (
-                <span className="text-[10px] font-stat-label text-on-surface-variant">
+                <span className="text-[10px] font-stat-label font-tnum text-on-surface-variant">
                   {monthCompletedDays}/{daysInMonth}d
                 </span>
               )}
@@ -150,7 +150,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
 
         {/* 4. Total Lifetime Check-ins */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between min-h-[115px]">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
               All-Time Done
@@ -165,9 +165,9 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+            <div className="font-app-title font-tnum text-xl sm:text-2xl font-bold text-on-surface">
               {totalLifetimeCompletions}
-              <span className="text-xs font-normal text-on-surface-variant ml-1">/ {trackedDaysTotal}d</span>
+              <span className="text-xs font-normal text-on-surface-variant ml-1 font-tnum">/ {trackedDaysTotal}d</span>
             </div>
             <p className="font-body-text text-[10px] text-on-surface-variant mt-0.5">
               {totalLifetimeCompletions} of {trackedDaysTotal} days done
@@ -176,7 +176,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
 
         {/* 5. All-Time Consistency Rate */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between min-h-[115px]">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
               All-Time Rate
@@ -191,7 +191,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="font-app-title text-xl sm:text-2xl font-bold text-primary dark:text-primary-fixed-dim">
+            <div className="font-app-title font-tnum text-xl sm:text-2xl font-bold text-primary dark:text-primary-fixed-dim">
               {allTimeRatePercent ?? 0}
               <span className="text-xs font-normal text-on-surface-variant ml-0.5">%</span>
             </div>
@@ -208,7 +208,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
         </div>
 
         {/* 6. Total Days Tracked */}
-        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-3.5 sm:p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between">
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 shadow-soft border border-outline-variant/15 flex flex-col justify-between min-h-[115px]">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold truncate">
               Days Tracked
@@ -223,7 +223,7 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             </div>
           </div>
           <div className="mt-2.5">
-            <div className="font-app-title text-xl sm:text-2xl font-bold text-on-surface">
+            <div className="font-app-title font-tnum text-xl sm:text-2xl font-bold text-on-surface">
               {trackedDaysTotal}
               <span className="text-xs font-normal text-on-surface-variant ml-1">days</span>
             </div>

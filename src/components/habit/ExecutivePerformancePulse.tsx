@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Habit } from '../../types';
 import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { HabitHistoryMetrics } from '../../hooks/useSingleHabitHistory';
@@ -16,7 +16,6 @@ export interface ExecutivePerformancePulseProps {
   habitMetricsMap: Record<string, HabitGridMetrics>;
   singleHabit?: Habit | null;
   singleMetrics?: HabitHistoryMetrics | null;
-  onExportReport?: (format: 'pdf' | 'csv') => void;
   onOpenMilestoneCard?: () => void;
   onOpenLaurelCeremony?: () => void;
   className?: string;
@@ -31,25 +30,10 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
   habitMetricsMap,
   singleHabit,
   singleMetrics,
-  onExportReport,
   onOpenMilestoneCard,
   onOpenLaurelCeremony,
   className = '',
 }) => {
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close export dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-        setIsExportMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const isSingle = selectedHabitId !== 'all' && singleHabit != null;
 
   // Previous month calculation for period-over-period comparison
@@ -258,7 +242,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           </h2>
         </div>
 
-        {/* Status Pill, Botanical Growth Rank, & Executive Actions */}
+        {/* Status Pill, Botanical Growth Rank, Milestone Card & Laurel Ceremony */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
           <div
             className={`px-3 py-1 rounded-full border text-xs font-bold font-stat-label flex items-center gap-1.5 shadow-2xs ${editorial.statusClass}`}
@@ -266,12 +250,28 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
             <span>{editorial.statusPill}</span>
           </div>
 
-          {/* Neurobiology Botanical Growth Rank Badge */}
+          {/* Botanical Growth Rank Badge */}
           <BotanicalGrowthRankBadge
             days={pulseData.longestStreak}
             size="sm"
             showProgress={false}
           />
+
+          {/* Shareable Milestone Card Modal Trigger */}
+          {onOpenMilestoneCard && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('selection');
+                onOpenMilestoneCard();
+              }}
+              className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all active:scale-95 shadow-2xs cursor-pointer"
+              title="Share Milestone Card"
+            >
+              <span className="material-symbols-outlined text-[15px] text-amber-500">stars</span>
+              <span className="hidden sm:inline">Milestone Card</span>
+            </button>
+          )}
 
           {/* End-of-Month Laurel Ceremony Trigger */}
           {onOpenLaurelCeremony && (
@@ -281,95 +281,21 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
                 triggerHaptic('milestone');
                 onOpenLaurelCeremony();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all active:scale-95 shadow-2xs cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-fixed-dim border border-primary/30 transition-all active:scale-95 shadow-2xs cursor-pointer"
               title="Open Month Laurel Ceremony"
             >
               <span>👑</span>
-              <span className="hidden sm:inline">Laurel Ceremony</span>
+              <span className="hidden sm:inline">Laurel</span>
             </button>
-          )}
-
-          {onExportReport && (
-            <div ref={exportMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setIsExportMenuOpen((prev) => !prev);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container-low dark:bg-surface-container-high/60 hover:bg-surface-container-high text-on-surface border border-outline-variant/30 hover:border-primary/40 transition-all active:scale-95 shadow-2xs cursor-pointer"
-                title="Download Executive Performance Report"
-              >
-                <span className="material-symbols-outlined text-[16px] text-primary">download</span>
-                <span className="hidden xs:inline">Export Report</span>
-                <span className="material-symbols-outlined text-[14px] text-on-surface-variant">
-                  {isExportMenuOpen ? 'expand_less' : 'expand_more'}
-                </span>
-              </button>
-
-              {isExportMenuOpen && (
-                <div className="absolute top-10 right-0 z-50 w-48 bg-surface-container-lowest dark:bg-surface-container-high rounded-2xl shadow-xl border border-outline-variant/20 p-1.5 space-y-1 animate-scaleUp">
-                  <div className="px-2.5 py-1 text-[10px] font-stat-label font-bold text-on-surface-variant uppercase tracking-wider">
-                    Format
-                  </div>
-                  {onOpenMilestoneCard && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsExportMenuOpen(false);
-                        onOpenMilestoneCard();
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-amber-500">stars</span>
-                      <div>
-                        <div className="font-bold">Milestone Card</div>
-                        <div className="text-[10px] text-on-surface-variant">Shareable summary card</div>
-                      </div>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      onExportReport('pdf');
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-error">picture_as_pdf</span>
-                    <div>
-                      <div className="font-bold">Executive PDF</div>
-                      <div className="text-[10px] text-on-surface-variant">Printable report with charts</div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      onExportReport('csv');
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-all cursor-pointer text-left"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-primary">table_chart</span>
-                    <div>
-                      <div className="font-bold">Spreadsheet CSV</div>
-                      <div className="text-[10px] text-on-surface-variant">Raw tabular matrix</div>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
           )}
         </div>
       </div>
 
-      {/* 3 Bento Micro-Tiles (Inspo Macrostructure) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 my-4 relative z-10">
-        {/* Tile 1: Monthly Flow Rate & Period Lift */}
-        <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
-          <div className="flex items-center justify-between">
+      {/* 3 Bento Micro-Tiles with Pinned Optical Baselines */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 my-4 relative z-10 items-stretch">
+        {/* Tile 1: Consistency */}
+        <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all min-h-[136px] flex flex-col justify-between">
+          <div className="h-6 flex items-center justify-between">
             <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
               Monthly Consistency
               <AnalyticalHelpTooltip
@@ -381,7 +307,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
             {/* Period-over-Period Lift Pill */}
             {pulseData.delta !== null ? (
               <span
-                className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold font-tnum ${
                   pulseData.delta > 0
                     ? 'bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490]'
                     : pulseData.delta < 0
@@ -399,22 +325,25 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
             )}
           </div>
 
-          <div>
+          <div className="h-10 flex items-baseline">
             <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
               {pulseData.rate}
               <span className="text-base font-semibold text-primary ml-0.5">%</span>
             </div>
-            <p className="text-[11px] text-on-surface-variant font-body-text mt-0.5">
+          </div>
+
+          <div className="h-5 flex items-center">
+            <p className="text-[11px] text-on-surface-variant font-body-text truncate">
               <span className="font-bold font-tnum text-on-surface">{pulseData.completed}</span> of{' '}
-              <span className="font-bold font-tnum text-on-surface">{pulseData.total}</span> checks logged
+              <span className="font-bold font-tnum text-on-surface">{pulseData.total}</span> checks
               {pulseData.delta !== null ? ` • vs ${prevMonthName}` : ''}
             </p>
           </div>
         </div>
 
         {/* Tile 2: Best Day */}
-        <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
-          <div className="flex items-center justify-between">
+        <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all min-h-[136px] flex flex-col justify-between">
+          <div className="h-6 flex items-center justify-between">
             <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
               Best Day
               <AnalyticalHelpTooltip
@@ -427,11 +356,14 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
             </span>
           </div>
 
-          <div>
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight capitalize">
+          <div className="h-10 flex items-baseline">
+            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight capitalize truncate">
               {pulseData.peakDayName}s
             </div>
-            <p className="text-[11px] text-on-surface-variant font-body-text mt-0.5">
+          </div>
+
+          <div className="h-5 flex items-center">
+            <p className="text-[11px] text-on-surface-variant font-body-text truncate">
               Weekday: <span className="font-bold font-tnum text-on-surface">{pulseData.weekdayRate}%</span> • Weekend:{' '}
               <span className="font-bold font-tnum text-on-surface">{pulseData.weekendRate}%</span>
             </p>
@@ -439,8 +371,8 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
         </div>
 
         {/* Tile 3: Current Streak */}
-        <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
-          <div className="flex items-center justify-between">
+        <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all min-h-[136px] flex flex-col justify-between">
+          <div className="h-6 flex items-center justify-between">
             <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
               Current Streak
               <AnalyticalHelpTooltip
@@ -459,12 +391,15 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
             )}
           </div>
 
-          <div>
+          <div className="h-10 flex items-baseline">
             <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
               {pulseData.currentStreak}
               <span className="text-base font-semibold text-on-surface-variant ml-1">Days</span>
             </div>
-            <p className="text-[11px] text-on-surface-variant font-body-text mt-0.5 truncate">
+          </div>
+
+          <div className="h-5 flex items-center">
+            <p className="text-[11px] text-on-surface-variant font-body-text truncate">
               {pulseData.contextLead} • Best: <span className="font-bold font-tnum text-on-surface">{pulseData.longestStreak}d</span>
             </p>
           </div>
