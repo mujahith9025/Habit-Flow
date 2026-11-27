@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 export const MobileBottomNav: React.FC = () => {
   const navTabs = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/habit', label: 'Habit', icon: 'task_alt' },
+    { to: '/habit', label: 'Reports', icon: 'insights' },
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];
 

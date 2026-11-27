@@ -32,20 +32,20 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
               hub
             </span>
             <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center">
-              Habit Synergy & Stacking Engine
+              Habit Synergy
               <AnalyticalHelpTooltip
                 term="Habit Stacking Synergy"
-                explanation="Calculates the conditional probability that completing habit A naturally triggers you to complete habit B."
+                explanation="Calculates the probability that completing habit A naturally triggers you to complete habit B."
               />
             </h3>
           </div>
           <p className="font-body-text text-xs text-on-surface-variant">
-            Atomic behavioral co-occurrence uncovering which habits naturally catalyze other routines.
+            Habits that naturally build momentum for each other.
           </p>
         </div>
 
         <span className="px-3 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container self-start sm:self-auto font-stat-label">
-          {topPairs.length} High-Synergy Pairs
+          {topPairs.length} Synergy Pairs
         </span>
       </div>
 
@@ -58,7 +58,7 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
             </div>
             <div>
               <div className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full bg-secondary/20 text-on-secondary-container text-[10px] font-black uppercase tracking-wider mb-0.5 font-stat-label">
-                Keystone Habit Catalyst
+                Anchor Habit
               </div>
               <h4 className="font-app-title text-base font-bold text-on-surface">
                 {keystoneHabit.habit.name}
@@ -71,7 +71,7 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-stat-label font-tnum text-xs font-bold">
-              +{keystoneHabit.catalyticScore}% Catalytic Lift
+              +{keystoneHabit.catalyticScore}% Lift
             </span>
           </div>
         </div>
@@ -80,7 +80,7 @@ export const HabitSynergyMatrixCard: React.FC<HabitSynergyMatrixCardProps> = ({
       {/* 3. Stacking Blueprints (James Clear Archetype) */}
       <div className="space-y-3">
         <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-stat-label">
-          Recommended Habit Stacking Blueprints
+          Recommended Habit Pairs
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

@@ -20,21 +20,21 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const { isInstalled } = usePWAInstall();
   const location = useLocation();
 
-  const getScreenMeta = (pathname: string): { title: string; subtitle?: string; icon: string } => {
+  const getScreenMeta = (pathname: string): { title: string; icon: string } => {
     if (pathname.startsWith('/dashboard')) {
-      return { title: 'Dashboard', icon: 'dashboard', subtitle: 'Daily Routine & Focus' };
+      return { title: 'Dashboard', icon: 'dashboard' };
     }
     if (pathname.startsWith('/habit')) {
-      return { title: 'Analytics & Reports', icon: 'insights', subtitle: 'Performance & Heatmaps' };
+      return { title: 'Reports', icon: 'insights' };
     }
     if (pathname.startsWith('/setting')) {
-      return { title: 'Settings', icon: 'tune', subtitle: 'Preferences & System' };
+      return { title: 'Settings', icon: 'tune' };
     }
     if (pathname.startsWith('/install')) {
-      return { title: 'Install App', icon: 'install_mobile', subtitle: 'PWA Setup' };
+      return { title: 'Install App', icon: 'install_mobile' };
     }
     if (pathname.startsWith('/debug')) {
-      return { title: 'Data Layer Debug', icon: 'bug_report', subtitle: 'Diagnostics' };
+      return { title: 'Debug', icon: 'bug_report' };
     }
     return { title: 'HabitFlow', icon: 'spa' };
   };
@@ -92,15 +92,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     {screenMeta.icon}
                   </span>
                 </div>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-center">
                   <h2 className="font-app-title text-lg lg:text-xl font-bold text-on-surface tracking-tight leading-none">
                     {screenMeta.title}
                   </h2>
-                  {screenMeta.subtitle && (
-                    <span className="hidden lg:inline text-xs text-on-surface-variant font-body-text">
-                      • {screenMeta.subtitle}
-                    </span>
-                  )}
                 </div>
               </div>
             )}

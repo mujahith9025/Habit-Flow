@@ -367,61 +367,50 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
           </div>
         )}
 
-        {/* Vacation Paused Habits Active Banner */}
+        {/* Vacation Paused Habits Compact Chip */}
         {pausedHabits.length > 0 && (
-          <div className="mb-2.5 px-3.5 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 flex items-center justify-between text-xs animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400">
+          <div className="mb-2 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 flex items-center justify-between text-xs animate-fadeIn">
+            <span className="flex items-center gap-1.5 text-[11px] font-medium">
+              <span className="material-symbols-outlined text-[15px] text-amber-600 dark:text-amber-400">
                 beach_access
               </span>
-              <p className="text-[11px] font-medium leading-tight">
-                <span className="font-bold">{pausedHabits.length} habit(s) paused:</span> Streaks are safely frozen and protected.
-              </p>
-            </div>
+              <span>{pausedHabits.length} habit{pausedHabits.length > 1 ? 's' : ''} paused</span>
+            </span>
             <button
               type="button"
               onClick={() => setIsVacationModalOpen(true)}
-              className="px-2 py-0.5 rounded-md bg-surface-container-lowest dark:bg-surface-container text-primary text-[10px] font-bold hover:underline cursor-pointer"
+              className="text-primary text-[10px] font-bold hover:underline cursor-pointer"
             >
               Manage
             </button>
           </div>
         )}
 
-        {/* "Never Miss Twice" Grace Day Streak Protection Banner */}
+        {/* Shield Protection Compact Chip */}
         {protectedHabits.length > 0 && (
-          <div className="mb-2.5 px-3.5 py-2 rounded-2xl bg-secondary-container/40 border border-secondary/25 text-on-secondary-container flex items-center justify-between text-xs animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-secondary">
+          <div className="mb-2 px-3 py-1 rounded-xl bg-secondary-container/40 border border-secondary/20 text-on-secondary-container flex items-center justify-between text-xs animate-fadeIn">
+            <span className="flex items-center gap-1.5 text-[11px] font-medium">
+              <span className="material-symbols-outlined text-[15px] text-secondary">
                 shield
               </span>
-              <div>
-                <p className="font-semibold text-[11px] leading-tight">
-                  <span className="font-bold">Never Miss Twice Shield:</span> {protectedHabits[0].name} missed yesterday, but your streak is protected! Complete it today to keep the flow.
-                </p>
-              </div>
-            </div>
-            <span className="px-2 py-0.5 rounded-full bg-secondary/15 text-secondary text-[10px] font-bold shrink-0">
-              Shielded
+              <span>Shield active: {protectedHabits[0].name}</span>
             </span>
           </div>
         )}
 
-        {/* Sunday/Monday Weekly Mindful Review Banner */}
+        {/* Weekly Review Compact Chip */}
         {isSundayOrMonday && (
-          <div className="mb-2.5 px-3.5 py-2 rounded-2xl bg-primary/10 border border-primary/20 text-on-surface flex items-center justify-between text-xs animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-primary">
+          <div className="mb-2 px-3 py-1 rounded-xl bg-primary/10 border border-primary/20 text-on-surface flex items-center justify-between text-xs animate-fadeIn">
+            <span className="flex items-center gap-1.5 text-[11px] font-medium">
+              <span className="material-symbols-outlined text-[15px] text-primary">
                 auto_stories
               </span>
-              <p className="text-[11px] text-on-surface font-medium leading-tight">
-                <span className="font-bold text-primary">Weekly Review:</span> Reflect on this week's momentum and mindful wins.
-              </p>
-            </div>
+              <span>Weekly review ready</span>
+            </span>
             <button
               type="button"
               onClick={() => setIsWeeklyReviewOpen(true)}
-              className="px-2.5 py-1 rounded-full bg-primary text-on-primary text-[10px] font-bold hover:scale-102 active:scale-95 transition-all cursor-pointer shrink-0"
+              className="text-primary text-[10px] font-bold hover:underline cursor-pointer"
             >
               Review ↗
             </button>
@@ -548,9 +537,6 @@ export const TodayFocusCard: React.FC<TodayFocusCardProps> = ({
         )}
 
         <div className="flex items-center gap-3">
-          <span className="text-[11px] font-medium text-on-surface-variant italic font-body-text hidden xs:inline">
-            Better than yesterday ↗
-          </span>
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase font-bold">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'short',

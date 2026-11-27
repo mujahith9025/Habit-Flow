@@ -238,38 +238,24 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
       <div className="absolute -right-16 -top-16 w-52 h-52 rounded-full bg-primary/5 dark:bg-primary/10 blur-3xl pointer-events-none" />
       <div className="absolute -left-16 -bottom-16 w-52 h-52 rounded-full bg-secondary/5 dark:bg-secondary/10 blur-3xl pointer-events-none" />
 
-      {/* Top Header: Badge, Editorial Title, and Executive Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 relative z-10">
+      {/* Top Header: Badge, Title, and Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high dark:bg-surface-container-high text-[11px] font-semibold text-on-surface-variant mb-1 shadow-xs">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high dark:bg-surface-container-high text-[11px] font-semibold text-on-surface-variant shadow-xs">
             <span
               className="material-symbols-outlined text-[14px] text-primary"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               insights
             </span>
-            <span>Executive Performance Pulse</span>
+            <span>Monthly Overview</span>
             <span>•</span>
             <span className="font-bold text-on-surface">{formattedMonthTitle}</span>
           </div>
 
-          <h2 className="font-editorial italic text-xl sm:text-2xl font-bold text-on-surface tracking-tight">
-            {editorial.headline}
+          <h2 className="font-app-title text-xl sm:text-2xl font-bold text-on-surface tracking-tight">
+            {isSingle ? pulseData.title : `${categoryName} (${habits.length} habits)`}
           </h2>
-
-          <p className="font-body-text text-xs sm:text-sm text-on-surface-variant">
-            {isSingle ? (
-              <>
-                Performance synthesis and execution intelligence for{' '}
-                <span className="font-semibold text-on-surface">{pulseData.title}</span>.
-              </>
-            ) : (
-              <>
-                Aggregate execution intelligence across all tracker habits in{' '}
-                <span className="font-semibold text-on-surface">{categoryName}</span>.
-              </>
-            )}
-          </p>
         </div>
 
         {/* Status Pill, Botanical Growth Rank, & Executive Actions */}
@@ -426,11 +412,11 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           </div>
         </div>
 
-        {/* Tile 2: Peak Power Window */}
+        {/* Tile 2: Best Day */}
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
-              Peak Power Window
+              Best Day
               <AnalyticalHelpTooltip
                 term="Peak Energy Day"
                 explanation="The day of the week when your habit execution rate statistically reaches its highest probability."
@@ -452,11 +438,11 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           </div>
         </div>
 
-        {/* Tile 3: Continuity & Unbroken Flow */}
+        {/* Tile 3: Current Streak */}
         <div className="bg-surface-container-low/70 dark:bg-surface-container-high/30 rounded-2xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="font-stat-label text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-on-surface-variant flex items-center">
-              Continuity & Momentum
+              Current Streak
               <AnalyticalHelpTooltip
                 term="Streak Momentum"
                 explanation="Tracks unbroken consecutive days of execution. Never missing twice prevents neural decay."
@@ -485,7 +471,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
         </div>
       </div>
 
-      {/* Actionable Natural-Language Executive Takeaway Bar */}
+      {/* Actionable Natural-Language Key Highlight Bar */}
       <div className="bg-primary/5 dark:bg-primary/10 rounded-2xl p-3 sm:p-3.5 border border-primary/15 flex items-start sm:items-center gap-2.5 relative z-10">
         <span
           className="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5 sm:mt-0"
@@ -494,7 +480,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           auto_awesome
         </span>
         <div className="text-xs text-on-surface leading-relaxed">
-          <span className="font-bold text-primary dark:text-primary-fixed-dim mr-1.5">Executive Takeaway:</span>
+          <span className="font-bold text-primary dark:text-primary-fixed-dim mr-1.5">Key Highlight:</span>
           <span className="text-on-surface-variant">{takeaway}</span>
         </div>
       </div>

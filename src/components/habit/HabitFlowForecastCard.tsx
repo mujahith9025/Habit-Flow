@@ -41,7 +41,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
               speed
             </span>
             <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface flex items-center">
-              Flow Forecast & Pacing Intelligence
+              Month Forecast
               <AnalyticalHelpTooltip
                 term="Flow Pacing"
                 explanation="Calculated from your rolling 7-day velocity to forecast your month-end completion percentage against the 80% Flow benchmark."
@@ -49,7 +49,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
             </h3>
           </div>
           <p className="font-body-text text-xs text-on-surface-variant">
-            Predictive trajectory based on your trailing 7-day velocity versus the 80% Flow benchmark.
+            Projected month-end consistency based on your recent momentum.
           </p>
         </div>
 
@@ -58,7 +58,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
           {is80TargetSecured ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#52995D]/15 text-[#2D5A34] dark:text-[#88C490] border border-[#52995D]/30 shadow-2xs font-stat-label font-tnum">
               <span className="material-symbols-outlined text-[15px]">verified</span>
-              <span>80% Flow Target Secured ({projectedRatePercent}%)</span>
+              <span>80% Target Secured ({projectedRatePercent}%)</span>
             </span>
           ) : isCurrentMonth && daysRemaining > 0 ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#D4A373]/20 text-[#8C5D30] dark:text-[#E2B788] border border-[#D4A373]/40 shadow-2xs font-stat-label font-tnum">
@@ -67,7 +67,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-surface-container-high text-on-surface-variant border border-outline-variant/20 font-stat-label">
-              <span>{isPastMonth ? 'Cycle Complete' : 'Upcoming Cycle'}</span>
+              <span>{isPastMonth ? 'Completed' : 'Upcoming'}</span>
             </span>
           )}
         </div>
@@ -78,7 +78,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
         {/* Cell 1: Projected Month-End Rate */}
         <div className="p-4 rounded-2xl bg-surface-container-low/70 dark:bg-surface-container-high/30 border border-outline-variant/15 flex flex-col justify-between space-y-2">
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
-            Projected Month-End Rate
+            Projected Finish
           </span>
           <div>
             <div className="flex items-baseline gap-1.5">
@@ -111,7 +111,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
         {/* Cell 2: Trailing Daily Velocity */}
         <div className="p-4 rounded-2xl bg-surface-container-low/70 dark:bg-surface-container-high/30 border border-outline-variant/15 flex flex-col justify-between space-y-2">
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold flex items-center">
-            Current Daily Velocity
+            Daily Pace
             <AnalyticalHelpTooltip
               term="Daily Velocity"
               explanation="The average number of habit checks you have completed per day over the trailing 7 days."
@@ -123,7 +123,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
               <span className="text-xs font-normal text-on-surface-variant ml-1">checks/d</span>
             </div>
             <p className="text-[10px] text-on-surface-variant font-body-text mt-1">
-              Trailing 7-day average check-in pace
+              7-day average pace
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
         {/* Cell 3: Completed vs Remaining */}
         <div className="p-4 rounded-2xl bg-surface-container-low/70 dark:bg-surface-container-high/30 border border-outline-variant/15 flex flex-col justify-between space-y-2">
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
-            Pacing & Progress
+            Checks Logged
           </span>
           <div>
             <div className="font-app-title font-tnum text-2xl sm:text-3xl font-extrabold text-on-surface">
@@ -141,7 +141,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-on-surface-variant font-body-text mt-1">
-              {daysRemaining > 0 ? `${daysRemaining} days remaining in cycle` : 'Cycle finalized'}
+              {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Finalized'}
             </p>
           </div>
         </div>
@@ -149,7 +149,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
         {/* Cell 4: Streak Shield Safety Net */}
         <div className="p-4 rounded-2xl bg-surface-container-low/70 dark:bg-surface-container-high/30 border border-outline-variant/15 flex flex-col justify-between space-y-2">
           <span className="font-stat-label text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
-            Resilience & Shields
+            Shields
           </span>
           <div>
             <div className="flex items-center gap-1.5">
@@ -162,7 +162,7 @@ export const HabitFlowForecastCard: React.FC<HabitFlowForecastCardProps> = ({
               <span className="text-xs font-normal text-on-surface-variant">Active</span>
             </div>
             <p className="text-[10px] text-on-surface-variant font-body-text mt-1">
-              {activeShieldsCount > 0 ? 'Vacation / pause safety active' : 'Zero streak shields consumed'}
+              {activeShieldsCount > 0 ? 'Pause protection active' : 'None consumed'}
             </p>
           </div>
         </div>

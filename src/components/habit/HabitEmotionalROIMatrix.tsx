@@ -96,11 +96,11 @@ export const HabitEmotionalROIMatrix: React.FC<HabitEmotionalROIMatrixProps> = (
               psychology
             </span>
             <h3 className="font-section-header text-base sm:text-lg font-bold text-on-surface">
-              Habit Emotional ROI Matrix
+              Mood & Habits
             </h3>
           </div>
           <p className="font-body-text text-xs text-on-surface-variant">
-            Mind-body correlation analyzing execution consistency against self-reported reflection moods.
+            How your habit consistency correlates with positive energy and calm.
           </p>
         </div>
 

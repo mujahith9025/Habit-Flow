@@ -59,7 +59,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   const navItems: NavItem[] = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/habit', label: 'Habit View', icon: 'task_alt' },
+    { to: '/habit', label: 'Reports', icon: 'insights' },
     ...(!isInstalled ? [{ to: '/install', label: 'Install App', icon: 'install_mobile' }] : []),
     { to: '/settings', label: 'Settings', icon: 'tune' },
   ];
@@ -100,9 +100,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 <h1 className="font-app-title text-xl font-bold text-primary dark:text-primary-fixed-dim leading-none">
                   HabitFlow
                 </h1>
-                <p className="font-body-text text-xs text-on-surface-variant mt-1">
-                  Gentle Persistence
-                </p>
               </div>
             )}
           </div>

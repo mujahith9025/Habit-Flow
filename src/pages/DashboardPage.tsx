@@ -9,7 +9,6 @@ import { WeeklyTabContent } from '../components/dashboard/WeeklyTabContent';
 import { MonthlyTabContent } from '../components/dashboard/MonthlyTabContent';
 import { FloatingActionButton } from '../components/dashboard/FloatingActionButton';
 import { HabitFormModal } from '../components/dashboard/HabitFormModal';
-import { MoodCorrelationCard } from '../components/dashboard/MoodCorrelationCard';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
@@ -250,12 +249,6 @@ export const DashboardPage: React.FC = () => {
           />
         </div>
       </div>
-
-      {/* 2.5. Mood & Habit Correlation Engine Insights */}
-      <MoodCorrelationCard
-        habits={activeHabits}
-        entriesByHabit={entriesByHabit}
-      />
 
       {/* 3. Category / Tracker Board Selector Tabs */}
       <CategoryFilterTabs
