@@ -225,7 +225,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
       {/* Top Header: Badge, Title, and Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high dark:bg-surface-container-high text-[11px] font-semibold text-on-surface-variant shadow-xs">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high dark:bg-surface-container-high text-[11px] font-semibold text-on-surface-variant shadow-xs whitespace-nowrap">
             <span
               className="material-symbols-outlined text-[14px] text-primary"
               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -357,7 +357,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           </div>
 
           <div className="h-10 flex items-baseline">
-            <div className="font-app-title text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight capitalize truncate">
+            <div className="font-app-title text-xl sm:text-2xl lg:text-3xl font-extrabold text-on-surface tracking-tight capitalize truncate">
               {pulseData.peakDayName}s
             </div>
           </div>

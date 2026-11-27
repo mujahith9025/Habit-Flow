@@ -105,7 +105,7 @@ export const HabitUnifiedHeader: React.FC<HabitUnifiedHeaderProps> = ({
   return (
     <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl border border-outline-variant/20 shadow-soft p-3 sm:p-4 space-y-3 relative transition-all">
       {/* Tier 1: Master Controls (Board Selector + Month Navigator + Actions) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Left: Tracker Board Selector */}
         <div ref={boardPickerRef} className="relative shrink-0">
           <button

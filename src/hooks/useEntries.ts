@@ -9,6 +9,7 @@ import {
 } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { HabitEntry, HabitEntryMap } from '../types';
+import { getDemoInitialEntries } from '../utils/demoData';
 
 export interface UseEntriesResult {
   entries: HabitEntryMap;
@@ -38,6 +39,29 @@ export function useEntries(habitId?: string, monthKey?: string): UseEntriesResul
     if (!user?.uid || !habitId || !monthKey) {
       setEntries({});
       setLoading(false);
+      return;
+    }
+
+    if (user.uid === 'demo-user-12345') {
+      const storageKey = `habitflow_cached_entries_${user.uid}_${habitId}_${monthKey}`;
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          setEntries(JSON.parse(raw));
+          setLastUpdated(new Date());
+          setLoading(false);
+          setError(null);
+          return;
+        }
+      } catch {}
+      const initial = getDemoInitialEntries(habitId, monthKey);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(initial));
+      } catch {}
+      setEntries(initial);
+      setLastUpdated(new Date());
+      setLoading(false);
+      setError(null);
       return;
     }
 
@@ -98,6 +122,18 @@ export function useEntries(habitId?: string, monthKey?: string): UseEntriesResul
         ...prev,
         [dateKey]: optimisticEntry,
       }));
+
+      if (user.uid === 'demo-user-12345') {
+        const curMonth = dateKey.substring(0, 7);
+        const nextEntries = { ...entriesRef.current, [dateKey]: optimisticEntry };
+        try {
+          localStorage.setItem(
+            `habitflow_cached_entries_${user.uid}_${habitId}_${curMonth}`,
+            JSON.stringify(nextEntries)
+          );
+        } catch {}
+        return optimisticEntry;
+      }
 
       try {
         // 2. Network Write to Firestore

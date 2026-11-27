@@ -13,7 +13,10 @@ export const AppShell: React.FC = () => {
   const { showExitToast } = useBackButtonHandler();
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem('habitflow_sidebar_collapsed') === 'true';
+    const saved = localStorage.getItem('habitflow_sidebar_collapsed');
+    if (saved !== null) return saved === 'true';
+    // Collapse by default on screens < 1024px (tablets) to maximize chart/grid breathing room
+    return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
@@ -39,7 +42,7 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row antialiased selection:bg-primary-container selection:text-on-primary-container">
+    <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row antialiased selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
       {/* Screen Reader Live Region Announcer (Polite & Assertive a11y) */}
       <AriaLiveAnnouncer />
 
@@ -62,7 +65,7 @@ export const AppShell: React.FC = () => {
       />
 
       {/* Main Content Viewport */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300 overflow-x-hidden">
         {/* Sticky Top Header */}
         <TopHeader
           isSidebarCollapsed={isSidebarCollapsed}
@@ -70,7 +73,7 @@ export const AppShell: React.FC = () => {
         />
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 px-container-padding py-md sm:py-lg pb-28 md:pb-12 max-w-[1500px] mx-auto w-full transition-all duration-300">
+        <main className="flex-1 px-container-padding py-md sm:py-lg pb-28 md:pb-12 max-w-[1500px] mx-auto w-full min-w-0 transition-all duration-300">
           <Outlet />
         </main>
       </div>

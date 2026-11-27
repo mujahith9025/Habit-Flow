@@ -103,19 +103,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </div>
 
         {/* Right: Actions & User Profile in the Right Corner */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
           {/* Quick Command Palette Search Button (Cmd+K / Ctrl+K) */}
           {onOpenCommandPalette && (
             <button
               type="button"
               onClick={onOpenCommandPalette}
               title="Search & Commands (Cmd+K / Ctrl+K)"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium text-on-surface-variant hover:text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border border-outline-variant/30 transition-all cursor-pointer active:scale-95 shadow-xs"
+              className="flex items-center justify-center w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-full text-xs font-medium text-on-surface-variant hover:text-on-surface bg-surface-container-low dark:bg-surface-container-high/40 hover:bg-surface-container-high border border-outline-variant/30 transition-all cursor-pointer active:scale-95 shadow-xs"
               aria-label="Open Command Palette (Cmd + K)"
             >
               <span className="material-symbols-outlined text-[17px] text-primary">search</span>
-              <span className="hidden md:inline text-[11px]">Search</span>
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-surface-container-highest/70 text-on-surface-variant">
+              <span className="hidden md:inline text-[11px] ml-1.5">Search</span>
+              <kbd className="hidden lg:inline-block ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-surface-container-highest/70 text-on-surface-variant">
                 ⌘K
               </kbd>
             </button>
@@ -123,15 +123,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
           {/* Real-Time Cloud Sync Verification Indicator */}
           <CloudSyncStatus variant="header" />
-          {/* How to Install App / PWA Install Guide Link (Hidden if already installed) */}
+
+          {/* How to Install App / PWA Install Guide Link (Shown on desktop large screens) */}
           {!isInstalled && (
             <Link
               to="/install"
               title="How to Install HabitFlow on Phone & PC"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors border border-primary/20 shadow-xs"
+              className="hidden lg:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors border border-primary/20 shadow-xs"
             >
               <span className="material-symbols-outlined text-[16px]">install_mobile</span>
-              <span className="hidden sm:inline">Install App</span>
+              <span>Install App</span>
             </Link>
           )}
 
@@ -145,13 +146,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 ? 'Theme: Japandi Charcoal (Click for OLED Obsidian)'
                 : 'Theme: Warm Light (Click for Japandi Charcoal)'
             }
-            className={`w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all active:scale-95 ${
+            className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all active:scale-95 shrink-0 ${
               isOled ? 'ring-1 ring-primary/40 bg-surface-container-high/60 shadow-oled-glow' : ''
             }`}
             aria-label="Toggle Theme"
           >
             <span
-              className={`material-symbols-outlined text-[20px] transition-transform ${
+              className={`material-symbols-outlined text-[18px] sm:text-[20px] transition-transform ${
                 theme === 'oled'
                   ? 'text-primary-fixed-dim drop-shadow-[0_0_8px_rgba(82,153,93,0.5)]'
                   : ''
@@ -166,7 +167,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <Link
               to="/settings"
               title="Go to Settings & Profile"
-              className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-soft flex items-center justify-center ring-2 ring-primary/20 hover:ring-primary/40"
+              className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-soft flex items-center justify-center ring-2 ring-primary/20 hover:ring-primary/40"
             >
               {user.photoURL ? (
                 <img

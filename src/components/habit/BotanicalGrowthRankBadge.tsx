@@ -55,7 +55,7 @@ export const BotanicalGrowthRankBadge: React.FC<BotanicalGrowthRankBadgeProps> =
                 {rank.label}
               </span>
 
-              <span className="text-[10px] font-bold text-on-surface-variant/80 font-mono font-tnum">
+              <span className="px-1.5 py-0.5 rounded-md bg-on-surface/5 border border-outline-variant/20 text-[9px] font-bold text-on-surface-variant font-mono font-tnum">
                 {rank.days}d
               </span>
             </div>

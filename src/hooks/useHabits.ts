@@ -19,6 +19,7 @@ import {
   encryptHabitData,
   decryptHabitData,
 } from '../utils/crypto';
+import { getDemoInitialHabits } from '../utils/demoData';
 
 export interface UseHabitsResult {
   habits: Habit[];
@@ -61,6 +62,20 @@ export interface UseHabitsResult {
 
 const getCachedHabits = (uid?: string): Habit[] => {
   if (!uid) return [];
+  if (uid === 'demo-user-12345') {
+    try {
+      const raw = localStorage.getItem(`habitflow_cached_habits_${uid}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    const demoDefaults = getDemoInitialHabits();
+    try {
+      localStorage.setItem(`habitflow_cached_habits_${uid}`, JSON.stringify(demoDefaults));
+    } catch {}
+    return demoDefaults;
+  }
   try {
     const raw = localStorage.getItem(`habitflow_cached_habits_${uid}`);
     return raw ? JSON.parse(raw) : [];
@@ -97,6 +112,23 @@ export function useHabits(
     if (!user?.uid) {
       setHabits([]);
       setLoading(false);
+      return;
+    }
+
+    if (user.uid === 'demo-user-12345') {
+      const cached = getCachedHabits(user.uid);
+      let filtered = cached;
+      if (!includeArchived) {
+        filtered = filtered.filter((h) => !h.archived);
+      }
+      if (frequencyFilter && frequencyFilter !== 'all') {
+        filtered = filtered.filter((h) => h.frequency === frequencyFilter);
+      }
+      filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      setHabits(filtered);
+      setLoading(false);
+      setLastUpdated(new Date());
+      setError(null);
       return;
     }
 
