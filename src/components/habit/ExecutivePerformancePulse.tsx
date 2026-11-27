@@ -4,6 +4,7 @@ import { HabitGridMetrics } from '../../hooks/useDailyHabitsData';
 import { HabitHistoryMetrics } from '../../hooks/useSingleHabitHistory';
 import { useCategoryAllTimeData } from '../../hooks/useCategoryAllTimeData';
 import { triggerHaptic } from '../../utils/haptics';
+import { BotanicalGrowthRankBadge } from './BotanicalGrowthRankBadge';
 
 export interface ExecutivePerformancePulseProps {
   selectedHabitId: string;
@@ -16,6 +17,7 @@ export interface ExecutivePerformancePulseProps {
   singleMetrics?: HabitHistoryMetrics | null;
   onExportReport?: (format: 'pdf' | 'csv') => void;
   onOpenMilestoneCard?: () => void;
+  onOpenLaurelCeremony?: () => void;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
   singleMetrics,
   onExportReport,
   onOpenMilestoneCard,
+  onOpenLaurelCeremony,
   className = '',
 }) => {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -268,13 +271,36 @@ export const ExecutivePerformancePulse: React.FC<ExecutivePerformancePulseProps>
           </p>
         </div>
 
-        {/* Status Pill & 1-Tap Executive Report Export */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        {/* Status Pill, Botanical Growth Rank, & Executive Actions */}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
           <div
             className={`px-3 py-1 rounded-full border text-xs font-bold font-stat-label flex items-center gap-1.5 shadow-2xs ${editorial.statusClass}`}
           >
             <span>{editorial.statusPill}</span>
           </div>
+
+          {/* Neurobiology Botanical Growth Rank Badge */}
+          <BotanicalGrowthRankBadge
+            days={pulseData.longestStreak}
+            size="sm"
+            showProgress={false}
+          />
+
+          {/* End-of-Month Laurel Ceremony Trigger */}
+          {onOpenLaurelCeremony && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('milestone');
+                onOpenLaurelCeremony();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all active:scale-95 shadow-2xs cursor-pointer"
+              title="Open Month Laurel Ceremony"
+            >
+              <span>👑</span>
+              <span className="hidden sm:inline">Laurel Ceremony</span>
+            </button>
+          )}
 
           {onExportReport && (
             <div ref={exportMenuRef} className="relative">

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { HabitHistoryMetrics } from '../../hooks/useSingleHabitHistory';
 import { useSmoothSparkline } from '../../hooks/useAnalyticsWorker';
+import { BotanicalGrowthRankBadge } from './BotanicalGrowthRankBadge';
 
 interface HabitStatsGridProps {
   metrics: HabitHistoryMetrics;
@@ -253,8 +254,13 @@ export const HabitStatsGrid: React.FC<HabitStatsGridProps> = ({
             </div>
           </div>
 
-          {/* Momentum Badge */}
-          <div className="flex items-center gap-2">
+          {/* Momentum & Botanical Growth Rank Badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            <BotanicalGrowthRankBadge
+              days={longestStreak || currentStreak}
+              size="sm"
+              showProgress={false}
+            />
             {trendData.momentum === 'rising' && (
               <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/25 flex items-center gap-1 shadow-2xs">
                 <span className="material-symbols-outlined text-[14px]">trending_up</span>

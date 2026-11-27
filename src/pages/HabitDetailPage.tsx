@@ -14,6 +14,8 @@ import { HabitEmotionalROIMatrix } from '../components/habit/HabitEmotionalROIMa
 import { HabitFlowForecastCard } from '../components/habit/HabitFlowForecastCard';
 import { HabitSynergyMatrixCard } from '../components/habit/HabitSynergyMatrixCard';
 import { ShareableMilestoneModal } from '../components/habit/ShareableMilestoneModal';
+import { HabitLaurelCeremonyModal, LaurelHabitData } from '../components/habit/HabitLaurelCeremonyModal';
+import { HabitEmotionalAuraCloud } from '../components/habit/HabitEmotionalAuraCloud';
 import { HabitUnifiedHeader } from '../components/habit/HabitUnifiedHeader';
 import { HabitStickyMiniHud } from '../components/habit/HabitStickyMiniHud';
 import { HabitSectionQuickJumpTabs, SectionTabItem } from '../components/habit/HabitSectionQuickJumpTabs';
@@ -67,6 +69,7 @@ export const HabitDetailPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [isLaurelModalOpen, setIsLaurelModalOpen] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ isExporting: boolean; percent: number; message: string } | null>(null);
   const [densityMode, setDensityMode] = useState<'spacious' | 'compact'>(() => {
     try {
@@ -467,6 +470,68 @@ export const HabitDetailPage: React.FC = () => {
     return analyzeHabitSynergy(habitsInCurrentCategory, entriesByHabit, daysInMonth);
   }, [habitsInCurrentCategory, entriesByHabit, daysInMonth]);
 
+  // Laurel Habit of the Month (most resilient habit in category)
+  const laurelHabit = useMemo<LaurelHabitData | null>(() => {
+    if (habitsInCurrentCategory.length === 0) return null;
+    let bestHabit = habitsInCurrentCategory[0];
+    let bestChecks = -1;
+    let bestStreak = -1;
+    let bestRate = 0;
+
+    habitsInCurrentCategory.forEach((h) => {
+      const m = aggregateMetricsMap[h.id];
+      const checks = m?.completedCount || 0;
+      const streak = m?.streakCount || 0;
+      const rate = Math.round(m?.monthProgressPercent || 0);
+
+      if (checks > bestChecks || (checks === bestChecks && streak > bestStreak)) {
+        bestHabit = h;
+        bestChecks = checks;
+        bestStreak = streak;
+        bestRate = rate;
+      }
+    });
+
+    return {
+      id: bestHabit.id,
+      name: bestHabit.name,
+      icon: bestHabit.icon,
+      color: bestHabit.color,
+      completedChecks: Math.max(0, bestChecks),
+      streakCount: Math.max(0, bestStreak),
+      completionRate: bestRate,
+    };
+  }, [habitsInCurrentCategory, aggregateMetricsMap]);
+
+  // Check if viewing the final days of the month or a past completed month to auto-trigger Laurel Ceremony once
+  useEffect(() => {
+    if (!laurelHabit || laurelHabit.completedChecks === 0) return;
+
+    const today = new Date();
+    const isViewingCurrentMonth =
+      selectedDate.getFullYear() === today.getFullYear() &&
+      selectedDate.getMonth() === today.getMonth();
+
+    const lastDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
+    const isFinalDays = isViewingCurrentMonth && today.getDate() >= lastDayOfMonth - 1;
+    const isPastCompletedMonth =
+      selectedDate.getFullYear() < today.getFullYear() ||
+      (selectedDate.getFullYear() === today.getFullYear() && selectedDate.getMonth() < today.getMonth());
+
+    if (isFinalDays || isPastCompletedMonth) {
+      const laurelStorageKey = `habitflow_laurel_seen_${currentMonthKey}`;
+      try {
+        const hasSeen = localStorage.getItem(laurelStorageKey);
+        if (!hasSeen) {
+          setIsLaurelModalOpen(true);
+          localStorage.setItem(laurelStorageKey, 'true');
+        }
+      } catch {
+        // Ignore
+      }
+    }
+  }, [currentMonthKey, selectedDate, laurelHabit]);
+
   if (habitsLoading) {
     return (
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
@@ -574,6 +639,7 @@ export const HabitDetailPage: React.FC = () => {
           singleMetrics={singleMetrics}
           onExportReport={handleExportReport}
           onOpenMilestoneCard={() => setIsMilestoneModalOpen(true)}
+          onOpenLaurelCeremony={() => setIsLaurelModalOpen(true)}
         />
       </div>
 
@@ -625,12 +691,16 @@ export const HabitDetailPage: React.FC = () => {
             <HabitSynergyMatrixCard synergyReport={habitSynergy} />
           </div>
 
-          {/* Habit Emotional ROI Matrix (Mood + Consistency) */}
-          <div id="emotional-roi" className="scroll-mt-20">
+          {/* Habit Emotional ROI Matrix & Mindful Reflection Word Cloud */}
+          <div id="emotional-roi" className="space-y-6 scroll-mt-20">
             <HabitEmotionalROIMatrix
               habits={habitsInCurrentCategory}
               entriesByHabit={entriesByHabit}
               habitMetricsMap={aggregateMetricsMap}
+            />
+            <HabitEmotionalAuraCloud
+              entriesByHabit={entriesByHabit}
+              selectedMonthTitle={formattedTitle}
             />
           </div>
         </div>
@@ -832,6 +902,16 @@ export const HabitDetailPage: React.FC = () => {
         totalHabits={milestoneStats.totalHabits}
         peakDayName={milestoneStats.peakDayName}
         onDownloadPDF={() => handleExportReport('pdf')}
+      />
+
+      {/* End-of-Month Habit Laurel Ceremony Modal */}
+      <HabitLaurelCeremonyModal
+        isOpen={isLaurelModalOpen}
+        onClose={() => setIsLaurelModalOpen(false)}
+        monthTitle={formattedTitle}
+        boardName={currentCategory}
+        laurelHabit={laurelHabit}
+        onOpenShareModal={() => setIsMilestoneModalOpen(true)}
       />
 
       {/* Keyboard Shortcuts Cheat-Sheet Modal */}
